@@ -25,20 +25,17 @@
 
 #include "nand_m79a_lld.h"
 
-
 /******************************************************************************
  *                              Status Operations
  *****************************************************************************/
 
 /**
-    @brief Sends command to reset the NAND Flash chip.
-    @note Transaction length: 1 byte; Returns success when Flash is ready for further instructions.
-
-    @return NAND_ReturnType
-    @retval Ret_ResetFailed
-    @retval Ret_NANDBusy
-    @retval Ret_Success
-*/
+ * @brief Sends command to reset the NAND Flash chip.
+ * @note Transaction length: 1 byte; Returns success when Flash is ready for further instructions.
+ * 
+ * @param[in] hspi  HAL SPI Handle
+ * @return NAND_ReturnType
+ */
 NAND_ReturnType NAND_Reset(SPI_HandleTypeDef *hspi) {
 
     uint8_t command = SPI_NAND_RESET;
@@ -56,18 +53,18 @@ NAND_ReturnType NAND_Reset(SPI_HandleTypeDef *hspi) {
 }
 
 /**
-    @brief Waits until device is ready for further instructions
-    @note Waits until OIP bit in the Status Register resets again, indicating
-    that the NAND Flash is ready for further instructions. If OIP = 1,
-    operation is ongoing, i.e. device is busy.
-
-    Assumption: the device keeps outputting the status register contents
-    until another command is issued. This is shown in pages 17 and 31.
-    TODO: confirm with an oscilloscope.
-
-    @return NAND_ReturnType
-    @retval Ret_Success
-*/
+ * @brief Waits until device is ready for further instructions
+ * @note Waits until OIP bit in the Status Register resets again, indicating
+ *  that the NAND Flash is ready for further instructions. If OIP = 1,
+ *  operation is ongoing, i.e. device is busy.
+ * 
+ *  Assumption: the device keeps outputting the status register contents
+ *  until another command is issued. This is shown in pages 17 and 31.
+ *  TODO: confirm with an oscilloscope.
+ * 
+ * @param[in] hspi  HAL SPI Handle
+ * @return NAND_ReturnType 
+ */
 NAND_ReturnType NAND_Wait_Until_Ready(SPI_HandleTypeDef *hspi) {
     uint8_t timeout_counter = 0;
     uint8_t max_attempts = 2;
@@ -99,13 +96,13 @@ NAND_ReturnType NAND_Wait_Until_Ready(SPI_HandleTypeDef *hspi) {
  *****************************************************************************/
 
 /**
-    @brief Sends command to read manufacturer and device ID of NAND flash chip
-    @note Transaction length: 4 bytes (2 each way)
-
-    @return NAND_ReturnType
-    @retval Ret_ResetFailed
-    @retval Ret_Success
-*/
+ * @brief Sends command to read manufacturer and device ID of NAND flash chip
+ * @note Transaction length: 4 bytes (2 each way)
+ * 
+ * @param hspi[in]      HAL SPI Handle
+ * @param nand_ID[out]  Pointer to ID structure
+ * @return NAND_ReturnType 
+ */
 NAND_ReturnType NAND_Read_ID(SPI_HandleTypeDef *hspi, NAND_ID *nand_ID) {
 
     uint8_t data_tx[] = {SPI_NAND_READ_ID, 0}; // second byte is dummy byte
@@ -127,15 +124,14 @@ NAND_ReturnType NAND_Read_ID(SPI_HandleTypeDef *hspi, NAND_ID *nand_ID) {
  *****************************************************************************/
 
 /**
-    @brief Returns Ret_NANDBusy if there are any operations in progress.
-    @note 
-        Sends command to read status register bit 1 (OIP).
-        Transaction length: 3 bytes (2 to transmit, 1 to receive)
-
-    @return NAND_ReturnType
-    @retval Ret_Success
-    @retval Ret_NANDBusy
-*/
+ * @brief Returns Ret_NANDBusy if there are any operations in progress.
+ * @note 
+ *      Sends command to read status register bit 1 (OIP).
+ *      Transaction length: 3 bytes (2 to transmit, 1 to receive)
+ * 
+ * @param hspi[in]  HAL SPI Handle
+ * @return NAND_ReturnType 
+ */
 NAND_ReturnType NAND_Check_Busy(SPI_HandleTypeDef *hspi) {
     uint8_t status_reg;
     
@@ -148,20 +144,21 @@ NAND_ReturnType NAND_Check_Busy(SPI_HandleTypeDef *hspi) {
 }
 
 /**
-    @brief Read one of four registers. 
-    @note 
-        The register address must be one of: 
-            SPI_NAND_BLKLOCK_REG_ADDR = 0xA0,
-            SPI_NAND_CFG_REG_ADDR     = 0xB0,  
-            SPI_NAND_STATUS_REG_ADDR  = 0xC0,
-            SPI_NAND_DIE_SEL_REG_ADDR = 0xD0
-
-        Transaction length: 3 bytes (2 to transmit, 1 to receive)
-
-    @return NAND_ReturnType
-    @retval Ret_Success
-    @retval Ret_Failed
-*/
+ * @brief Read one of four registers.
+ * @note
+ *      The register address must be one of:
+ *          SPI_NAND_BLKLOCK_REG_ADDR = 0xA0,
+ *          SPI_NAND_CFG_REG_ADDR     = 0xB0,
+ *          SPI_NAND_STATUS_REG_ADDR  = 0xC0,
+ *          SPI_NAND_DIE_SEL_REG_ADDR = 0xD0
+ * 
+ *      Transaction length: 3 bytes (2 to transmit, 1 to receive)
+ *
+ * @param hspi[in]      HAL SPI Handle
+ * @param reg_addr[in]  Address of type RegisterAddr
+ * @param reg[out]      Pointer to register contents
+ * @return NAND_ReturnType 
+ */
 NAND_ReturnType NAND_Get_Features(SPI_HandleTypeDef *hspi, RegisterAddr reg_addr, uint8_t *reg) {
     uint8_t command[] = {SPI_NAND_GET_FEATURES, reg_addr};
     SPI_Params tx = { .buffer = command, .length = 2 };
@@ -177,20 +174,20 @@ NAND_ReturnType NAND_Get_Features(SPI_HandleTypeDef *hspi, RegisterAddr reg_addr
 }
 
 /**
-    @brief Write to one of three registers. Can not write to the status register.
-    @note 
-        The register address must be one of: 
-            SPI_NAND_BLKLOCK_REG_ADDR = 0xA0,
-            SPI_NAND_CFG_REG_ADDR     = 0xB0,  
-            SPI_NAND_DIE_SEL_REG_ADDR = 0xD0
-
-        Transaction length: 3 bytes (2 to transmit, 1 to receive)
-
-    @return NAND_ReturnType
-    @retval Ret_Success
-    @retval Ret_Failed
-    @retval Ret_RegAddressInvalid
-*/
+ * @brief Write to one of three registers. Can not write to the status register.
+ * @note
+ *      The register address must be one of:
+ *          SPI_NAND_BLKLOCK_REG_ADDR = 0xA0,
+ *          SPI_NAND_CFG_REG_ADDR     = 0xB0,
+ *          SPI_NAND_DIE_SEL_REG_ADDR = 0xD0
+ * 
+ *      Transaction length: 3 bytes (2 to transmit, 1 to receive)
+ * 
+ * @param hspi[in]      HAL SPI Handle
+ * @param reg_addr[in]  Address of type RegisterAddr
+ * @param reg[out]      Pointer to register contents
+ * @return NAND_ReturnType 
+ */
 NAND_ReturnType NAND_Set_Features(SPI_HandleTypeDef *hspi, RegisterAddr reg_addr, uint8_t reg) {
     if (reg_addr == SPI_NAND_STATUS_REG_ADDR) {
         return Ret_RegAddressInvalid;
@@ -213,17 +210,19 @@ NAND_ReturnType NAND_Set_Features(SPI_HandleTypeDef *hspi, RegisterAddr reg_addr
  *****************************************************************************/
 
 /**
-    @brief Read bytes stored in a page.
-    @note Command sequence:
-            1) Send page read command to read data from page to cache
-            2) Wait until OIP bit resets in status register
-            3) Read data from cache
-
-    @return NAND_ReturnType
-    @retval Ret_ReadFailed
-    @retval Ret_Success
-*/
-NAND_ReturnType NAND_Page_Read(SPI_HandleTypeDef *hspi, PhysicalAddrs *addr, uint8_t *buffer, uint16_t length) {
+ * @brief Read bytes stored in a page.
+ * @note Command sequence:
+ *          1) Send page read command to read data from page to cache
+ *          2) Wait until OIP bit resets in status register
+ *          3) Read data from cache
+ * 
+ * @param hspi[in]      HAL SPI Handle
+ * @param addr[in]      Pointer to PhysicalAddrs struct
+ * @param length[in]    Number of bytes to read
+ * @param buffer[out]   Pointer to contents read from page
+ * @return NAND_ReturnType 
+ */
+NAND_ReturnType NAND_Page_Read(SPI_HandleTypeDef *hspi, PhysicalAddrs *addr, uint16_t length, uint8_t *buffer) {
     
     NAND_SPI_ReturnType status;
 
@@ -277,16 +276,20 @@ NAND_ReturnType NAND_Page_Read(SPI_HandleTypeDef *hspi, PhysicalAddrs *addr, uin
  * NAND Flash device.
  */
 /**
-    @brief Write data to a page.
-    @note Command sequence:
-            1) WRITE ENABLE
-            2) PROGRAM LOAD : load data into cache register
-            3) PROGRAM EXECUTE : transfers data from cache to main array and waits until OIP bit is cleared
-            4) WRITE DISABLE
-    @return
-    @retval
-*/
-NAND_ReturnType NAND_Page_Program(SPI_HandleTypeDef *hspi, PhysicalAddrs *addr, uint8_t *buffer, uint16_t length) {
+ * @brief Write data to a page.
+ * @note Command sequence:
+ *          1) WRITE ENABLE
+ *          2) PROGRAM LOAD : load data into cache register
+ *          3) PROGRAM EXECUTE : transfers data from cache to main array and waits until OIP bit is cleared
+ *          4) WRITE DISABLE
+ * 
+ * @param hspi[in]      HAL SPI Handle
+ * @param addr[in]      Pointer to PhysicalAddrs struct
+ * @param length[in]    Number of bytes to write
+ * @param buffer[in]    Pointer to contents read from page
+ * @return NAND_ReturnType 
+ */
+NAND_ReturnType NAND_Page_Program(SPI_HandleTypeDef *hspi, PhysicalAddrs *addr, uint16_t length, uint8_t *buffer) {
 
     NAND_SPI_ReturnType status;
 
@@ -351,15 +354,17 @@ NAND_ReturnType NAND_Page_Program(SPI_HandleTypeDef *hspi, PhysicalAddrs *addr, 
  */
 
 /**
-    @brief Erases an entire block (136 KB) at a time. 
-    @note Command sequence:
-            1) WRITE ENABLE
-            2) BLOCK ERASE
-            3) Wait for OIP bit to clear
-            4) WRITE DISABLE
-    @return NAND_ReturnType
-    @retval
-*/
+ * @brief Erases an entire block (136 KB) at a time.
+ * @note Command sequence:
+ *          1) WRITE ENABLE
+ *          2) BLOCK ERASE
+ *          3) Wait for OIP bit to clear
+ *          4) WRITE DISABLE
+ * 
+ * @param hspi[in]  HAL SPI Handle
+ * @param addr[in]  Pointer to struct with block number
+ * @return NAND_ReturnType 
+ */
 NAND_ReturnType NAND_Block_Erase(SPI_HandleTypeDef *hspi, PhysicalAddrs *addr) {
 
     /* Command 1: WRITE ENABLE */
@@ -416,12 +421,24 @@ NAND_ReturnType NAND_Block_Erase(SPI_HandleTypeDef *hspi, PhysicalAddrs *addr) {
  *                              Internal Functions
  *****************************************************************************/
 
+/**
+ * @brief Enable writing to NAND.
+ * 
+ * @param hspi[in]  HAL SPI Handle
+ * @return NAND_SPI_ReturnType 
+ */
 NAND_SPI_ReturnType __write_enable(SPI_HandleTypeDef *hspi) {
     uint8_t command = SPI_NAND_WRITE_ENABLE;
     SPI_Params transmit = { .buffer = &command, .length = 1 };
     return NAND_SPI_Send(hspi, &transmit);
 }
 
+/**
+ * @brief Disable writing to NAND
+ * 
+ * @param hspi[in] HAL SPI Handle
+ * @return NAND_SPI_ReturnType 
+ */
 NAND_SPI_ReturnType __write_disable(SPI_HandleTypeDef *hspi) {
     uint8_t command = SPI_NAND_WRITE_DISABLE;
     SPI_Params transmit = { .buffer = &command, .length = 1 };

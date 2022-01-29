@@ -17,30 +17,25 @@
  * @author Tharun Suresh
  * @date 2021-12-29
  * 
- * @brief Top NAND Controller Layer 
+ * @brief Top NAND Controller Layer
  * 
- * This layer contains functions for managing the NAND IC, its storage levels, 
- * and reading and writing to the IC. Internal functions map logical addresses 
+ * This layer contains functions for managing the NAND IC, its storage levels,
+ * and reading and writing to the IC. Internal functions map logical addresses
  * to physical locations using low level drivers.
  */
 
 #include "nand_m79a.h"
-
-
-
 
 /******************************************************************************
  *                              Initialization
  *****************************************************************************/
 
 /**
-    @brief Initializes the NAND. Steps: Reset device and check for correct device IDs.
-    @note This function must be called first when powered on.
-
-    @return NAND_ReturnType
-    @retval Ret_ResetFailed
-    @retval Ret_WrongID
-    @retval Ret_Success
+ * @brief Initializes the NAND. Steps: Reset device and check for correct device IDs.
+ * @note  This function must be called first when powered on.
+ * 
+ * @param[in] hspi  HAL SPI Handle
+ * @return NAND_ReturnType
  */
 NAND_ReturnType NAND_Init(SPI_HandleTypeDef *hspi) {
     NAND_ID dev_ID;
@@ -62,21 +57,18 @@ NAND_ReturnType NAND_Init(SPI_HandleTypeDef *hspi) {
     }
 }
 
-
 /******************************************************************************
  *                              Reads and Writes
  *****************************************************************************/
 
 /**
-    @brief 
-    @note 
-
-    @return NAND_ReturnType
-    @retval 
+ * @brief Work in progress; Read an arbitrary amount of bytes from the NAND
+ * 
+ * @param[in] hspi      HAL SPI Handle  
+ * @param[in] address   pointer to the NAND address
+ * @param[in] length    number of bytes to read
+ * @return NAND_ReturnType 
  */
-// NAND_ReturnType func(SPI_HandleTypeDef *hspi) {
-// }
-
 NAND_ReturnType NAND_Read(SPI_HandleTypeDef *hspi, NAND_Addr *address, uint16_t length) {
     PhysicalAddrs addr_i;
     uint8_t data[PAGE_SIZE];
@@ -87,7 +79,7 @@ NAND_ReturnType NAND_Read(SPI_HandleTypeDef *hspi, NAND_Addr *address, uint16_t 
     /* Convert logical address to physical internal addresses to send to NAND */
     __map_logical_addr(address, &addr_i);
 
-    NAND_Page_Read(hspi, &addr_i, data, length);
+    NAND_Page_Read(hspi, &addr_i, length, data);
 
     return Ret_Success;
 
@@ -98,11 +90,11 @@ NAND_ReturnType NAND_Read(SPI_HandleTypeDef *hspi, NAND_Addr *address, uint16_t 
  *****************************************************************************/
 
 /**
-    @brief 
-    @note 
-
-    @return NAND_ReturnType
-    @retval 
+ * @brief Maps logical addresses to physical locations within the NAND
+ * 
+ * @param[in]   address       pointer to logical address [0x0 to 0xFLASH_SIZE_BYTES]
+ * @param[out]  addr_struct   pointer to struct with row, col addresses
+ * @return NAND_ReturnType 
  */
 NAND_ReturnType __map_logical_addr(NAND_Addr *address, PhysicalAddrs *addr_struct) {
     addr_struct -> plane    = ADDRESS_2_PLANE(*address);

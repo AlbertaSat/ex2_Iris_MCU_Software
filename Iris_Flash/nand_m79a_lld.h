@@ -276,11 +276,11 @@ NAND_ReturnType NAND_Get_Features(SPI_HandleTypeDef *hspi, RegisterAddr reg_addr
 NAND_ReturnType NAND_Set_Features(SPI_HandleTypeDef *hspi, RegisterAddr reg_addr, uint8_t reg);
 
 /* read operations */
-NAND_ReturnType NAND_Page_Read(SPI_HandleTypeDef *hspi, PhysicalAddrs *addr, uint8_t *buffer, uint16_t length);
+NAND_ReturnType NAND_Page_Read(SPI_HandleTypeDef *hspi, PhysicalAddrs *addr, uint16_t length, uint8_t *buffer);
 // NAND_ReturnType NAND_Spare_Read(SPI_HandleTypeDef *hspi, PhysicalAddrs *addr, uint8_t *buffer);
 
 /* write operations */
-NAND_ReturnType NAND_Page_Program(SPI_HandleTypeDef *hspi, PhysicalAddrs *addr, uint8_t *buffer, uint16_t length);
+NAND_ReturnType NAND_Page_Program(SPI_HandleTypeDef *hspi, PhysicalAddrs *addr,  uint16_t length, uint8_t *buffer);
 // NAND_ReturnType NAND_Spare_Program(SPI_HandleTypeDef *hspi, PhysicalAddrs *addrs, uint8_t *buffer);
 
 /* erase operation */

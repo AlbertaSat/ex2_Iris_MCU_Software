@@ -12,8 +12,7 @@ Note: The STM32L0 HAL is used for SPI x1 data transfers to and from the NAND Fla
 
 Ver. |      Date      |     Comments     |
 ---  |      ---       |       ---        |
-0.1	 |	  Jan 2022    |  In Development  | 					
-
+0.1	 |	  Feb 2022    |  In Development  |
 
 ## Contents
 
