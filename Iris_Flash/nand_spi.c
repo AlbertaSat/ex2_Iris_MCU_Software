@@ -1,26 +1,27 @@
-/************************** NAND SPI Functions ***********************************
+/*
+ * Copyright (C) 2015  University of Alberta
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ */
 
-    Filename:    nand_spi.c
-    Description: Implements SPI wrapper functions for use by low-level drivers.
-                Uses HAL library for STM32L0 series.
-
-    Version:     0.1
-    Author:      Tharun Suresh
-
-********************************************************************************
-
-    Version History.
-
-    Ver.    Date            Comments
-
-    0.1     Jan 2022        In Development
-
-********************************************************************************
-
-    The following functions are available in this library:
-
-
-********************************************************************************/
+/**
+ * @file nand_spi.h
+ * @author Tharun Suresh
+ * @date 2021-12-29
+ * 
+ * @brief SPI Wrapper Functions 
+ * 
+ * Implements SPI wrapper functions for use by low-level drivers.
+ * Uses HAL library for STM32L0 series.
+*/
 
 #include "nand_spi.h"
 
