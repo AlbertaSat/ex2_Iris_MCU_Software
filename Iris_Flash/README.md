@@ -28,8 +28,6 @@ In order of high level functions => hardware:
 
 ## Usage 
 
-- Clone this folder to Drivers/ in the STM32 IDE generated folder structure. 
-- Add to project by going to Project -> Properties -> C/C++ General -> Paths and Symbols -> Includes
 - Add `#include "nand_m79a.h"` to main.c
 - Make sure SPI and GPIO are set up (see `NAND_SPI_Init` and `NAND_GPIO_Init` in nand_spi.c for expected settings)
 

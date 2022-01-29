@@ -1,26 +1,33 @@
-/************************** Flash Memory Driver ***********************************
+/*
+ * Copyright (C) 2015  University of Alberta
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ */
 
-    Filename:    nand_m79a.h
-    Description: Top NAND controller layer that manages storage and maps logical addresses
-                 to physical locations using low level drivers.
+/**
+ * @file nand_m79a.h
+ * @author Tharun Suresh
+ * @date 2021-12-29
+ * 
+ * @brief Top NAND Controller Layer 
+ * 
+ * This is the header file to import in projects using Micron M79A NAND ICs.
+ * 
+ * This layer contains functions for managing the NAND IC, its storage levels, 
+ * and reading and writing to the IC. Internal functions map logical addresses 
+ * to physical locations using low level drivers.
+ */
 
-    Version:     0.1
-    Author:      Tharun Suresh
-
-********************************************************************************
-
-    Version History.
-
-    Ver.        Date            Comments
-
-    0.1        Jan 2022         In Development
-
-********************************************************************************
-
-    The following functions are available in this library:
-
-
-********************************************************************************/
+#ifndef NAND_M79A_H
+#define NAND_M79A_H
 
 #include "nand_m79a_lld.h"
 
@@ -60,3 +67,4 @@ NAND_ReturnType NAND_Init(SPI_HandleTypeDef *hspi);
 
 
 
+#endif /* NAND_M79A_H */
