@@ -34,14 +34,14 @@
  * @brief Initializes the NAND. Steps: Reset device and check for correct device IDs.
  * @note  This function must be called first when powered on.
  * 
- * @param[in] None
+ * @param[in] hspi  HAL SPI Handle
  * @return NAND_ReturnType
  */
-NAND_ReturnType NAND_Init(void) {
+NAND_ReturnType NAND_Init(SPI_HandleTypeDef *hspi) {
     NAND_ID dev_ID;
 
-    NAND_SPI_Init();
-    NAND_GPIO_Init();
+    /* Store the HAL SPI Handle for all transactions*/
+    NAND_SPI_Init(hspi);
 
     /* Wait for T_POR = 1.25ms after power on */
     NAND_Wait(T_POR);

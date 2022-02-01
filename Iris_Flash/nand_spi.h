@@ -70,7 +70,7 @@ typedef struct {
  *****************************************************************************/
    
     /* General functions */
-    void NAND_SPI_Init(void);
+    void NAND_SPI_Init(SPI_HandleTypeDef *hspi);
     void NAND_Wait(uint8_t milliseconds);
 
     /* Wrapper functions for sending and receiving data */

@@ -58,7 +58,7 @@ NAND_ReturnType __map_logical_addr(NAND_Addr *address, PhysicalAddrs *addr_struc
  *                              List of APIs
  *****************************************************************************/
 
-NAND_ReturnType NAND_Init(void);
+NAND_ReturnType NAND_Init(SPI_HandleTypeDef *hspi);
 
 NAND_ReturnType NAND_Read(NAND_Addr *address, uint16_t length);
 
