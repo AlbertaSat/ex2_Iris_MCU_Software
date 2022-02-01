@@ -255,39 +255,39 @@ typedef enum {
 /******************************************************************************
  *                            Internal Functions
  *****************************************************************************/
-NAND_SPI_ReturnType __write_enable(SPI_HandleTypeDef *hspi);
-NAND_SPI_ReturnType __write_disable(SPI_HandleTypeDef *hspi);
+NAND_SPI_ReturnType __write_enable(void);
+NAND_SPI_ReturnType __write_disable(void);
 
 /******************************************************************************
  *                            List of APIs
  *****************************************************************************/
 
 /* status operations */
-NAND_ReturnType NAND_Reset(SPI_HandleTypeDef *hspi);
-NAND_ReturnType NAND_Wait_Until_Ready(SPI_HandleTypeDef *hspi);
+NAND_ReturnType NAND_Reset(void);
+NAND_ReturnType NAND_Wait_Until_Ready(void);
 
 /* identification operations */
-NAND_ReturnType NAND_Read_ID(SPI_HandleTypeDef *hspi, NAND_ID *nand_ID);
-// NAND_ReturnType NAND_Read_Param_Page(SPI_HandleTypeDef *hspi, param_page_t *ppage);
+NAND_ReturnType NAND_Read_ID(NAND_ID *nand_ID);
+// NAND_ReturnType NAND_Read_Param_Page(param_page_t *ppage);
 
 /* feature operations */
-NAND_ReturnType NAND_Check_Busy(SPI_HandleTypeDef *hspi);
-NAND_ReturnType NAND_Get_Features(SPI_HandleTypeDef *hspi, RegisterAddr reg_addr, uint8_t *reg);
-NAND_ReturnType NAND_Set_Features(SPI_HandleTypeDef *hspi, RegisterAddr reg_addr, uint8_t reg);
+NAND_ReturnType NAND_Check_Busy(void);
+NAND_ReturnType NAND_Get_Features(RegisterAddr reg_addr, uint8_t *reg);
+NAND_ReturnType NAND_Set_Features(RegisterAddr reg_addr, uint8_t reg);
 
 /* read operations */
-NAND_ReturnType NAND_Page_Read(SPI_HandleTypeDef *hspi, PhysicalAddrs *addr, uint8_t *buffer, uint16_t length);
-// NAND_ReturnType NAND_Spare_Read(SPI_HandleTypeDef *hspi, PhysicalAddrs *addr, uint8_t *buffer);
+NAND_ReturnType NAND_Page_Read(PhysicalAddrs *addr, uint16_t length, uint8_t *buffer);
+// NAND_ReturnType NAND_Spare_Read(PhysicalAddrs *addr, uint8_t *buffer);
 
 /* write operations */
-NAND_ReturnType NAND_Page_Program(SPI_HandleTypeDef *hspi, PhysicalAddrs *addr, uint8_t *buffer, uint16_t length);
-// NAND_ReturnType NAND_Spare_Program(SPI_HandleTypeDef *hspi, PhysicalAddrs *addrs, uint8_t *buffer);
+NAND_ReturnType NAND_Page_Program(PhysicalAddrs *addr,  uint16_t length, uint8_t *buffer);
+// NAND_ReturnType NAND_Spare_Program(PhysicalAddrs *addrs, uint8_t *buffer);
 
 /* erase operation */
-NAND_ReturnType NAND_Block_Erase(SPI_HandleTypeDef *hspi, PhysicalAddrs *addr);
+NAND_ReturnType NAND_Block_Erase(PhysicalAddrs *addr);
 
 /* internal data move operations */
-// NAND_ReturnType NAND_Copy_Back(SPI_HandleTypeDef *hspi, NAND_Addr src_addr, NAND_Addr dest_addr);
+// NAND_ReturnType NAND_Copy_Back(NAND_Addr src_addr, NAND_Addr dest_addr);
 
 /* block lock operations */
 // NAND_ReturnType NAND_Lock(void);
