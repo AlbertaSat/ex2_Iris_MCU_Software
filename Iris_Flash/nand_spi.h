@@ -25,15 +25,23 @@
 
 #include "stm32l0xx_hal.h"
 
-#define NAND_NCS_PIN    GPIO_PIN_12
-#define NAND_SCK_PIN    GPIO_PIN_13
-#define NAND_MISO_PIN   GPIO_PIN_14
-#define NAND_MOSI_PIN   GPIO_PIN_15
+/******************************************************************************
+ *                        USER NAND SPI HARDWARE SETTINGS
+ *****************************************************************************/
 
-#define NAND_MOSI_PORT  GPIOB
-#define NAND_MISO_PORT  GPIOB
-#define NAND_SCK_PORT   GPIOB
+#define NAND_SPI        SPI2
+
+#define NAND_NWP_PIN    GPIO_PIN_6
+#define NAND_NHOLD_PIN  GPIO_PIN_7
+#define NAND_NCS_PIN    GPIO_PIN_12
+
+#define NAND_NWP_PORT   GPIOB
+#define NAND_NHOLD_PORT GPIOB
 #define NAND_NCS_PORT   GPIOB
+
+/******************************************************************************
+ *                           Local Definitions
+ *****************************************************************************/
 
 #define DUMMY_BYTE         0x00
 #define NAND_SPI_TIMEOUT   100
@@ -62,13 +70,14 @@ typedef struct {
  *****************************************************************************/
    
     /* General functions */
+    void NAND_SPI_Init(void);
     void NAND_Wait(uint8_t milliseconds);
 
     /* Wrapper functions for sending and receiving data */
-    NAND_SPI_ReturnType NAND_SPI_Send(SPI_HandleTypeDef *hspi, SPI_Params *data_send);
-    NAND_SPI_ReturnType NAND_SPI_SendReceive(SPI_HandleTypeDef *hspi, SPI_Params *data_send, SPI_Params *data_recv);
-    NAND_SPI_ReturnType NAND_SPI_Receive(SPI_HandleTypeDef *hspi, SPI_Params *data_recv);
+    NAND_SPI_ReturnType NAND_SPI_Send(SPI_Params *data_send);
+    NAND_SPI_ReturnType NAND_SPI_SendReceive(SPI_Params *data_send, SPI_Params *data_recv);
+    NAND_SPI_ReturnType NAND_SPI_Receive(SPI_Params *data_recv);
 
-    NAND_SPI_ReturnType NAND_SPI_Send_Command_Data(SPI_HandleTypeDef *hspi, SPI_Params *cmd_send, SPI_Params *data_send);
+    NAND_SPI_ReturnType NAND_SPI_Send_Command_Data(SPI_Params *cmd_send, SPI_Params *data_send);
 
 /******************************************************************************/

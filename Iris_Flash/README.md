@@ -28,8 +28,10 @@ In order of high level functions => hardware:
 ## Usage 
 
 - Add `#include "nand_m79a.h"` to main.c
-- Make sure SPI and GPIO are set up (see `NAND_SPI_Init` and `NAND_GPIO_Init` in nand_spi.c for expected settings)
-
+- Define the pins connecting to the NAND IC in `nand_spi.h`
+  - `nand_spi.c` takes care of initializing the pins and the SPI interface for you.
+  - Remove the auto generated `MX_SPIn_Init` (n is the one intended to be used with the NAND) from `main.c`. 
+  - Same with any references to pins used by the NAND from `MX_GPIO_Init`.
 ## References 
 
 ### Documents
