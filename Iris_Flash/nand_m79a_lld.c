@@ -419,7 +419,7 @@ NAND_ReturnType NAND_Block_Erase(PhysicalAddrs *addr) {
  * @brief Enable writing to NAND.
  * 
  * @param[in] None
- * @return NAND_SPI_ReturnType 
+ * @return NAND_SPI_ReturnType
  */
 NAND_SPI_ReturnType __write_enable(void) {
     uint8_t command = SPI_NAND_WRITE_ENABLE;

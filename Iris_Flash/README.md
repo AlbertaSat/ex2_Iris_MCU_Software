@@ -65,3 +65,5 @@ In order of high level functions => hardware:
 - Bad-block management and mapping from logical addresses to physical locations [High priority]
 - Wear leveling 
 - Error correction code (ECC)
+- Prevent accidental overwrites
+- POST check to ensure full functionality

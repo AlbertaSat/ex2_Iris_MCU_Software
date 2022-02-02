@@ -13,7 +13,7 @@
  */
 
 /**
- * @file nand_spi.h
+ * @file nand_spi.c
  * @author Tharun Suresh
  * @date 2021-12-29
  * 
@@ -101,7 +101,7 @@ void NAND_SPI_Init(SPI_HandleTypeDef *hspi) {
  * @param[in] milliseconds Number of milliseconds to delay
  */
 void NAND_Wait(uint8_t milliseconds){
-   HAL_Delay(milliseconds);
+    HAL_Delay(milliseconds);
 };
 
 
@@ -123,9 +123,9 @@ NAND_SPI_ReturnType NAND_SPI_Send(SPI_Params *data_send) {
     __nand_spi_cs_high();
 
     if (send_status != HAL_OK) {
-    return SPI_Fail; 
+        return SPI_Fail; 
     } else {
-    return SPI_OK;
+        return SPI_OK;
     }
 
 };
@@ -146,9 +146,9 @@ NAND_SPI_ReturnType NAND_SPI_SendReceive(SPI_Params *data_send, SPI_Params *data
     __nand_spi_cs_high();
 
     if (recv_status != HAL_OK) {
-    return SPI_Fail; 
+        return SPI_Fail; 
     } else {
-    return SPI_OK;
+        return SPI_OK;
     }
 };
 
@@ -166,9 +166,9 @@ NAND_SPI_ReturnType NAND_SPI_Receive(SPI_Params *data_recv) {
     __nand_spi_cs_high();
 
     if (receive_status != HAL_OK) {
-    return SPI_Fail; 
+        return SPI_Fail; 
     } else {
-    return SPI_OK;
+        return SPI_OK;
     }
 };
 
@@ -192,9 +192,9 @@ NAND_SPI_ReturnType NAND_SPI_Send_Command_Data(SPI_Params *cmd_send, SPI_Params 
     __nand_spi_cs_high();
 
     if (send_status != HAL_OK) {
-    return SPI_Fail; 
+        return SPI_Fail; 
     } else {
-    return SPI_OK;
+        return SPI_OK;
     }
 };
 
@@ -207,7 +207,7 @@ NAND_SPI_ReturnType NAND_SPI_Send_Command_Data(SPI_Params *cmd_send, SPI_Params 
  * @note Must be called prior to every SPI transmission
  */
 void __nand_spi_cs_low(void) {
-   HAL_GPIO_WritePin(NAND_NCS_PORT, NAND_NCS_PIN, GPIO_PIN_RESET);
+    HAL_GPIO_WritePin(NAND_NCS_PORT, NAND_NCS_PIN, GPIO_PIN_RESET);
 };
 
 /**

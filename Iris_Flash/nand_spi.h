@@ -26,7 +26,7 @@
 #include "stm32l0xx_hal.h"
 
 /******************************************************************************
- *                        USER NAND SPI HARDWARE SETTINGS
+ *          For reference only: NAND SPI HARDWARE SETTINGS
  *****************************************************************************/
 
 #define NAND_SPI        SPI2
