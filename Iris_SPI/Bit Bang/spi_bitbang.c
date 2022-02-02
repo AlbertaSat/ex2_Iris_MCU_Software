@@ -52,18 +52,7 @@
 //  /*Configure GPIO pin Output Level */
 //  HAL_GPIO_WritePin(GPIOB, SPI_B_MOSI_Pin|SPI_B_NSS_Pin|SPI_B_CLK_Pin, GPIO_PIN_RESET);
 
-uint8_t read_byte(uint8_t addr){
-	/*	Flow:
-	 * 	Start
-		Set the SS pin low to begin communication
-		Set the pin for Master Out Slave In (MOSI) to the first bit of the data to be sent
-		Set the clock pin (SCK) high so data is transmitted by the master and received by the slave
-		Read the state of the Master in Slave Out (MISO) to receive the first bit of data from slave
-		Set SCK Low, so data can be sent on the next rising edge
-		Go to 2 till all data bits have been transmitted.
-		Set the SS pin High to stop transmission.
-		Stop
-*/
+uint8_t spi_read_byte(uint8_t addr){
 	uint8_t rec;
 	// CS Low
 	_CS_LOW();
@@ -92,7 +81,7 @@ uint8_t read_byte(uint8_t addr){
 	return rec;
 }
 
-void write_byte(uint8_t addr, uint8_t byte){
+void spi_write_byte(uint8_t addr, uint8_t byte){
 	// CS Low
 	_CS_LOW();
 	// Send Phase
@@ -111,6 +100,36 @@ void write_byte(uint8_t addr, uint8_t byte){
 		_CLK_LOW();
 	}
 
+	_CS_HIGH();
+}
+
+void read_multiple_bytes(uint8_t addr, uint32_t length){
+	uint8_t rec;
+	// CS Low
+	_CS_LOW();
+	// Send Phase
+	for (int i=0; i<8; i++){
+		HAL_GPIO_WritePin(MOSI_Port, MOSI_Pin, bit_read(addr, i));
+		_CLK_HIGH();
+		HAL_GPIO_ReadPin(MISO_Port, MISO_Pin);
+		_CLK_LOW();
+	}
+
+	for (int j=0; j<length; j++){
+		// Recieve phase
+		for (int i=0; i<8; i++){
+			HAL_GPIO_WritePin(MOSI_Port, MOSI_Pin, bit_read(0x00, i));
+			_CLK_HIGH();
+			if (HAL_GPIO_ReadPin(MISO_Port, MISO_Pin) == GPIO_PIN_SET){
+				rec = rec << 1 | 0b1;
+			}
+			else{
+				rec = rec << 1 | 0b0;
+			}
+			_CLK_LOW();
+			rec = 0; //remove me and figure out how to dump data
+		}
+	}
 	_CS_HIGH();
 }
 

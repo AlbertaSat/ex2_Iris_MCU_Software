@@ -44,8 +44,9 @@ void _CS_HIGH();
 void _CLK_LOW();
 void _CLK_HIGH();
 
-uint8_t read_byte(uint8_t byte);
-void write_byte(uint8_t addr, uint8_t byte);
+uint8_t spi_read_byte(uint8_t byte);
+void spi_write_byte(uint8_t addr, uint8_t byte);
+void read_multiple_bytes(uint8_t addr, uint32_t length);
 
 GPIO_PinState bit_read(uint8_t byte, int j);
 //void delay_us (uint32_t nus);
