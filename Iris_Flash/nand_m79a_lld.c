@@ -91,6 +91,24 @@ NAND_ReturnType NAND_Wait_Until_Ready(void) {
     return Ret_Success;
 }
 
+/**
+ * @brief Send a dummy byte to NAND via SPI
+ * 
+ * @return NAND_ReturnType 
+ */
+NAND_ReturnType NAND_Send_Dummy_Byte(void) {
+    uint8_t dummy = DUMMY_BYTE;
+    
+    SPI_Params tx = { .buffer = &dummy, .length = 1 };
+    NAND_SPI_ReturnType status = NAND_SPI_Send(&tx);
+
+    if (status != HAL_OK) {
+        return Ret_Failed;
+    } else {
+        return Ret_Success;
+    }
+}
+
 /******************************************************************************
  *                      Identification Operations
  *****************************************************************************/

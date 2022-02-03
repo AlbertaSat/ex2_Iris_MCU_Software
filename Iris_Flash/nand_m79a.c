@@ -34,30 +34,32 @@
  * @brief Initializes the NAND. Steps: Reset device and check for correct device IDs.
  * @note  This function must be called first when powered on.
  * 
- * @param[in] hspi  HAL SPI Handle
+ * @param[in] None
  * @return NAND_ReturnType
  */
-NAND_ReturnType NAND_Init(SPI_HandleTypeDef *hspi) {
+NAND_ReturnType NAND_Init(void) {
     NAND_ID dev_ID;
 
-    /* Store the HAL SPI Handle for all transactions*/
-    NAND_SPI_Init(hspi);
+    NAND_Wait(T_POR);       /* Wait for T_POR = 1.25ms after power on */
+    NAND_Send_Dummy_Byte(); /* Initializes SPI clock settings */
 
-    /* Wait for T_POR = 1.25ms after power on */
-    NAND_Wait(T_POR);
-
-    /* Reset NAND flash during initialization. May not be necessary though (page 50) */
+    /* Reset NAND flash after power on. May not be necessary though (page 50) */
     if (NAND_Reset() != Ret_Success) {
         return Ret_ResetFailed;
-    } else {
-        /* check if device ID is same as expected */
-        NAND_Read_ID(&dev_ID);
-        if (dev_ID.manufacturer_ID != NAND_ID_MANUFACTURER || dev_ID.device_ID != NAND_ID_DEVICE) {
-            return Ret_WrongID;
-        } else {
-            return Ret_Success;
-        }
+    } 
+
+    /* check if device ID is same as expected */
+    NAND_Read_ID(&dev_ID);
+    if (dev_ID.manufacturer_ID != NAND_ID_MANUFACTURER || dev_ID.device_ID != NAND_ID_DEVICE) {
+        return Ret_WrongID;
     }
+
+    // TODO:
+    // run power on self test (POST)
+    // build bad block table
+
+    return Ret_Success;
+
 }
 
 /******************************************************************************
@@ -107,3 +109,28 @@ NAND_ReturnType __map_logical_addr(NAND_Addr *address, PhysicalAddrs *addr_struc
 
     return Ret_Success;
 }
+
+
+//NAND_ReturnType __build_bad_block_table(blocktable *table) {
+
+/*  reference: TN-29-17 */
+
+    // /*Read for Bad blocks and set up bad block table. */
+    // for (i=0; i<NAND_BLOCK_COUNT; i++) {
+    //     rc = NAND_ReadPage(i*64, 2048, 1, ucPageReadBuf);/* Read Block i, Page 0, Byte 2048 */
+    //     if(ucPageReadBuf[0] == 0xFF){
+    //         rc = NAND_ReadPage(i*64+1, 2048, 1, ucPageReadBuf);/* Read Block i, Page 1, Byte 2048*/
+    //         if(ucPageReadBuf[0] == 0xFF) {
+    //             bb[i]=1;/*block is good */
+    //         } else {
+    //             bb[i]=0;/*block is bad */
+    //         }
+    //     } else {
+    //         bb[i]=0;/*block is bad */
+    //     }
+    // }
+
+
+
+//    return Ret_Success;
+//}

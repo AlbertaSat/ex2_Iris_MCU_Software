@@ -29,6 +29,10 @@ In order of high level functions => hardware:
 
 - Add `#include "nand_m79a.h"` to main.c
 - Make sure SPI and GPIO are set up (see `NAND_SPI_Init` and `NAND_GPIO_Init` in `nand_spi.c` for expected settings)
+- Initialization code:
+  ```C
+  NAND_SPI_Init(&hspin);
+  NAND_Init();
 ## References 
 
 ### Documents

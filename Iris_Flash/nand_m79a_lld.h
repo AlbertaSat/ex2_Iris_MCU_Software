@@ -265,6 +265,7 @@ NAND_SPI_ReturnType __write_disable(void);
 /* status operations */
 NAND_ReturnType NAND_Reset(void);
 NAND_ReturnType NAND_Wait_Until_Ready(void);
+NAND_ReturnType NAND_Send_Dummy_Byte(void);
 
 /* identification operations */
 NAND_ReturnType NAND_Read_ID(NAND_ID *nand_ID);
