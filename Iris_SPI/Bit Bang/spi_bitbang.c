@@ -78,6 +78,8 @@ uint8_t spi_read_byte(uint8_t addr){
 	}
 
 	_CS_HIGH();
+	HAL_GPIO_WritePin(MOSI_Port, MOSI_Pin, GPIO_PIN_RESET);
+
 	return rec;
 }
 
@@ -99,8 +101,9 @@ void spi_write_byte(uint8_t addr, uint8_t byte){
 		HAL_GPIO_ReadPin(MISO_Port, MISO_Pin);
 		_CLK_LOW();
 	}
-
 	_CS_HIGH();
+	HAL_GPIO_WritePin(MOSI_Port, MOSI_Pin, GPIO_PIN_RESET);
+
 }
 
 void read_multiple_bytes(uint8_t addr, uint32_t length){
@@ -131,6 +134,8 @@ void read_multiple_bytes(uint8_t addr, uint32_t length){
 		}
 	}
 	_CS_HIGH();
+	HAL_GPIO_WritePin(MOSI_Port, MOSI_Pin, GPIO_PIN_RESET);
+
 }
 
 GPIO_PinState bit_read(uint8_t byte, int j){
