@@ -1,0 +1,3 @@
+nand_m79a.c:40:17:NAND_Init	16	static
+nand_m79a.c:76:17:NAND_Read	2216	static
+nand_m79a.c:103:17:__map_logical_addr	16	static

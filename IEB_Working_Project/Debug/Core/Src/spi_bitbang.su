@@ -1,0 +1,10 @@
+spi_bitbang.c:58:9:read_spi_reg	32	static
+spi_bitbang.c:98:6:write_spi_reg	32	static
+spi_bitbang.c:133:6:spi_read_multiple_bytes	32	static
+spi_bitbang.c:175:15:bit_read	16	static
+spi_bitbang.c:183:6:_CS1_LOW	8	static
+spi_bitbang.c:186:6:_CS1_HIGH	8	static
+spi_bitbang.c:190:6:_CS2_LOW	8	static
+spi_bitbang.c:193:6:_CS2_HIGH	8	static
+spi_bitbang.c:197:6:_CLK_LOW	8	static
+spi_bitbang.c:200:6:_CLK_HIGH	8	static
