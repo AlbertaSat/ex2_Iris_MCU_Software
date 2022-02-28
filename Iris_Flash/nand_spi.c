@@ -166,7 +166,7 @@ NAND_SPI_ReturnType NAND_SPI_Receive(SPI_Params *data_recv) {
     __nand_spi_cs_high();
 
     if (receive_status != HAL_OK) {
-        return SPI_Fail; 
+        return SPI_Fail;
     } else {
         return SPI_OK;
     }

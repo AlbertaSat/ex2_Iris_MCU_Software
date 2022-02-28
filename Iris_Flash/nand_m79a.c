@@ -55,8 +55,8 @@ NAND_ReturnType NAND_Init(void) {
     }
 
     // TODO:
-    // run power on self test (POST)
     // build bad block table
+    // finally, run power on self test (POST)
 
     return Ret_Success;
 
@@ -71,22 +71,112 @@ NAND_ReturnType NAND_Init(void) {
  * 
  * @param[in] address   pointer to the NAND address
  * @param[in] length    number of bytes to read
+ * @param[out] buffer   pointer to the start of the data read from NAND
  * @return NAND_ReturnType 
  */
-NAND_ReturnType NAND_Read(NAND_Addr *address, uint16_t length) {
-    PhysicalAddrs addr_i;
-    uint8_t data[PAGE_SIZE];
-
-    // TODO: can't just be any address. start address has to be page start. and max len must be page end.
-    // handle writing between pages.
+NAND_ReturnType NAND_Read(NAND_Addr *address, uint16_t length, uint8_t *buffer) {
     
-    /* Convert logical address to physical internal addresses to send to NAND */
+    PhysicalAddrs addr_i;
+    NAND_ReturnType read_status = Ret_Success;
+
+    /* Address to start reading has to be page start (for now)*/ 
+    if ((*address % PAGE_DATA_SIZE) != 0) {
+        return Ret_AddressInvalid;
+    }
+    
+    /* Convert logical address to physical internal locations */
     __map_logical_addr(address, &addr_i);
 
-    NAND_Page_Read(&addr_i, length, data);
+    /* read the requested data from NAND page by page */
+	/* figure out how many pages to read */
+	uint8_t num_pages;
+	uint16_t last_page_read_length = length % PAGE_DATA_SIZE;
+	if (last_page_read_length != 0) {
+		num_pages = (length / PAGE_DATA_SIZE) + 1;
+	} else {
+		num_pages = length / PAGE_DATA_SIZE;
+		last_page_read_length = PAGE_DATA_SIZE;
+	}
 
-    return Ret_Success;
+	/* iterate through pages */
+	uint8_t page = 1;
+	uint16_t read_length = PAGE_DATA_SIZE;
+	NAND_Addr nand_addr = *address;
 
+	while (page <= num_pages) {
+		if (read_status != Ret_Success) {
+			return Ret_ReadFailed;
+		} else {
+			if (page == num_pages) { // if last page, read appropriate number of bytes
+				read_length = last_page_read_length;
+			}
+			read_status = NAND_Page_Read(&addr_i, read_length, buffer);
+
+			/* update loop variables for next iteration */
+			page += 1;
+			nand_addr += PAGE_DATA_SIZE;
+			buffer += PAGE_DATA_SIZE;
+			__map_logical_addr(&nand_addr, &addr_i);
+		}
+	}
+    return read_status;
+}
+
+
+/**
+ * @brief Work in progress; Write an arbitrary amount of bytes to the NAND
+ * 
+ * @param[in] address   pointer to the NAND address
+ * @param[in] length    number of bytes to write
+ * @param[in] buffer    pointer to the data that needs to be written to NAND
+ * @return NAND_ReturnType 
+ */
+NAND_ReturnType NAND_Write(NAND_Addr *address, uint16_t length, uint8_t *buffer) {
+    
+    PhysicalAddrs addr_i;
+    NAND_ReturnType write_status = Ret_Success;
+
+    /* Address to start writing has to be page start (for now)*/ 
+    if ((*address % PAGE_DATA_SIZE) != 0) {
+        return Ret_AddressInvalid;
+    }
+    
+    /* Convert logical address to physical internal locations */
+    __map_logical_addr(address, &addr_i);
+
+    /* write the requested data to NAND page by page */
+	/* figure out how many pages to write */
+	uint8_t num_pages;
+	uint16_t last_page_write_length = length % PAGE_DATA_SIZE;
+	if (last_page_write_length != 0) {
+		num_pages = (length / PAGE_DATA_SIZE) + 1;
+	} else {
+		num_pages = length / PAGE_DATA_SIZE;
+		last_page_write_length = PAGE_DATA_SIZE;
+	}
+
+	/* iterate through pages */
+	uint8_t page = 1;
+	uint16_t write_length = PAGE_DATA_SIZE;
+	NAND_Addr nand_addr = *address;
+
+	while (page <= num_pages) {
+		if (write_status != Ret_Success) {
+			return Ret_WriteFailed;
+		} else {
+			if (page == num_pages) { // if last page, read appropriate number of bytes
+				write_length = last_page_write_length;
+			}
+			write_status = NAND_Page_Program(&addr_i, write_length, buffer);
+
+			/* update loop variables for next iteration */
+			page += 1;
+			nand_addr += PAGE_DATA_SIZE;
+			buffer += PAGE_DATA_SIZE;
+			__map_logical_addr(&nand_addr, &addr_i);
+		}
+	}
+    return write_status;
 }
 
 /******************************************************************************
@@ -110,6 +200,13 @@ NAND_ReturnType __map_logical_addr(NAND_Addr *address, PhysicalAddrs *addr_struc
     return Ret_Success;
 }
 
+
+NAND_ReturnType __run_POST(void) {
+
+    // small read write test
+
+    return Ret_Success;
+}
 
 //NAND_ReturnType __build_bad_block_table(blocktable *table) {
 

@@ -44,7 +44,7 @@
  *****************************************************************************/
 
 #define DUMMY_BYTE         0x00
-#define NAND_SPI_TIMEOUT   100
+#define NAND_SPI_TIMEOUT   1000  /* max time for a transaction. nCS pulls high after */
 
 /* using custom return type to keep higher layers as platform-agnostic as possible */
 typedef enum {

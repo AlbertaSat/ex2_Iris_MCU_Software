@@ -12,13 +12,13 @@ Note: The STM32L0 HAL is used for SPI x1 data transfers to and from the NAND Fla
 
 Ver. |      Date      |     Comments     |
 ---  |      ---       |       ---        |
-0.1	 |	  Feb 2022    |  In Development  |
+0.1	 |	  Mar 2022    |  In Development  |
 
 ## Contents
 
 In order of high level functions => hardware: 
 - nand_m79a:
-  - Functions for reading and writing to M79a NAND Flash ICs
+  - Top level functions for reading and writing to M79a NAND Flash ICs
 - nand_m79a_lld:
   - Low level drivers implementing individual commands and dealing with physical locations within the NAND
 - nand_spi:
@@ -47,19 +47,18 @@ In order of high level functions => hardware:
 
 ## To-Do List
 
-### Hardware 
-- Validate driver functions
-
+1. Validate low level page_program and page_read functions
+2. Finish writing top level NAND_Read and NAND_Write functions & validate them
+3. Then move on to other features as described below:
 ### Low level driver features (nand_m79a_lld)
 - Finish implementing all of the commands
-  - Read all registers, subfeatures
-  - Read and write to spare areas
-  - Move, lock operations
-  - Read bad block bytes
+  - Read bad block bytes [Absolutely necessary]
+  - Read and write to spare areas [Medium priority]
+  - Move, lock operations [Medium priority]
   - Parameter page [Low priority]
   - OTP areas [Low priority]
 
-- Optimize functions
+- Optimize functions [Low priority]
   - NAND_Wait(1) wastes time. 
     - No command takes that long to complete.
     - Compounds when calling the function multiple times.
