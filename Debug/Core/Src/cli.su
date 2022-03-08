@@ -1,0 +1,13 @@
+debug.h:10:20:DBG_PUT	16	static
+cli.c:15:27:next_token	16	static
+cli.c:24:13:help	8	static
+cli.c:38:13:handle_format_cmd	120	static
+cli.c:96:13:handle_reg_cmd	120	static
+cli.c:173:13:handle_width_cmd	112	static
+cli.c:248:13:handle_capture_cmd	24	static
+cli.c:277:6:reset_sensors	88	static
+cli.c:364:6:scan_i2c	96	static
+cli.c:379:13:sensor_togglepower	16	static
+cli.c:391:6:init_nand_flash	24	static
+cli.c:409:6:handle_i2c8_8_read	128	static
+cli.c:478:6:handle_command	24	static
