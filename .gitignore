@@ -111,3 +111,4 @@ Debug/makefile
 Debug/objects.list
 Debug/objects.mk
 Debug/sources.mk
+.settings/language.settings.xml
