@@ -4,11 +4,9 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <stdlib.h>
-#include <stdint.h>
 #include <unistd.h>
 #include <string.h>
 #include <termios.h>
-#include <arpa/inet.h>
 
 #define MAX_NAME_LEN 64
 
@@ -19,7 +17,6 @@ enum DataState {
     STATE_RESET,
     STATE_HAVE_J,
     STATE_HAVE_P,
-    STATE_GET_LEN,
     STATE_DOWNLOADING,
     STATE_LOCAL
 };
@@ -53,7 +50,7 @@ int main(int argc, char **argv) {
     }
     fprintf(stderr, "output file: %s\n", imgfile);
 
-    int ttyfd = open("/dev/ttyACM0", O_RDWR | O_NDELAY);
+    int ttyfd = open("/dev/ttyUSB0", O_RDWR | O_NDELAY);
     if (ttyfd == -1) {
         perror("open");
         return 1;
@@ -76,7 +73,7 @@ int main(int argc, char **argv) {
     
     enum DataState state = STATE_RESET;
     int val, pos = 0;
-    uint32_t netlen, count = 0;
+    int count = 0;
     while(1) {
         fd_set rfds;
         struct timeval tv = { 0 };
@@ -113,30 +110,15 @@ int main(int argc, char **argv) {
                 break;
             default:
                 if (state == STATE_LOCAL) {
-                    if (line[0] == 0x7f)
-                        line[0] = '\b'; // echoing backspace doesn't seem to work
-
-                    if (write(1, line, cnt) == -1) {
-                        perror("local echo");
-                    }
-
                     if (line[0] == '\n' || (pos + cnt) >= MAX_NAME_LEN-1) {
                         imgfile[pos] = 0;
-                        fprintf(stderr, "new file is: %s\n", imgfile);
                         state = STATE_RESET;
-                        pos = 0;
-                    }
-                    else if (line[0] == 0x7f) { // handle backspace
-                        if (pos > 0)
-                            pos--;
                     }
                     else {
                         memcpy(imgfile + pos, line, cnt);
                         pos += cnt;
                     }
-                    continue;
                 }
-
                 if (write(ttyfd, line, cnt) != cnt) {
                     perror("write tty");
                 }
@@ -167,62 +149,81 @@ int main(int argc, char **argv) {
             break;
         case STATE_HAVE_P:
             if (c == 'G') {
-                state = STATE_GET_LEN;
-                pos = 3;
-                netlen = 0;
+                state = STATE_DOWNLOADING;
+                fputs("G\n", stderr);
                 if (!open_image(imgfile)) {
                     fprintf(stderr, "can't save to image '%s'\n", imgfile);
                     state = STATE_RESET;
                 }
+                continue;
              }
             else
                 state = STATE_RESET;
             break;
-        case STATE_GET_LEN:
-            netlen |= ((c & 0x0ff) << 8*pos);
-            if (pos == 0) {
-                count = ntohl(netlen);
-                fprintf(stderr, " downloading %d bytes\n", count);
-                state = STATE_DOWNLOADING;
-            }
-            else
-                --pos;
-            continue;
         default:
             break;
         }
-        if (state != STATE_DOWNLOADING) {
-            if (c == 0x7f)
-                c = '\b';
-            if (write(1, &c, 1) == -1) {
-                perror("echo");
+        if (state == STATE_DOWNLOADING) {
+            if (c == ' ') {
+                c = val;
+                if ((rc = fwrite(&c, 1, 1, img)) == -1) {
+                    perror("write");
+                    break;
+                }
+                // printf("%02x ", c);
+                if (pos != 2) {
+                    printf("odd pos %d?\n", pos);
+                }
+                pos = 0;
+                val = 0;
+                count++;
+                if ((count % 1024) == 0) {
+                    char dot = '.';
+                    if(write(STDERR_FILENO, &dot, 1) != 1) {
+                        fprintf(stderr, "dot failed?\n");
+                    }
+                }
+            }
+            else {
+                if (c == '\04') {
+                    /* Finished receiving the current image. Close it, set the
+                     * state back to "looking for image marker", and prepare a
+                     * new image filename in case we want to dump another one.
+                     */
+                    fputs("done\n", stderr);
+                    fclose(img);
+                    img = 0;
+                    sprintf(imgfile, "%s(%d)", imgfile, imgcnt);
+                    state = STATE_RESET; // reset state machine
+                    continue;
+                }
+
+                int digit;
+                if (c >= '0' && c <= '9')
+                    digit = c - '0';
+                else if (c >= 'a' && c <= 'f')
+                    digit = (c - 'a') + 10;
+                else {
+                    fprintf(stderr, "bad char '%c'\n", c);
+                    break;
+                }
+                if (pos == 0) {
+                    val = digit << 4;
+                    pos = 1;
+                }
+                else if (pos == 1) {
+                    val = val | digit;
+                    pos = 2;
+                }
+                else {
+                    fprintf(stderr, "bad pos %d\n", pos);
+                    break;
+                }
             }
         }
         else {
-            if ((rc = fwrite(&c, 1, 1, img)) == -1) {
-                perror("write");
-                break;
-            }
-            count--;
-
-            if (count <= 0) {
-                /* Finished receiving the current image. Close it, set the
-                 * state back to "looking for image marker", and prepare a
-                 * new image filename in case we want to dump another one.
-                 */
-                fputs("done\n", stderr);
-                fclose(img);
-                img = 0;
-                sprintf(imgfile, "%s(%d)", imgfile, imgcnt);
-                state = STATE_RESET; // reset state machine
-                continue;
-            }
-
-            if ((count % 1024) == 0) {
-                char dot = '.';
-                if(write(STDERR_FILENO, &dot, 1) != 1) {
-                    fprintf(stderr, "dot failed?\n");
-                }
+            if (write(1, &c, 1) == -1) {
+                perror("echo");
             }
         }
     }
