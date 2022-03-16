@@ -253,6 +253,9 @@ char hex_2_ascii(uint8_t hex) {
     return (hex < 10) ? '0' + hex : 'a' + (hex - 10);
 }
 
+static inline uint32_t min(uint32_t a, uint32_t b) {
+    return (a <= b) ? a : b;
+}
 
 #define BMP_HDR_LEN 14
 #define INFO_HDR_LEN 52
@@ -336,40 +339,101 @@ static void dump_uart_bmp(uint8_t sensor) {
     }
 }
 
+#define BUF_LEN 64
+
 static void dump_uart_jpg(uint32_t length, uint8_t sensor) {
     uint8_t prev = 0, curr = 0;
     bool found_header = false;
-    uint32_t i;
-    char buf[64];
+    uint32_t i, x = 0;
+    uint8_t buf[BUF_LEN];
+
+    // Note: we're assuming the ARM is BE
+    memcpy(buf, &length, sizeof(length));
+    HAL_UART_Transmit(&huart1, (uint8_t *) buf, sizeof(length), 100);
 
     for (i=0; i<length; i++) {
         prev = curr;
         curr = read_fifo(sensor);
         if ((curr == 0xd9) && (prev == 0xff)) {
             // found the footer - break
-            sprintf(buf, "%02x ", curr);
-            DBG_PUT(buf);
+            buf[x++] = curr;
+            HAL_UART_Transmit(&huart1, buf, x, 100);
+            x = 0;
+            i++;
             found_header = false;
             break;
         }
 
         if (found_header) {
-            sprintf(buf, "%02x ", curr);
-            DBG_PUT(buf);
+            buf[x] = curr;
+            x++;
+            if (x >= BUF_LEN) {
+                HAL_UART_Transmit(&huart1, buf, BUF_LEN, 100);
+                x = 0;
+            }
         }
         else if ((curr == 0xd8) && (prev = 0xff)) {
             found_header = true;
-            sprintf(buf, "%02x %02x ", prev, curr);
-            DBG_PUT(buf);
+            buf[0] = prev;
+            buf[1] = curr;
+            HAL_UART_Transmit(&huart1, (uint8_t *) buf, 2, 100);
+            x = 0;
         }
+    }
+
+    if (x) {
+        HAL_UART_Transmit(&huart1, buf, x, 100);
     }
 
     if (found_header) {
         // We found the header but not the footer :-(
-        sprintf(buf, "ff d9 ");
-        DBG_PUT(buf);
+        buf[0] = 0xff;
+        buf[1] = 0xd9;
+        HAL_UART_Transmit(&huart1, (uint8_t *) buf, 2, 100);
+    }
+    else {
+        memset(buf, 0, BUF_LEN);
+        while (i < length) {
+            int cnt = min(length - i, BUF_LEN);
+            HAL_UART_Transmit(&huart1, (uint8_t *) buf, cnt, 100);
+            i += cnt;
+        }
     }
 }
+//static void dump_uart_jpg(uint32_t length, uint8_t sensor) {
+//    uint8_t prev = 0, curr = 0;
+//    bool found_header = false;
+//    uint32_t i;
+//    char buf[64];
+//
+//    for (i=0; i<length; i++) {
+//        prev = curr;
+//        curr = read_fifo(sensor);
+//        if ((curr == 0xd9) && (prev == 0xff)) {
+//            // found the footer - break
+//            sprintf(buf, "%02x ", curr);
+//            DBG_PUT(buf);
+//            found_header = false;
+//            break;
+//        }
+//
+//        if (found_header) {
+//            sprintf(buf, "%02x ", curr);
+//            DBG_PUT(buf);
+//        }
+//        else if ((curr == 0xd8) && (prev = 0xff)) {
+//            found_header = true;
+//            sprintf(buf, "%02x %02x ", prev, curr);
+//            DBG_PUT(buf);
+//        }
+//    }
+//
+//    if (found_header) {
+//        // We found the header but not the footer :-(
+//        sprintf(buf, "ff d9 ");
+//        DBG_PUT(buf);
+//    }
+//}
 
 static void dump_uart_raw(uint32_t length, uint8_t sensor) {
     char buf[4];
@@ -423,3 +487,4 @@ void SingleCapTransfer(int format, uint8_t sensor) {
 
     DBG_PUT("\04");
 }
+

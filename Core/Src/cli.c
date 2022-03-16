@@ -29,10 +29,12 @@ static void help() {
     DBG_PUT("\t\treg <vis/nir> read <regnum>\r\n\treg write <regnum> <val>\r\n");
     DBG_PUT("\t\twidth  <vis/nir> [<pixels>]\r\n");
     DBG_PUT("\tscan Scan I2C bus 2\r\n");
-    DBG_PUT("\tNeeds work\r\n:");
+    DBG_PUT("\tNeeds work\r\n");
     DBG_PUT("\t\tinit sensor Resets arducam modules to default\r\n");
     DBG_PUT("\t\tinit nand Initialize NAND Flash\r\n");
     DBG_PUT("\tNot tested/partially implemented:\r\n");
+    DBG_PUT("\t\tSaturation [<0..8>]\r\n");
+
 }
 
 static void handle_format_cmd(const char *cmd) {
@@ -330,7 +332,7 @@ void reset_sensors(void){
 		      DBG_PUT("NIR Camera: SPI Unavailable\r\n");
 		  }
 		  else{
-			  DBG_PUT("NIR Camera: SPI available\r\n");
+			  DBG_PUT("NIR Camera: SPI Initialized\r\n");
 		  }
 
 		  // Change MCU mode
@@ -386,6 +388,25 @@ static void sensor_togglepower(int i){
 	DBG_PUT("Sensor Power Disabled.\r\n");
 
 
+}
+
+static void handle_saturation_cmd(const char *cmd, ) {
+    char buf[64];
+    const char *satarg = next_token(cmd);
+    int saturation;
+
+    if (satarg) {
+        if (*satarg >= '0' && *satarg <= '8') {
+            saturation = *satarg - '0';
+            arducam_set_saturation(saturation);
+        }
+        else
+            DBG_PUT("legal saturation values are 0-8\r\n");
+    }
+
+    saturation = arducam_get_saturation();
+    sprintf(buf, "current saturation: %x\r\n", saturation);
+    DBG_PUT(buf);
 }
 
 void init_nand_flash(){
@@ -500,7 +521,21 @@ void handle_command(char *cmd) {
         break;
 
     case 's':
-    	scan_i2c();
+    	switch(*(cmd+1)){
+    	//todo fix shit
+    	}
+		const char *c = next_token(cmd);
+		switch(*c){
+			case 'v':
+				handle_saturation_cmd(c, VIS_SENSOR);
+				break;
+			case 'n':
+				handle_saturation_cmd(NIR_SENSOR);
+				break;
+			default:
+				DGB_PUT("Target Error\r\n");
+				break;
+
     	break;
 
     case 'p':	; //janky use of semicolon??
@@ -528,6 +563,7 @@ void handle_command(char *cmd) {
 				break;
 		}
 		break;
+
 
     case 'h':
     default:

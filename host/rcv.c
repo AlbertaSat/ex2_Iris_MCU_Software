@@ -53,7 +53,7 @@ int main(int argc, char **argv) {
     }
     fprintf(stderr, "output file: %s\n", imgfile);
 
-    int ttyfd = open("/dev/ttyACM0", O_RDWR | O_NDELAY);
+    int ttyfd = open("/dev/ttyUSB0", O_RDWR | O_NDELAY);
     if (ttyfd == -1) {
         perror("open");
         return 1;
