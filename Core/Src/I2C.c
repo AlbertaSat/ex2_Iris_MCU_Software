@@ -57,8 +57,12 @@ int rdSensorReg16_8(uint16_t regID, uint8_t *regDat, uint8_t sensor) {
 
 // I2C2 Functions
 uint8_t i2c2_read16_8(uint8_t addr, uint16_t register_pointer){
-	uint8_t val = hi2c_read16_8(hi2c2, addr, register_pointer);
-	return val;
+//	uint8_t val = hi2c_read16_8(hi2c2, addr, register_pointer);
+//	return val;
+	HAL_StatusTypeDef status = HAL_OK;
+	    uint16_t return_value = 0;
+	    status = HAL_I2C_Mem_Read(&hi2c2, addr, (uint16_t)register_pointer, I2C_MEMADD_SIZE_16BIT, &return_value, 1, 100);
+	    return return_value;
 }
 void i2c2_write16_8(uint8_t addr, uint16_t register_pointer, uint16_t register_value){
 	hi2c_write16_8(hi2c2, addr, register_pointer, register_value);
@@ -76,7 +80,7 @@ void i2c2_write8_8(uint8_t addr, uint8_t register_pointer, uint8_t register_valu
 // General functions
 uint8_t hi2c_read16_8(I2C_HandleTypeDef hi2c, uint8_t addr, uint16_t register_pointer)
 {
-    uint16_t return_value = 0;
+    uint8_t return_value = 0;
     HAL_I2C_Mem_Read(&hi2c, addr, (uint16_t)register_pointer, I2C_MEMADD_SIZE_16BIT, &return_value, 1, 100);
     return return_value;
 }

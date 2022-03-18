@@ -249,6 +249,19 @@ uint8_t get_bit(uint8_t addr, uint8_t bit, uint8_t sensor)
     return temp;
 }
 
+void arducam_set_saturation(int saturation, uint8_t sensor) {
+    wrSensorReg16_8(0x5001, 0xff, sensor); // enable saturation setting
+    wrSensorReg16_8(0x5583, saturation << 4, sensor); // Set U saturation
+    wrSensorReg16_8(0x5584, saturation << 4, sensor); // Set V saturation
+    wrSensorReg16_8(0x5580, 0x02, sensor); // enable Special Effects
+}
+
+int arducam_get_saturation(uint8_t sensor) {
+    uint8_t reg_val;
+    /* Technically, this is only the U saturation. They can all be set separately */
+    rdSensorReg16_8(0x5583, &reg_val, sensor);
+    return reg_val >> 4;
+}
 char hex_2_ascii(uint8_t hex) {
     return (hex < 10) ? '0' + hex : 'a' + (hex - 10);
 }

@@ -55,6 +55,7 @@
 //  /*Configure GPIO pin Output Level */
 //  HAL_GPIO_WritePin(GPIOB, SPI_B_MOSI_Pin|SPI_B_NSS_Pin|SPI_B_CLK_Pin, GPIO_PIN_RESET);
 
+//todo burst mode!
 uint8_t read_spi_reg(uint8_t addr, uint8_t sensor){
 	uint8_t rec;
 	// CS Low

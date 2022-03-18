@@ -390,7 +390,8 @@ static void sensor_togglepower(int i){
 
 }
 
-static void handle_saturation_cmd(const char *cmd, ) {
+//todo implement sensor selection
+static void handle_saturation_cmd(const char *cmd, uint8_t sensor) {
     char buf[64];
     const char *satarg = next_token(cmd);
     int saturation;
@@ -398,13 +399,13 @@ static void handle_saturation_cmd(const char *cmd, ) {
     if (satarg) {
         if (*satarg >= '0' && *satarg <= '8') {
             saturation = *satarg - '0';
-            arducam_set_saturation(saturation);
+            arducam_set_saturation(saturation, sensor);
         }
         else
             DBG_PUT("legal saturation values are 0-8\r\n");
     }
 
-    saturation = arducam_get_saturation();
+    saturation = arducam_get_saturation(sensor);
     sprintf(buf, "current saturation: %x\r\n", saturation);
     DBG_PUT(buf);
 }
@@ -427,36 +428,37 @@ void init_nand_flash(){
 
 }
 
-void handle_i2c8_8_read(const char cmd){
+void handle_i2c16_8_cmd(const char *cmd){
     char buf[64];
-    const char *rwaddr = next_token(cmd);
-
-	if (!rwaddr) {
-		help();
-		return;
-	}
-	const char *rwarg = next_token(rwaddr);
+	const char *rwarg = next_token(cmd);
 
 	if (!rwarg) {
-		help();
+		DBG_PUT("rwarg broke\r\n");
+		return;
+	}
+    const char *rwaddr = next_token(rwarg);
+
+	if (!rwaddr) {
+		DBG_PUT("rwaddr broke\r\n");
 		return;
 	}
 
-	const char *regptr = next_token(rwarg);
+
+	const char *regptr = next_token(rwaddr);
 	if (!regptr) {
-		help();
+		DBG_PUT("regptr broke\r\n");
 		return;
 	}
 
 	uint32_t reg;
 	if (sscanf(regptr, "%lx", &reg) != 1) {
-		help();
+		DBG_PUT("reg broke\r\n");
 		return;
 	}
 
 	uint32_t addr;
 	if (sscanf(rwaddr, "%lx", &addr) != 1) {
-		help();
+		DBG_PUT("addr broke\r\n");
 		return;
 	}
 
@@ -464,8 +466,8 @@ void handle_i2c8_8_read(const char cmd){
 	case 'r':
 		{
 			uint8_t val;
-//			rdSensorReg16_8(reg, &val, target_sensor);
-			val = i2c2_read8_8(addr, reg);
+//			i2c2_read16_8(reg, &val);
+			val = i2c2_read16_8(addr, reg);
 			sprintf(buf, "Device 0x%lx register 0x%lx = 0x%02x\r\n", addr, reg, val);
 		}
 		break;
@@ -483,7 +485,7 @@ void handle_i2c8_8_read(const char cmd){
 				break;
 			}
 //			wrSensorReg16_8(reg, val, target_sensor);
-			i2c2_write8_8(addr, reg, val);
+			i2c2_write16_8(addr, reg, val);
 
 			sprintf(buf, "Device 0x%lx register 0x%lx wrote 0x%02lx\r\n", addr, reg, val);
 		}
@@ -506,15 +508,9 @@ void handle_command(char *cmd) {
         handle_format_cmd(cmd);
         break;
 
-    case 'r':	;
-    	switch(*(cmd+2)){
-    	case 'a':	// third char is the identifier between reg and read
-    		break; // needs to handle 16 / 8 bit stuff
-    	case 'g':
-            handle_reg_cmd(cmd);
-            break;
-    	}
-    	break;
+    case 'r':
+		handle_reg_cmd(cmd);
+		break;
 
     case 'w':
         handle_width_cmd(cmd);
@@ -522,19 +518,23 @@ void handle_command(char *cmd) {
 
     case 's':
     	switch(*(cmd+1)){
-    	//todo fix shit
+    	case 'c':
+    		scan_i2c();
+    		break;
     	}
-		const char *c = next_token(cmd);
-		switch(*c){
-			case 'v':
-				handle_saturation_cmd(c, VIS_SENSOR);
-				break;
-			case 'n':
-				handle_saturation_cmd(NIR_SENSOR);
-				break;
-			default:
-				DGB_PUT("Target Error\r\n");
-				break;
+    	case 'a':;
+			const char *c = next_token(cmd);
+			switch(*c){
+				case 'v':
+					handle_saturation_cmd(c, VIS_SENSOR);
+					break;
+				case 'n':
+					handle_saturation_cmd(c, NIR_SENSOR);
+					break;
+				default:
+					DBG_PUT("Target Error\r\n");
+					break;
+			}
 
     	break;
 
@@ -553,14 +553,20 @@ void handle_command(char *cmd) {
     	}
     	break;
 	case 'i':;
-		const char *i = next_token(cmd);
-		switch(*i){
-			case 'n':
-				init_nand_flash();
+		switch(*(cmd+1)){
+			case '2':
+				handle_i2c16_8_cmd(cmd); // needs to handle 16 / 8 bit stuff
 				break;
-			case 's':
-				reset_sensors();
-				break;
+			default:;
+				const char *i = next_token(cmd);
+				switch(*i){
+					case 'n':
+						init_nand_flash();
+						break;
+					case 's':
+						reset_sensors();
+						break;
+				}
 		}
 		break;
 

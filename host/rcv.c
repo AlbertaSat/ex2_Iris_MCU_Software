@@ -9,6 +9,7 @@
 #include <string.h>
 #include <termios.h>
 #include <arpa/inet.h>
+#include <stddef.h>
 
 #define MAX_NAME_LEN 64
 
@@ -40,10 +41,33 @@ static bool open_image(const char *fname) {
     return true;
 }
 
+void print_progress(size_t count, size_t max)
+{
+	const char prefix[] = "Progress: [";
+	const char suffix[] = "]";
+	const size_t prefix_length = sizeof(prefix) - 1;
+	const size_t suffix_length = sizeof(suffix) - 1;
+	char *buffer = calloc(max + prefix_length + suffix_length + 1, 1); // +1 for \0
+	size_t i = 0;
+
+	strcpy(buffer, prefix);
+	for (; i < max; ++i)
+	{
+		buffer[prefix_length + i] = i < count ? '#' : ' ';
+	}
+
+	strcpy(&buffer[prefix_length + i], suffix);
+	//printf("\b%c[2K\r%s\n", 27, buffer);
+	printf("\b\r%c[2K\r%s", 27, buffer);
+	fflush(stdout);
+	free(buffer);
+}
+
 int main(int argc, char **argv) {
     char imgfile[MAX_NAME_LEN];
     int imgcnt = 1;
-
+    size_t iter = 0;
+    size_t maxcount = 0;
     strncpy(imgfile, "img.jpg", MAX_NAME_LEN);
     for (int i=0; i<argc; i++) {
         if (argv[i][0] == '-' && argv[i][1] == 'o') {
@@ -76,7 +100,9 @@ int main(int argc, char **argv) {
     
     enum DataState state = STATE_RESET;
     int val, pos = 0;
-    uint32_t netlen, count = 0;
+    //uint32_t netlen, count = 0;
+    uint32_t netlen = 0;
+    size_t count = 0;
     while(1) {
         fd_set rfds;
         struct timeval tv = { 0 };
@@ -183,6 +209,7 @@ int main(int argc, char **argv) {
             if (pos == 0) {
                 count = ntohl(netlen);
                 fprintf(stderr, " downloading %d bytes\n", count);
+                maxcount = count / 1024;
                 state = STATE_DOWNLOADING;
             }
             else
@@ -210,19 +237,18 @@ int main(int argc, char **argv) {
                  * state back to "looking for image marker", and prepare a
                  * new image filename in case we want to dump another one.
                  */
-                fputs("done\n", stderr);
+                fputs("\r\nCapture Complete!\r\n", stderr);
                 fclose(img);
                 img = 0;
                 sprintf(imgfile, "%s(%d)", imgfile, imgcnt);
                 state = STATE_RESET; // reset state machine
+                iter = 0;
                 continue;
             }
 
             if ((count % 1024) == 0) {
-                char dot = '.';
-                if(write(STDERR_FILENO, &dot, 1) != 1) {
-                    fprintf(stderr, "dot failed?\n");
-                }
+            	 iter++;
+                print_progress(iter, maxcount);
             }
         }
     }
