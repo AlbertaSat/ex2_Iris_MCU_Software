@@ -26,6 +26,7 @@
 #include "cli.h"
 #include "spi_bitbang.h"
 #include "nand_m79a.h"
+#include "IEB_TESTS.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -63,9 +64,9 @@ static void MX_SPI2_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-static inline void DBG_PUT(char *str) {
-    HAL_UART_Transmit(&huart1, (uint8_t *) str, strlen(str), 100);
-}
+//static inline void DBG_PUT(char *str) {
+//    HAL_UART_Transmit(&huart1, (uint8_t *) str, strlen(str), 100);
+//}
 
 /* USER CODE END 0 */
 
@@ -111,8 +112,11 @@ int main(void)
   /* USER CODE BEGIN WHILE */
    char cmd[64];
    char *ptr = cmd;
-   DBG_PUT("----------------------\r\nBooting...\r\n");
-   DBG_PUT("Ready!\r\n");
+   // manually iterate versioning
+   DBG_PUT("-----------------------------------\r\n");
+   DBG_PUT("Iris Electronics Unit Test Software\r\nVersion 1.05.0; 2022-03-21\r\n");
+   DBG_PUT("-----------------------------------\r\n");
+
    while (1)
    {
        HAL_StatusTypeDef rc = HAL_UART_Receive(&huart1, (uint8_t *) ptr, 1, 20000);

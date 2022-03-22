@@ -4,6 +4,8 @@
 void handle_command(char *cmd);
 void reset_sensors(void);
 extern int format;
+void scan_i2c();
+
 //char head[] = "$$$$$$\\           $$\\           \r\n"\
 //		"\\_$$  _|          \\__|          \r\n"\
 //		"  $$ |   $$$$$$\\  $$\\  $$$$$$$\\ \r\n"\
