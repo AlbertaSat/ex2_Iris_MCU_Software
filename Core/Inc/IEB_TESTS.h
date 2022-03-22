@@ -14,7 +14,6 @@
 void CHECK_LED_I2C_SPI_TS(void);
 
 void _toggleLED(void);
-void _testOBCSPI(void);
 void _testArducamSensor(uint8_t sensor);
 void _testScanI2C();
 

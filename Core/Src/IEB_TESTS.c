@@ -23,7 +23,6 @@ void CHECK_LED_I2C_SPI_TS(void){
 	// Test SPI
 	_testArducamSensor(VIS_SENSOR);
 	_testArducamSensor(NIR_SENSOR);
-	_testOBCSPI();
 
 	// Temperature Sensor stuff
 	HAL_Delay(1000);
@@ -58,9 +57,7 @@ void _testArducamSensor(uint8_t sensor){
 	}
 }
 
-void _testOBCSPI(void){
-	return;
-}
+
 
 void _testScanI2C(){
 	 HAL_StatusTypeDef result;
