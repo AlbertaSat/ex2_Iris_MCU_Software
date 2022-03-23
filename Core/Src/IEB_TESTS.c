@@ -4,7 +4,7 @@
  *  Created on: Mar. 21, 2022
  *      Author: Liam
  */
-#include "IEB_TESTs.h"
+#include "IEB_TESTS.h"
 #include "cli.h"
 #include "main.h"
 extern I2C_HandleTypeDef hi2c2;
@@ -12,19 +12,36 @@ extern I2C_HandleTypeDef hi2c2;
 void CHECK_LED_I2C_SPI_TS(void){
 
 	// Blink IO LED
+	DBG_PUT("--------------------\r\n");
+	DBG_PUT("Blinking LED\r\n");
+
 	for (int i=0; i<10; i++){
 		_toggleLED();
 		HAL_Delay(150);
 	}
+	DBG_PUT("--------------------\r\n\n");
 
 	// Scan I2C Bus
-	scan_i2c();
+	DBG_PUT("--------------------\r\n");
+	DBG_PUT("Testing internal I2C bus\r\n");
+	_testScanI2C();
+	DBG_PUT("--------------------\r\n\n");
 
 	// Test SPI
+	DBG_PUT("--------------------\r\n");
+	DBG_PUT("Testing VIS SPI\r\n");
+
 	_testArducamSensor(VIS_SENSOR);
+	DBG_PUT("Testing NIR SPI\r\n");
+
 	_testArducamSensor(NIR_SENSOR);
+	DBG_PUT("--------------------\r\n\n");
 
 	// Temperature Sensor stuff
+	DBG_PUT("--------------------\r\n");
+	DBG_PUT("Testing Temperature Sensors (NC)\r\n");
+	DBG_PUT("--------------------\r\n");
+
 	HAL_Delay(1000);
 }
 
@@ -49,10 +66,10 @@ void _testArducamSensor(uint8_t sensor){
 	}
 	else{
 		if (sensor == VIS_SENSOR){
-			  DBG_PUT("VIS Camera: SPI Initialized\r\n");
+			  DBG_PUT("TEST PASSED: VIS SPI Initialized\r\n");
 		}
 		else{
-			  DBG_PUT("NIR Camera: SPI Initialized\r\n");
+			  DBG_PUT("TEST PASSED: NIR SPI Initialized\r\n");
 		}
 	}
 }
@@ -64,11 +81,10 @@ void _testScanI2C(){
 	 uint8_t i;
 	 char buf[64];
 	 int deviceFound = 0;
-	 DBG_PUT("Scanning I2C bus 2...\r\n");
 	 for (i=1; i<128; i++){
 		 result = HAL_I2C_IsDeviceReady(&hi2c2, (uint16_t)(i<<1), 2, 2);
 		 if (result == HAL_OK){
-			 if (deviceFound != 0){
+			 if (deviceFound == 0){
 				 deviceFound = 1; 	// Janky but works for asserting that I2C bus is operational
 			 }
 			 sprintf(buf,"I2C address found: 0x%X\r\n", (uint16_t)(i));

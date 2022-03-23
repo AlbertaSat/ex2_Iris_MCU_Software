@@ -41,10 +41,10 @@
 #define NSS1_Pin GPIO_PIN_0
 #define NSS1_Port GPIOA
 
-#define MOSI_Pin GPIO_PIN_3
+#define MOSI_Pin GPIO_PIN_2
 #define MOSI_Port GPIOA
 
-#define MISO_Pin GPIO_PIN_2
+#define MISO_Pin GPIO_PIN_3
 #define MISO_Port GPIOA
 
 

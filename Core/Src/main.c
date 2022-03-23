@@ -6,6 +6,8 @@
   ******************************************************************************
   * @attention
   *
+  * Copyright (c) 2022 STMicroelectronics.
+  * All rights reserved.
   *
   * This software is licensed under terms that can be found in the LICENSE file
   * in the root directory of this software component.
@@ -332,28 +334,28 @@ static void MX_GPIO_Init(void)
   GPIO_InitTypeDef GPIO_InitStruct = {0};
 
   /* GPIO Ports Clock Enable */
-  __HAL_RCC_GPIOC_CLK_ENABLE();
   __HAL_RCC_GPIOH_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOA, USART2_CS1_Pin|USART2_CS2_Pin|USART2_MOSI_Pin|USART2_CLK_Pin
-                          |NAND_NWP_Pin, GPIO_PIN_RESET);
+                          |WP__Pin|CAM_EN_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOB, TEST_OUT1_Pin|NAND_NCS_Pin|CAM_EN_Pin, GPIO_PIN_RESET);
-
-  /*Configure GPIO pin : TEST_IN2_Pin */
-  GPIO_InitStruct.Pin = TEST_IN2_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(TEST_IN2_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_WritePin(GPIOB, TEST_OUT1_Pin|NAND_NCS_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pins : USART2_CS1_Pin USART2_CS2_Pin */
   GPIO_InitStruct.Pin = USART2_CS1_Pin|USART2_CS2_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : USART2_MOSI_Pin USART2_CLK_Pin */
+  GPIO_InitStruct.Pin = USART2_MOSI_Pin|USART2_CLK_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_PULLDOWN;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
@@ -363,25 +365,12 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(USART2_MISO_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : USART2_MOSI_Pin USART2_CLK_Pin */
-  GPIO_InitStruct.Pin = USART2_MOSI_Pin|USART2_CLK_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStruct.Pull = GPIO_PULLDOWN;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
-  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-
-  /*Configure GPIO pins : TEST_OUT1_Pin CAM_EN_Pin */
-  GPIO_InitStruct.Pin = TEST_OUT1_Pin|CAM_EN_Pin;
+  /*Configure GPIO pin : TEST_OUT1_Pin */
+  GPIO_InitStruct.Pin = TEST_OUT1_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
-
-  /*Configure GPIO pin : TEST_OUT2_Pin */
-  GPIO_InitStruct.Pin = TEST_OUT2_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(TEST_OUT2_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(TEST_OUT1_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pin : TEST_IN1_Pin */
   GPIO_InitStruct.Pin = TEST_IN1_Pin;
@@ -396,12 +385,19 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(NAND_NCS_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : NAND_NWP_Pin */
-  GPIO_InitStruct.Pin = NAND_NWP_Pin;
+  /*Configure GPIO pin : WP__Pin */
+  GPIO_InitStruct.Pin = WP__Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(WP__GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : CAM_EN_Pin */
+  GPIO_InitStruct.Pin = CAM_EN_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(NAND_NWP_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(CAM_EN_GPIO_Port, &GPIO_InitStruct);
 
 }
 
