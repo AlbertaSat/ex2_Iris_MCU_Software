@@ -100,3 +100,7 @@ void _testScanI2C(){
 	 }
 }
 
+
+void testTempSensor(void){
+
+}

@@ -65,7 +65,7 @@ uint8_t i2c2_read16_8(uint8_t addr, uint16_t register_pointer){
 	    return return_value;
 }
 void i2c2_write16_8(uint8_t addr, uint16_t register_pointer, uint16_t register_value){
-	hi2c_write16_8(hi2c2, addr, register_pointer, register_value);
+	hi2c_write16_8(hi2c2, addr << 1, register_pointer, register_value);
 	return;
 }
 
@@ -81,7 +81,7 @@ void i2c2_write8_8(uint8_t addr, uint8_t register_pointer, uint8_t register_valu
 uint8_t hi2c_read16_8(I2C_HandleTypeDef hi2c, uint8_t addr, uint16_t register_pointer)
 {
     uint8_t return_value = 0;
-    HAL_I2C_Mem_Read(&hi2c, addr, (uint16_t)register_pointer, I2C_MEMADD_SIZE_16BIT, &return_value, 1, 100);
+    HAL_I2C_Mem_Read(&hi2c, addr << 1, (uint16_t)register_pointer, I2C_MEMADD_SIZE_16BIT, &return_value, 1, 100);
     return return_value;
 }
 
@@ -89,7 +89,7 @@ void hi2c_write16_8(I2C_HandleTypeDef hi2c, uint8_t addr, uint16_t register_poin
 {
     uint8_t dataBuffer[1];
     dataBuffer[0] = register_value;
-    HAL_I2C_Mem_Write(&hi2c, addr, (uint16_t)register_pointer, I2C_MEMADD_SIZE_16BIT, dataBuffer, 1, 100);
+    HAL_I2C_Mem_Write(&hi2c, addr << 1, (uint16_t)register_pointer, I2C_MEMADD_SIZE_16BIT, dataBuffer, 1, 100);
 }
 
 // UNTESTED BELOW
@@ -97,7 +97,7 @@ uint8_t hi2c_read8_8(I2C_HandleTypeDef hi2c, uint8_t addr, uint8_t register_poin
 {
     uint16_t return_value = 0;
 
-    HAL_I2C_Mem_Read(&hi2c, addr, (uint8_t)register_pointer, I2C_MEMADD_SIZE_8BIT, &return_value, 1, 100);
+    HAL_I2C_Mem_Read(&hi2c, addr << 1, (uint8_t)register_pointer, I2C_MEMADD_SIZE_8BIT, &return_value, 1, 100);
     return return_value;
 }
 
@@ -105,5 +105,5 @@ void hi2c_write8_8(I2C_HandleTypeDef hi2c, uint8_t addr, uint8_t register_pointe
 {
     uint8_t dataBuffer[1];
     dataBuffer[0] = register_value;
-    HAL_I2C_Mem_Write(&hi2c, addr, (uint8_t)register_pointer, I2C_MEMADD_SIZE_8BIT, dataBuffer, 1, 100);
+    HAL_I2C_Mem_Write(&hi2c, addr << 1, (uint8_t)register_pointer, I2C_MEMADD_SIZE_8BIT, dataBuffer, 1, 100);
 }

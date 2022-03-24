@@ -130,3 +130,5 @@ host/sat8.jpg
 host/yuv2rgb
 *.xml
 *.jpg
+*.xml
+*.prefs
