@@ -7,6 +7,7 @@
 #include "IEB_TESTS.h"
 #include "cli.h"
 #include "main.h"
+#include "tmp421.h"
 extern I2C_HandleTypeDef hi2c2;
 
 void CHECK_LED_I2C_SPI_TS(void){
@@ -102,5 +103,13 @@ void _testScanI2C(){
 
 
 void testTempSensor(void){
+	return;
+}
 
+void printTemp(uint16_t temp, uint8_t sensor){
+	char buf[64];
+	float high = (temp >> 8) - 64;
+	float low = (float)((temp&0xFF) >> 4) * 0.0625;
+	sprintf(buf,"Sensor %x Temperature: %f", sensor, high+low);
+	DBG_PUT(buf);
 }
