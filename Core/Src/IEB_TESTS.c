@@ -103,13 +103,22 @@ void _testScanI2C(){
 
 
 void testTempSensor(void){
+
+	uint16_t vis_temp = get_temp(0x4C);
+	uint16_t nir_temp = get_temp(0x4D);
+
+	printTemp(vis_temp, 0x4C);
+	printTemp(nir_temp, 0x4D);
+
+
 	return;
+
 }
 
 void printTemp(uint16_t temp, uint8_t sensor){
 	char buf[64];
-	float high = (temp >> 8) - 64;
+	float high = (float)(temp >> 8);
 	float low = (float)((temp&0xFF) >> 4) * 0.0625;
-	sprintf(buf,"Sensor %x Temperature: %f", sensor, high+low);
+	sprintf(buf,"Sensor 0x%x Temperature: %2.3f C\r", sensor, high+low);
 	DBG_PUT(buf);
 }

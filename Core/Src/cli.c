@@ -518,7 +518,11 @@ void handle_command(char *cmd) {
         handle_width_cmd(cmd);
         break;
     case 't':
-    	CHECK_LED_I2C_SPI_TS();
+    	//CHECK_LED_I2C_SPI_TS();
+    	for (int i=0; i<150; i++){
+    	testTempSensor();
+    	HAL_Delay(1000);
+    	}
     	break;
     case 's':
     	switch(*(cmd+1)){
