@@ -67,7 +67,7 @@ NAND_ReturnType NAND_Reset(void) {
  */
 NAND_ReturnType NAND_Wait_Until_Ready(void) {
     uint8_t timeout_counter = 0;
-    uint8_t max_attempts = 2;
+    uint8_t max_attempts = 100;
 
     /* SPI Transaction set up */
     uint8_t data_rx;
@@ -81,7 +81,6 @@ NAND_ReturnType NAND_Wait_Until_Ready(void) {
         while (CHECK_OIP(data_rx)) {
             if (timeout_counter < max_attempts) {
                 NAND_SPI_Receive(&rx);
-                NAND_Wait(1);
                 timeout_counter += 1;
             } else {
                 return Ret_NANDBusy;
@@ -102,7 +101,7 @@ NAND_ReturnType NAND_Send_Dummy_Byte(void) {
     SPI_Params tx = { .buffer = &dummy, .length = 1 };
     NAND_SPI_ReturnType status = NAND_SPI_Send(&tx);
 
-    if (status != HAL_OK) {
+    if (status != SPI_OK) {
         return Ret_Failed;
     } else {
         return Ret_Success;
@@ -240,13 +239,13 @@ NAND_ReturnType NAND_Page_Read(PhysicalAddrs *addr, uint16_t length, uint8_t *bu
     
     NAND_SPI_ReturnType status;
 
-    if (length > PAGE_SIZE) {
+    if (length > PAGE_DATA_SIZE) {
         return Ret_ReadFailed;
     }
 
     /* Command 1: PAGE READ. See datasheet page 16 for details */
     uint32_t row = addr->rowAddr;
-    uint8_t command_page_read[4] = {SPI_NAND_PAGE_READ, (row >> 16), (row >> 8), (row & 0xFF)};
+    uint8_t command_page_read[4] = {SPI_NAND_PAGE_READ, BYTE_2(row), BYTE_1(row), BYTE_0(row)};
 
     SPI_Params tx_page_read = {.buffer = command_page_read, .length = 4};
 
@@ -263,7 +262,7 @@ NAND_ReturnType NAND_Page_Read(PhysicalAddrs *addr, uint16_t length, uint8_t *bu
 
     /* Command 3: READ FROM CACHE. See datasheet page 18 for details */
     uint32_t col = addr->colAddr;
-    uint8_t command_cache_read[4] = {SPI_NAND_READ_CACHE_X1, (col >> 8), (col & 0xFF), DUMMY_BYTE};
+    uint8_t command_cache_read[4] = {SPI_NAND_READ_CACHE_X1, BYTE_1(col), BYTE_0(col), DUMMY_BYTE};
 
     SPI_Params tx_cache_read = {.buffer = command_cache_read, .length = 4};
     SPI_Params rx_cache_read = {.buffer = buffer, .length = length};
@@ -307,7 +306,7 @@ NAND_ReturnType NAND_Page_Program(PhysicalAddrs *addr, uint16_t length, uint8_t 
     NAND_SPI_ReturnType status;
 
     if (length > PAGE_DATA_SIZE) {
-        return Ret_ProgramFailed;
+        return Ret_WriteFailed;
     }
 
     /* Command 1: WRITE ENABLE */
@@ -315,7 +314,7 @@ NAND_ReturnType NAND_Page_Program(PhysicalAddrs *addr, uint16_t length, uint8_t 
 
     /* Command 2: PROGRAM LOAD. See datasheet page 30 for details */
     uint32_t col = addr->colAddr;
-    uint8_t command_load[3] = {SPI_NAND_PROGRAM_LOAD_X1, (col >> 8), (col & 0xFF)};
+    uint8_t command_load[3] = {SPI_NAND_PROGRAM_LOAD_X1, BYTE_1(col), BYTE_0(col)};
 
     SPI_Params tx_cmd = {.buffer = command_load, .length = 3};
     SPI_Params tx_data = {.buffer = buffer, .length = PAGE_DATA_SIZE}; 
@@ -324,24 +323,24 @@ NAND_ReturnType NAND_Page_Program(PhysicalAddrs *addr, uint16_t length, uint8_t 
     status = NAND_SPI_Send_Command_Data(&tx_cmd, &tx_data);
 
     if (status != SPI_OK) {
-        return Ret_ProgramFailed;
+        return Ret_WriteFailed;
     }
 
     /* Command 3: PROGRAM EXECUTE. See datasheet page 31 for details */
     uint32_t row = addr->rowAddr;
-    uint8_t command_exec[4] = {SPI_NAND_PROGRAM_EXEC, (row >> 16), (row >> 8), (row & 0xFF)};
+    uint8_t command_exec[4] = {SPI_NAND_PROGRAM_EXEC, BYTE_2(row), BYTE_1(row), BYTE_0(row)};
 
     SPI_Params exec_cmd = {.buffer = command_exec, .length = 4};
 
     status = NAND_SPI_Send(&exec_cmd);
 
     if (status != SPI_OK) {
-        return Ret_ProgramFailed;
+        return Ret_WriteFailed;
     }
 
     /* Make sure the device is ready and then disable writes. */
     if (NAND_Wait_Until_Ready() != Ret_Success) {
-        return Ret_ProgramFailed;
+        return Ret_WriteFailed;
     }
 
     /* Command 4: WRITE DISABLE */
@@ -384,7 +383,7 @@ NAND_ReturnType NAND_Block_Erase(PhysicalAddrs *addr) {
 
     /* Command 2: BLOCK ERASE. See datasheet page 35 for details */
     uint32_t block = addr->block; // TODO: datasheet simply specifies block address. assuming that's the 11-bit block number padded with dummy bits. check.
-    uint8_t command[4] = {SPI_NAND_BLOCK_ERASE, (block >> 16), (block >> 8), (block & 0xFF)};
+    uint8_t command[4] = {SPI_NAND_BLOCK_ERASE, BYTE_2(block), BYTE_1(block), BYTE_0(block)};
 
     SPI_Params tx_cmd = {.buffer = command, .length = 4};
     if (NAND_SPI_Send(&tx_cmd) != SPI_OK) {

@@ -32,7 +32,7 @@ typedef enum {
     Ret_ResetFailed,
     Ret_WrongID,
     Ret_NANDBusy,
-    // Ret_AddressInvalid,
+    Ret_AddressInvalid,
     Ret_RegAddressInvalid,
     // Ret_MemoryOverflow,
     // Ret_BlockEraseFailed,
@@ -44,7 +44,7 @@ typedef enum {
     // Ret_OperationOngoing,
     // Ret_OperationTimeOut,
     Ret_ReadFailed,
-    Ret_ProgramFailed,
+    Ret_WriteFailed,
 	Ret_EraseFailed,
     // Ret_SectorProtected,
     // Ret_SectorUnprotected,
@@ -115,7 +115,12 @@ typedef enum {
     #define ADDRESS_2_COL(Address)      ((uint32_t) (Address & 0x07FF)) // take last 11 bits of address
 
     /* bit macros */
-    #define CHECK_OIP(status_reg)       (status_reg & SPI_NAND_OIP) // returns 1 if OIP bit is 1 and device is busy
+    #define BYTE_0(data)                ((uint8_t)         (data & 0xFF))
+    #define BYTE_1(data)                ((uint8_t) ( (data >> 8) & 0xFF))
+    #define BYTE_2(data)                ((uint8_t) ((data >> 16) & 0xFF))
+    #define BYTE_3(data)                ((uint8_t) ((data >> 24) & 0xFF))
+
+    #define CHECK_OIP(status_reg)       (status_reg & SPI_NAND_OIP) // returns 1 if OIP bit is 1 and device is busy    
 
     /* Command Code Definitions (see Datasheet page 13) */
     typedef enum {

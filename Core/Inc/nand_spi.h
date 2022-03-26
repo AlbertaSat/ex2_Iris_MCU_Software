@@ -24,29 +24,6 @@
 */
 
 #include "stm32l0xx_hal.h"
-#define NAND_NSS_Pin GPIO_PIN_12
-#define NAND_NSS_Port GPIOB
-
-#define NAND_CLK_Pin GPIO_PIN_7
-#define NAND_CLK_Port GPIOB
-
-#define NAND_MOSI_Pin GPIO_PIN_14
-#define NAND_MOSI_Port GPIOB
-
-#define NAND_MISO_Pin GPIO_PIN_4
-#define NAND_MISO_Port GPIOA
-
-//GPIO_PinState bit_read(uint8_t byte, int j);
-
-void _NAND_CS_LOW();
-void _NAND_CS_HIGH();
-void _NAND_CLK_LOW();
-void _NAND_CLK_HIGH();
-
-uint8_t spi_read_byte(uint8_t byte);
-void spi_write_byte(uint8_t addr, uint8_t byte);
-void read_multiple_bytes(uint8_t addr, uint32_t length);
-
 
 /******************************************************************************
  *          For reference only: NAND SPI HARDWARE SETTINGS
@@ -54,12 +31,12 @@ void read_multiple_bytes(uint8_t addr, uint32_t length);
 
 #define NAND_SPI        SPI2
 
-#define NAND_NWP_PIN    GPIO_PIN_11
-//#define NAND_NHOLD_PIN  GPIO_PIN_7
+#define NAND_NWP_PIN    GPIO_PIN_6
+#define NAND_NHOLD_PIN  GPIO_PIN_7
 #define NAND_NCS_PIN    GPIO_PIN_12
 
-#define NAND_NWP_PORT   GPIOA
-//#define NAND_NHOLD_PORT GPIOB
+#define NAND_NWP_PORT   GPIOB
+#define NAND_NHOLD_PORT GPIOB
 #define NAND_NCS_PORT   GPIOB
 
 /******************************************************************************
@@ -67,7 +44,7 @@ void read_multiple_bytes(uint8_t addr, uint32_t length);
  *****************************************************************************/
 
 #define DUMMY_BYTE         0x00
-#define NAND_SPI_TIMEOUT   100
+#define NAND_SPI_TIMEOUT   1000  /* max time for a transaction. nCS pulls high after */
 
 /* using custom return type to keep higher layers as platform-agnostic as possible */
 typedef enum {
