@@ -78,8 +78,10 @@ void Error_Handler(void);
 #define CAM_EN_Pin GPIO_PIN_11
 #define CAM_EN_GPIO_Port GPIOA
 /* USER CODE BEGIN Private defines */
+#define software_ver = 0x11
 #define VIS_SENSOR 0
 #define NIR_SENSOR 1
+
 
 
 /* USER CODE END Private defines */

@@ -30,6 +30,7 @@
 #include "nand_m79a.h"
 #include "IEB_TESTS.h"
 #include "tmp421.h"
+#include "housekeeping.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
