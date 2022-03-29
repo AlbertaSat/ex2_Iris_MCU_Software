@@ -76,15 +76,27 @@ void i2c2_write8_8(uint8_t addr, uint8_t register_pointer, uint8_t register_valu
 uint8_t hi2c_read16_8(I2C_HandleTypeDef hi2c, uint8_t addr, uint16_t register_pointer)
 {
     uint8_t return_value = 0;
-    HAL_I2C_Mem_Read(&hi2c, addr << 1, (uint16_t)register_pointer, I2C_MEMADD_SIZE_16BIT, &return_value, 1, 100);
+	HAL_StatusTypeDef status = HAL_OK;
+    status = HAL_I2C_Mem_Read(&hi2c, addr << 1, (uint16_t)register_pointer, I2C_MEMADD_SIZE_16BIT, &return_value, 1, 100);
+    if (status != HAL_OK) {
+            char buf[64];
+            sprintf(buf, "I2C16_8 read from 0x%x register 0x%x failed\r\n", addr, register_pointer);
+            DBG_PUT(buf);
+        }
     return return_value;
 }
 
 void hi2c_write16_8(I2C_HandleTypeDef hi2c, uint8_t addr, uint16_t register_pointer, uint16_t register_value)
 {
     uint8_t dataBuffer[1];
+    HAL_StatusTypeDef status = HAL_OK;
     dataBuffer[0] = register_value;
-    HAL_I2C_Mem_Write(&hi2c, addr << 1, (uint16_t)register_pointer, I2C_MEMADD_SIZE_16BIT, dataBuffer, 1, 100);
+    status = HAL_I2C_Mem_Write(&hi2c, addr << 1, (uint16_t)register_pointer, I2C_MEMADD_SIZE_16BIT, dataBuffer, 1, 100);
+    if (status != HAL_OK) {
+            char buf[64];
+            sprintf(buf, "I2C16_8 write to 0x%x register 0x%x failed\r\n", addr, register_pointer);
+            DBG_PUT(buf);
+        }
 }
 
 // UNTESTED BELOW

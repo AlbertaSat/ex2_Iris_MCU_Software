@@ -12,7 +12,9 @@
 // Temp sensor I2C addresses
 #define VIS_TEMP_SENSOR 0x4C
 #define NIR_TEMP_SENSOR 0x4D
-#define num_temp_sensors 1
+#define TEMP3 0x4E
+#define TEMP4 0x4F
+#define num_temp_sensors 4
 
 uint16_t get_temp(uint8_t sensor_addr);
 void init_temp_sensors(void);

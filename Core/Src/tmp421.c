@@ -7,7 +7,10 @@
 #include "tmp421.h"
 
 uint8_t tempSensorList[num_temp_sensors] = {
-		0x4C
+		VIS_TEMP_SENSOR,
+		NIR_TEMP_SENSOR,
+		TEMP3,
+		TEMP4
 };
 // change bit 2 of config 1 to set to extended binary and make life easier. Need to initalize them prior tho
 // add initialization function for all sensors
