@@ -67,9 +67,9 @@ void write_reg(uint8_t addr, uint8_t data, uint8_t sensor);
 uint8_t read_reg(uint8_t addr, uint8_t sensor);
 
 
-int wrSensorReg16_8(uint16_t regID, uint8_t regDat, uint8_t sensor);
-int rdSensorReg16_8(uint16_t regID, uint8_t *regDat, uint8_t sensor);
-
-int wrSensorRegs16_8(const struct sensor_reg reglist[], uint8_t sensor);
+//int wrSensorReg16_8(uint16_t regID, uint8_t regDat, uint8_t sensor);
+//int rdSensorReg16_8(uint16_t regID, uint8_t *regDat, uint8_t sensor);
+//
+//int wrSensorRegs16_8(const struct sensor_reg reglist[], uint8_t sensor);
 
 #endif // ARDUCAM_DEFH

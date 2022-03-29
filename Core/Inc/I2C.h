@@ -9,7 +9,7 @@
 #define INC_I2C_H_
 #include "stm32l0xx_hal.h"
 #include "arducam.h"
-int wrSensorReg16_8(uint16_t regID, uint8_t regDat, uint8_t sensor);
+void wrSensorReg16_8(uint16_t regID, uint8_t regDat, uint8_t sensor);
 
 int wrSensorRegs16_8(const struct sensor_reg reglist[], uint8_t sensor);
 
