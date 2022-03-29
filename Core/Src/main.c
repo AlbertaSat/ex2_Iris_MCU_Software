@@ -29,6 +29,7 @@
 #include "spi_bitbang.h"
 #include "nand_m79a.h"
 #include "IEB_TESTS.h"
+#include "tmp421.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -109,7 +110,6 @@ int main(void)
 
 
 
-
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -120,6 +120,7 @@ int main(void)
    DBG_PUT("-----------------------------------\r\n");
    DBG_PUT("Iris Electronics Unit Test Software\r\nVersion 1.05.0; 2022-03-21\r\n");
    DBG_PUT("-----------------------------------\r\n");
+   init_temp_sensors();
 
    while (1)
    {
