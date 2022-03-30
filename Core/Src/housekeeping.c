@@ -7,17 +7,12 @@
 #include "main.h"
 #include "tmp421.h"
 #include "debug.h"
-struct __attribute__((__packed__)) housekeeping_packet {
-	uint16_t vis_temp;
-	uint16_t nir_temp;
-	uint16_t flash_temp;
-	uint16_t gate_temp;
-	uint8_t imagenum;
-	uint8_t software_version;
-};
+#include "housekeeping.h"
 
-struct housekeeping_packet get_housekeeping(){
-	struct housekeeping_packet hk;
+
+
+housekeeping_packet_t get_housekeeping(){
+	housekeeping_packet_t hk;
 	hk.vis_temp = get_temp(VIS_SENSOR);
 	hk.nir_temp = get_temp(NIR_SENSOR);
 	hk.flash_temp = get_temp(TEMP3);
@@ -27,7 +22,7 @@ struct housekeeping_packet get_housekeeping(){
 	return hk;
 }
 
-void decode_hk_packet (struct housekeeping_packet hk){
+void decode_hk_packet (housekeeping_packet_t hk){
 	char buf[64];
 	sprintf(buf, "hk.vis_temp: 0x%x", hk.vis_temp);
 	DBG_PUT(buf);

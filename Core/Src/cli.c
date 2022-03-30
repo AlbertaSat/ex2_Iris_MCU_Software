@@ -7,9 +7,10 @@
 #include "main.h"
 #include "nand_m79a.h"
 #include "IEB_TESTS.h"
+#include "housekeeping.h"
 int format = JPEG;
 extern I2C_HandleTypeDef hi2c2;
-
+//extern struct housekeeping_packet hk;
 
 int VIS_DETECTED = 0;
 int NIR_DETECTED = 0;
@@ -500,9 +501,19 @@ void handle_i2c16_8_cmd(const char *cmd){
 
 }
 
+void get_housekeeping_packet(uint8_t *out){
+	housekeeping_packet_t hk;
+	hk = get_housekeeping();
+	memcpy(out, (uint8_t *)&hk, sizeof(housekeeping_packet_t));
+}
+
 void handle_command(char *cmd) {
 	char *c;
+	uint8_t in[sizeof(housekeeping_packet_t)];
     switch(*cmd) {
+    case 'g':
+    	get_housekeeping_packet(&in);
+    	break;
     case 'c':
     	handle_capture_cmd(cmd);
     	break;
