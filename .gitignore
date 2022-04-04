@@ -132,3 +132,5 @@ host/yuv2rgb
 *.jpg
 *.xml
 *.prefs
+*.prefs
+*.xml
