@@ -8,59 +8,49 @@ extern I2C_HandleTypeDef hi2c2;
 
 #define SCCB_READ 1
 
-static uint16_t VIS_ADDRESS = 0x78;
-static uint16_t NIR_ADDRESS = 0x7C;
+static uint16_t VIS_ADDRESS = 0x3C;
+static uint16_t NIR_ADDRESS = 0x3E;
+
 // arducam functions
 void wrSensorReg16_8(uint16_t regID, uint8_t regDat, uint8_t sensor) {
-    uint8_t data = regDat;
-    HAL_StatusTypeDef rc;
     if (sensor == VIS_SENSOR){
     	i2c2_write16_8(VIS_ADDRESS, regID, regDat);
-//        rc = HAL_I2C_Mem_Write(&hi2c2, VIS_ADDRESS, regID, I2C_MEMADD_SIZE_16BIT, &data, 1, 100);
     }
     else{
     	i2c2_write16_8(NIR_ADDRESS, regID, regDat);
-
-//        rc = HAL_I2C_Mem_Write(&hi2c2, NIR_ADDRESS, regID, I2C_MEMADD_SIZE_16BIT, &data, 1, 100);
-
     }
     HAL_Delay(1);
-//    return (int) rc;
 }
 
-int wrSensorRegs16_8(const struct sensor_reg reglist[], uint8_t sensor) {
+void wrSensorRegs16_8(const struct sensor_reg reglist[], uint8_t sensor) {
     const struct sensor_reg *curr = reglist;
     for (curr=reglist; curr->reg != 0xffff; curr++) {
         wrSensorReg16_8(curr->reg, curr->val, sensor);
     }
-    return 0;
+    return;
 }
 
-int rdSensorReg16_8(uint16_t regID, uint8_t *regDat, uint8_t sensor) {
-    HAL_StatusTypeDef rc;
+void rdSensorReg16_8(uint16_t regID, uint8_t *regDat, uint8_t sensor) {
     if (sensor == VIS_SENSOR){
-        rc = HAL_I2C_Mem_Read(&hi2c2, VIS_ADDRESS, regID, I2C_MEMADD_SIZE_16BIT, regDat, 1, 100);
-
+//        rc = HAL_I2C_Mem_Read(&hi2c2, VIS_ADDRESS, regID, I2C_MEMADD_SIZE_16BIT, regDat, 1, 100);
+    	i2c2_read16_8(VIS_ADDRESS, regID, regDat);
     }
     else{
-        rc = HAL_I2C_Mem_Read(&hi2c2, NIR_ADDRESS, regID, I2C_MEMADD_SIZE_16BIT, regDat, 1, 100);
+//        rc = HAL_I2C_Mem_Read(&hi2c2, NIR_ADDRESS, regID, I2C_MEMADD_SIZE_16BIT, regDat, 1, 100);
+    	i2c2_read16_8(NIR_ADDRESS, regID, regDat);
 
     }
-    if (rc != HAL_OK) {
-        char buf[64];
-        sprintf(buf, "I2C read xmit to 0x%x failed: 0x%x\r\n", regID, rc);
-    }
-    return (int) rc;
+    return;
 }
 
 // I2C2 Functions
-uint8_t i2c2_read16_8(uint8_t addr, uint16_t register_pointer){
-	uint16_t return_value = 0;
-	HAL_I2C_Mem_Read(&hi2c2, addr, (uint16_t)register_pointer, I2C_MEMADD_SIZE_16BIT, &return_value, 1, 100);
-	return return_value;
+void i2c2_read16_8(uint8_t addr, uint16_t register_pointer, uint8_t *reg_data){
+	// todo generalize
+	hi2c_read16_8(hi2c2, addr, register_pointer, reg_data);
+	return;
 }
 void i2c2_write16_8(uint8_t addr, uint16_t register_pointer, uint16_t register_value){
-	hi2c_write16_8(hi2c2, addr << 1, register_pointer, register_value);
+	hi2c_write16_8(hi2c2, addr, register_pointer, register_value);
 	return;
 }
 
@@ -73,17 +63,15 @@ void i2c2_write8_8(uint8_t addr, uint8_t register_pointer, uint8_t register_valu
 	return;
 }
 // General functions
-uint8_t hi2c_read16_8(I2C_HandleTypeDef hi2c, uint8_t addr, uint16_t register_pointer)
+void hi2c_read16_8(I2C_HandleTypeDef hi2c, uint8_t addr, uint16_t register_pointer, uint8_t *reg_data)
 {
-    uint8_t return_value = 0;
-	HAL_StatusTypeDef status = HAL_OK;
-    status = HAL_I2C_Mem_Read(&hi2c, addr << 1, (uint16_t)register_pointer, I2C_MEMADD_SIZE_16BIT, &return_value, 1, 100);
-    if (status != HAL_OK) {
+    	HAL_StatusTypeDef rc;
+    	rc = HAL_I2C_Mem_Read(&hi2c, addr<<1, (uint16_t)register_pointer, I2C_MEMADD_SIZE_16BIT, reg_data, 1, 100);
+        if (rc != HAL_OK) {
             char buf[64];
-            sprintf(buf, "I2C16_8 read from 0x%x register 0x%x failed\r\n", addr, register_pointer);
-            DBG_PUT(buf);
+            sprintf(buf, "I2C read xmit to 0x%x failed: 0x%x\r\n", register_pointer, rc);
         }
-    return return_value;
+    return;
 }
 
 void hi2c_write16_8(I2C_HandleTypeDef hi2c, uint8_t addr, uint16_t register_pointer, uint16_t register_value)

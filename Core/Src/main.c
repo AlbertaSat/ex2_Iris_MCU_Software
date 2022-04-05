@@ -131,7 +131,8 @@ int main(void)
    DBG_PUT("Iris Electronics Unit Test Software\r\nVersion 1.05.0; 2022-03-21\r\n");
    DBG_PUT("-----------------------------------\r\n");
    init_temp_sensors();
-
+   sensor_togglepower(1);
+   reset_sensors();
    while (1)
    {
        HAL_StatusTypeDef rc = HAL_UART_Receive(&huart1, (uint8_t *) ptr, 1, 20000);

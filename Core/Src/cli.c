@@ -382,7 +382,7 @@ void scan_i2c(){
 	 DBG_PUT("Scan Complete.\r\n");
 }
 
-static void sensor_togglepower(int i){
+void sensor_togglepower(int i){
 	if (i == 1){
 		HAL_GPIO_WritePin(CAM_EN_GPIO_Port, CAM_EN_Pin, GPIO_PIN_SET);
 		DBG_PUT("Sensor Power Enabled.\r\n");
