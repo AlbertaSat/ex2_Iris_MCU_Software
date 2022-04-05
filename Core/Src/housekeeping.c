@@ -22,6 +22,8 @@ housekeeping_packet_t get_housekeeping(){
 	return hk;
 }
 
+
+
 void decode_hk_packet (housekeeping_packet_t hk){
 	char buf[64];
 	sprintf(buf, "hk.vis_temp: 0x%x", hk.vis_temp);

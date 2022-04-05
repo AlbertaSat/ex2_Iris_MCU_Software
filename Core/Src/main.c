@@ -15,6 +15,15 @@
   *
   ******************************************************************************
   */
+
+/*
+ * 	TODO:
+ * 		- SPI Command Handling
+ * 		- SPI Burst for image readout
+ * 		- Endianness
+ * 		- Revamp IOC File
+ * 		- Image number iteration / handling
+ */
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
