@@ -428,8 +428,23 @@ void init_nand_flash(){
 		else{
 			DBG_PUT("Something else is wrong wit the NAND Flash\r\n");
 		}
-
-
+		uint8_t rtn[32];
+		char buf[64];
+		NAND_Read(0x1000, 32, rtn);
+		for (int i=0; i<32; i++){
+			sprintf(buf, "%x", rtn[i]);
+			DBG_PUT(buf);
+		}
+		DBG_PUT("\r\n");
+		uint8_t send[32];
+		memcpy(send, "Hello World", 11);
+		NAND_Write(0x1000, 32, send);
+		NAND_Read(0x1000, 32, rtn);
+		for (int i=0; i<32; i++){
+			sprintf(buf, "%x", rtn[i]);
+			DBG_PUT(buf);
+		}
+		DBG_PUT("\r\n");
 }
 
 void handle_i2c16_8_cmd(const char *cmd){
@@ -513,6 +528,7 @@ void handle_command(char *cmd) {
     switch(*cmd) {
     case 'g':
     	get_housekeeping_packet(&in);
+    	decode_hk_packet(&in);
     	break;
     case 'c':
     	handle_capture_cmd(cmd);

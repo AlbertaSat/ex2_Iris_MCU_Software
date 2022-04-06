@@ -21,7 +21,6 @@
  * 		- SPI Command Handling
  * 		- SPI Burst for image readout
  * 		- Endianness
- * 		- Revamp IOC File
  * 		- Image number iteration / handling
  */
 /* USER CODE END Header */
@@ -136,9 +135,9 @@ int main(void)
    DBG_PUT("-----------------------------------\r\n");
    DBG_PUT("Iris Electronics Unit Test Software\r\nVersion 1.05.0; 2022-03-21\r\n");
    DBG_PUT("-----------------------------------\r\n");
-   init_temp_sensors();
-   sensor_togglepower(1);
-   reset_sensors();
+//   init_temp_sensors();
+//   sensor_togglepower(1);
+//   reset_sensors();
    while (1)
    {
        HAL_StatusTypeDef rc = HAL_UART_Receive(&huart1, (uint8_t *) ptr, 1, 20000);
@@ -446,9 +445,9 @@ static void MX_GPIO_Init(void)
                           |CAN_S_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pins : USART2_CS1_Pin USART2_CS2_Pin USART2_MOSI_Pin USART2_CLK_Pin
-                           WP__Pin CAM_EN_Pin NAND_CS2_Pin SPI1_NSS_Pin */
+                           CAM_EN_Pin NAND_CS2_Pin SPI1_NSS_Pin */
   GPIO_InitStruct.Pin = USART2_CS1_Pin|USART2_CS2_Pin|USART2_MOSI_Pin|USART2_CLK_Pin
-                          |WP__Pin|CAM_EN_Pin|NAND_CS2_Pin|SPI1_NSS_Pin;
+                          |CAM_EN_Pin|NAND_CS2_Pin|SPI1_NSS_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
@@ -468,6 +467,13 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : WP__Pin */
+  GPIO_InitStruct.Pin = WP__Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_PULLDOWN;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(WP__GPIO_Port, &GPIO_InitStruct);
 
 }
 
