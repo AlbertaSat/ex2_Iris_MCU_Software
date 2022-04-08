@@ -6,9 +6,11 @@
 #include "debug.h"
 #include "main.h"
 #include "nand_m79a.h"
+#include "IEB_TESTS.h"
+#include "housekeeping.h"
 int format = JPEG;
 extern I2C_HandleTypeDef hi2c2;
-
+//extern struct housekeeping_packet hk;
 
 int VIS_DETECTED = 0;
 int NIR_DETECTED = 0;
@@ -22,12 +24,14 @@ static inline const char* next_token(const char *ptr) {
 }
 
 static void help() {
+    DBG_PUT("TO RUN TESTS: test\r\n\n\n");
     DBG_PUT("Commands:\r\n");
     DBG_PUT("\tWorking/Tested:\r\n");
     DBG_PUT("\t\tcapture <vis/nir>\r\n");
     DBG_PUT("\t\tformat<vis/nir> [JPEG|BMP|RAW]\r\n");
     DBG_PUT("\t\treg <vis/nir> read <regnum>\r\n\treg write <regnum> <val>\r\n");
     DBG_PUT("\t\twidth  <vis/nir> [<pixels>]\r\n");
+    DBG_PUT("\t\tpower on/off\r\n");
     DBG_PUT("\tscan Scan I2C bus 2\r\n");
     DBG_PUT("\tNeeds work\r\n");
     DBG_PUT("\t\tinit sensor Resets arducam modules to default\r\n");
@@ -378,7 +382,7 @@ void scan_i2c(){
 	 DBG_PUT("Scan Complete.\r\n");
 }
 
-static void sensor_togglepower(int i){
+void sensor_togglepower(int i){
 	if (i == 1){
 		HAL_GPIO_WritePin(CAM_EN_GPIO_Port, CAM_EN_Pin, GPIO_PIN_SET);
 		DBG_PUT("Sensor Power Enabled.\r\n");
@@ -424,8 +428,23 @@ void init_nand_flash(){
 		else{
 			DBG_PUT("Something else is wrong wit the NAND Flash\r\n");
 		}
-
-
+		uint8_t rtn[32];
+		char buf[64];
+		NAND_Read(0x1000, 32, rtn);
+		for (int i=0; i<32; i++){
+			sprintf(buf, "%x", rtn[i]);
+			DBG_PUT(buf);
+		}
+		DBG_PUT("\r\n");
+		uint8_t send[32];
+		memcpy(send, "Hello World", 11);
+		NAND_Write(0x1000, 32, send);
+		NAND_Read(0x1000, 32, rtn);
+		for (int i=0; i<32; i++){
+			sprintf(buf, "%x", rtn[i]);
+			DBG_PUT(buf);
+		}
+		DBG_PUT("\r\n");
 }
 
 void handle_i2c16_8_cmd(const char *cmd){
@@ -466,8 +485,7 @@ void handle_i2c16_8_cmd(const char *cmd){
 	case 'r':
 		{
 			uint8_t val;
-//			i2c2_read16_8(reg, &val);
-			val = i2c2_read16_8(addr, reg);
+			val = i2c2_read8_8(addr, reg); // switch back to 16-8
 			sprintf(buf, "Device 0x%lx register 0x%lx = 0x%02x\r\n", addr, reg, val);
 		}
 		break;
@@ -498,9 +516,20 @@ void handle_i2c16_8_cmd(const char *cmd){
 
 }
 
+housekeeping_packet_t get_housekeeping_packet(){
+	housekeeping_packet_t hk;
+	hk = get_housekeeping();
+	return hk;
+}
+
 void handle_command(char *cmd) {
 	char *c;
+	housekeeping_packet_t hk;
     switch(*cmd) {
+    case 'g':
+    	hk = get_housekeeping_packet();
+    	decode_hk_packet(hk);
+    	break;
     case 'c':
     	handle_capture_cmd(cmd);
     	break;
@@ -515,27 +544,33 @@ void handle_command(char *cmd) {
     case 'w':
         handle_width_cmd(cmd);
         break;
-
+    case 't':
+    	//CHECK_LED_I2C_SPI_TS();
+    	for (int i=0; i<150; i++){
+    	testTempSensor();
+    	HAL_Delay(1000);
+    	}
+    	break;
     case 's':
     	switch(*(cmd+1)){
-    	case 'c':
-    		scan_i2c();
-    		break;
-    	}
-    	case 'a':;
-			const char *c = next_token(cmd);
-			switch(*c){
-				case 'v':
-					handle_saturation_cmd(c, VIS_SENSOR);
-					break;
-				case 'n':
-					handle_saturation_cmd(c, NIR_SENSOR);
-					break;
-				default:
-					DBG_PUT("Target Error\r\n");
-					break;
-			}
+			case 'c':
+				scan_i2c();
+				break;
 
+			case 'a':;
+				const char *c = next_token(cmd);
+				switch(*c){
+					case 'v':
+						handle_saturation_cmd(c, VIS_SENSOR);
+						break;
+					case 'n':
+						handle_saturation_cmd(c, NIR_SENSOR);
+						break;
+					default:
+						DBG_PUT("Target Error\r\n");
+						break;
+				}
+    	}
     	break;
 
     case 'p':	; //janky use of semicolon??

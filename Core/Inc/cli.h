@@ -4,15 +4,8 @@
 void handle_command(char *cmd);
 void reset_sensors(void);
 extern int format;
-//char head[] = "$$$$$$\\           $$\\           \r\n"\
-//		"\\_$$  _|          \\__|          \r\n"\
-//		"  $$ |   $$$$$$\\  $$\\  $$$$$$$\\ \r\n"\
-//		"  $$ |  $$  __$$\\ $$ |$$  _____|\r\n"\
-//		"  $$ |  $$ |  \\__|$$ |\\$$$$$$\\  \r\n"\
-//		"  $$ |  $$ |      $$ | \\____$$\\ \r\n"\
-//		"$$$$$$\\ $$ |      $$ |$$$$$$$  |\r\n"\
-//		"\\______|\\__|      \\__|\\_______/ \r\n"\
-//		"                                \r\n"\
-//		"                                \r\n"\
-//		"                                \r\n";
+void scan_i2c();
+void reset_sensors(void);
+void sensor_togglepower(int i);
+
 #endif // CLI_DEFH

@@ -116,21 +116,19 @@ void NAND_Wait(uint8_t milliseconds){
  * @return NAND_SPI_ReturnType 
  */
 NAND_SPI_ReturnType NAND_SPI_Send(SPI_Params *data_send) {
-//    HAL_StatusTypeDef send_status;
+    HAL_StatusTypeDef send_status;
 
-    //__nand_spi_NAND_CS_LOW();
-//    send_status = HAL_SPI_Transmit(hspi_nand, data_send->buffer, data_send->length, NAND_SPI_TIMEOUT);
-    NAND_SPI_Transmit(data_send->buffer);
-    return SPI_OK;
-    //__nand_spi_NAND_CS_HIGH();
+    __nand_spi_cs_low();
+    send_status = HAL_SPI_Transmit(hspi_nand, data_send->buffer, data_send->length, NAND_SPI_TIMEOUT);
+    __nand_spi_cs_high();
 
-//    if (send_status != HAL_OK) {
-//        return SPI_Fail;
-//    } else {
-//        return SPI_OK;
-//    }
+    if (send_status != HAL_OK) {
+        return SPI_Fail; 
+    } else {
+        return SPI_OK;
+    }
 
-}
+};
 
 /**
  * @brief Send and receive data from NAND in one transaction.
@@ -142,10 +140,10 @@ NAND_SPI_ReturnType NAND_SPI_Send(SPI_Params *data_send) {
 NAND_SPI_ReturnType NAND_SPI_SendReceive(SPI_Params *data_send, SPI_Params *data_recv) {
     HAL_StatusTypeDef recv_status;
 
-    //__nand_spi_NAND_CS_LOW();
+    __nand_spi_cs_low();
     HAL_SPI_Transmit(hspi_nand, data_send->buffer, data_send->length, NAND_SPI_TIMEOUT);
     recv_status = HAL_SPI_Receive(hspi_nand, data_recv->buffer, data_recv->length, NAND_SPI_TIMEOUT);
-    //__nand_spi_NAND_CS_HIGH();
+    __nand_spi_cs_high();
 
     if (recv_status != HAL_OK) {
         return SPI_Fail; 
@@ -163,12 +161,12 @@ NAND_SPI_ReturnType NAND_SPI_SendReceive(SPI_Params *data_send, SPI_Params *data
 NAND_SPI_ReturnType NAND_SPI_Receive(SPI_Params *data_recv) {
     HAL_StatusTypeDef receive_status;
 
-    //__nand_spi_NAND_CS_LOW();
+    __nand_spi_cs_low();
     receive_status = HAL_SPI_Receive(hspi_nand, data_recv->buffer, data_recv->length, NAND_SPI_TIMEOUT);
-    //__nand_spi_NAND_CS_HIGH();
+    __nand_spi_cs_high();
 
     if (receive_status != HAL_OK) {
-        return SPI_Fail; 
+        return SPI_Fail;
     } else {
         return SPI_OK;
     }
@@ -188,10 +186,10 @@ NAND_SPI_ReturnType NAND_SPI_Receive(SPI_Params *data_recv) {
 NAND_SPI_ReturnType NAND_SPI_Send_Command_Data(SPI_Params *cmd_send, SPI_Params *data_send) {
     HAL_StatusTypeDef send_status;
 
-    //__nand_spi_NAND_CS_LOW();
+    __nand_spi_cs_low();
     HAL_SPI_Transmit(hspi_nand, cmd_send->buffer, cmd_send->length, NAND_SPI_TIMEOUT);
     send_status = HAL_SPI_Transmit(hspi_nand, data_send->buffer, data_send->length, NAND_SPI_TIMEOUT);
-    //__nand_spi_NAND_CS_HIGH();
+    __nand_spi_cs_high();
 
     if (send_status != HAL_OK) {
         return SPI_Fail; 
@@ -203,124 +201,19 @@ NAND_SPI_ReturnType NAND_SPI_Send_Command_Data(SPI_Params *cmd_send, SPI_Params 
 /******************************************************************************
  *                              Internal Functions
  *****************************************************************************/
-uint8_t NAND_spi_read_byte(uint8_t addr){
-	uint8_t rec;
-	// CS Low
-	_NAND_CS_LOW();
-	// Send Phase
-	for (int i=0; i<8; i++){
-		HAL_GPIO_WritePin(NAND_MOSI_Port, NAND_MOSI_Pin, bit_read(addr, i));
-		_NAND_CLK_HIGH();
-		HAL_GPIO_ReadPin(NAND_MISO_Port, NAND_MISO_Pin);
-		_NAND_CLK_LOW();
-	}
 
-	// Recieve phase
-	for (int i=0; i<8; i++){
-		HAL_GPIO_WritePin(NAND_MOSI_Port, NAND_MOSI_Pin, bit_read(0x00, i));
-		_NAND_CLK_HIGH();
-		if (HAL_GPIO_ReadPin(NAND_MISO_Port, NAND_MISO_Pin) == GPIO_PIN_SET){
-			rec = rec << 1 | 0b1;
-		}
-		else{
-			rec = rec << 1 | 0b0;
-		}
-		_NAND_CLK_LOW();
-	}
+/**
+ * @brief Enable SPI communication to NAND by pulling chip select pin low.
+ * @note Must be called prior to every SPI transmission
+ */
+void __nand_spi_cs_low(void) {
+    HAL_GPIO_WritePin(NAND_NCS_PORT, NAND_NCS_PIN, GPIO_PIN_RESET);
+};
 
-	_NAND_CS_HIGH();
-	HAL_GPIO_WritePin(NAND_MOSI_Port, NAND_MOSI_Pin, GPIO_PIN_RESET);
-
-	return rec;
-}
-
-void NAND_spi_write_byte(uint8_t addr, uint8_t byte){
-	// CS Low
-	_NAND_CS_LOW();
-	// Send Phase
-	for (int i=0; i<8; i++){
-		HAL_GPIO_WritePin(NAND_MOSI_Port, NAND_MOSI_Pin, bit_read((addr | 0x80), i));
-		_NAND_CLK_HIGH();
-		HAL_GPIO_ReadPin(NAND_MISO_Port, NAND_MISO_Pin);
-		_NAND_CLK_LOW();
-	}
-
-	// Write phase
-	for (int i=0; i<8; i++){
-		HAL_GPIO_WritePin(NAND_MOSI_Port, NAND_MOSI_Pin, bit_read(byte, i));
-		_NAND_CLK_HIGH();
-		HAL_GPIO_ReadPin(NAND_MISO_Port, NAND_MISO_Pin);
-		_NAND_CLK_LOW();
-	}
-	_NAND_CS_HIGH();
-	HAL_GPIO_WritePin(NAND_MOSI_Port, NAND_MOSI_Pin, GPIO_PIN_RESET);
-
-}
-
-void read_multiple_bytes(uint8_t addr, uint32_t length){
-	uint8_t rec;
-	// CS Low
-	_NAND_CS_LOW();
-	// Send Phase
-	for (int i=0; i<8; i++){
-		HAL_GPIO_WritePin(NAND_MOSI_Port, NAND_MOSI_Pin, bit_read(addr, i));
-		_NAND_CLK_HIGH();
-		HAL_GPIO_ReadPin(NAND_MISO_Port, NAND_MISO_Pin);
-		_NAND_CLK_LOW();
-	}
-
-	for (int j=0; j<length; j++){
-		// Recieve phase
-		for (int i=0; i<8; i++){
-			HAL_GPIO_WritePin(NAND_MOSI_Port, NAND_MOSI_Pin, bit_read(0x00, i));
-			_NAND_CLK_HIGH();
-			if (HAL_GPIO_ReadPin(NAND_MISO_Port, NAND_MISO_Pin) == GPIO_PIN_SET){
-				rec = rec << 1 | 0b1;
-			}
-			else{
-				rec = rec << 1 | 0b0;
-			}
-			_NAND_CLK_LOW();
-			rec = 0; //remove me and figure out how to dump data
-		}
-	}
-	_NAND_CS_HIGH();
-	HAL_GPIO_WritePin(NAND_MOSI_Port, NAND_MOSI_Pin, GPIO_PIN_RESET);
-
-}
-
-//GPIO_PinState bit_read(uint8_t byte, int j){
-//	byte = byte << j;
-//	if (byte & 0x80){
-//		return GPIO_PIN_SET;
-//	}
-//	return GPIO_PIN_RESET;
-//}
-
-void NAND_SPI_Transmit(addr){
-	// CS Low
-	_NAND_CS_LOW();
-	// Send Phase
-	for (int i=0; i<8; i++){
-		HAL_GPIO_WritePin(NAND_MOSI_Port, NAND_MOSI_Pin, bit_read(addr, i));
-		_NAND_CLK_HIGH();
-		HAL_GPIO_ReadPin(NAND_MISO_Port, NAND_MISO_Pin);
-		_NAND_CLK_LOW();
-	}
-	_NAND_CS_HIGH();
-	HAL_GPIO_WritePin(NAND_MOSI_Port, NAND_MOSI_Pin, GPIO_PIN_RESET);
-}
-
-void _NAND_CS_LOW(){
-	HAL_GPIO_WritePin(NAND_NSS_Port, NAND_NSS_Pin, GPIO_PIN_RESET);
-}
-void _NAND_CS_HIGH(){
-	HAL_GPIO_WritePin(NAND_NSS_Port, NAND_NSS_Pin, GPIO_PIN_SET);
-}
-
-void _NAND_CLK_LOW(){
-	HAL_GPIO_WritePin(NAND_CLK_Port, NAND_CLK_Pin, GPIO_PIN_RESET);
-}
-void _NAND_CLK_HIGH(){
-	HAL_GPIO_WritePin(NAND_CLK_Port, NAND_CLK_Pin, GPIO_PIN_SET);
-}
+/**
+ * @brief Close SPI communication to NAND by pulling chip select pin high.
+ * @note Must be called after every SPI transmission
+ */
+void __nand_spi_cs_high(void) {
+    HAL_GPIO_WritePin(NAND_NCS_PORT, NAND_NCS_PIN, GPIO_PIN_SET);
+};
