@@ -516,19 +516,21 @@ void handle_i2c16_8_cmd(const char *cmd){
 
 }
 
-void get_housekeeping_packet(uint8_t *out){
+housekeeping_packet_t get_housekeeping_packet(){
+	//uint8_t *out
 	housekeeping_packet_t hk;
 	hk = get_housekeeping();
-	memcpy(out, (uint8_t *)&hk, sizeof(housekeeping_packet_t));
+//	memcpy(out, (uint8_t *)&hk, sizeof(housekeeping_packet_t));
+	return hk;
 }
 
 void handle_command(char *cmd) {
 	char *c;
-	uint8_t in[sizeof(housekeeping_packet_t)];
+	housekeeping_packet_t hk;
     switch(*cmd) {
     case 'g':
-    	get_housekeeping_packet(&in);
-    	decode_hk_packet(&in);
+    	hk = get_housekeeping_packet();
+    	decode_hk_packet(hk);
     	break;
     case 'c':
     	handle_capture_cmd(cmd);

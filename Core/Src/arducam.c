@@ -501,3 +501,8 @@ void SingleCapTransfer(int format, uint8_t sensor) {
     DBG_PUT("\04");
 }
 
+uint8_t get_image_num(){
+	// todo: Actually implement image counting
+	return 0;
+}
+
