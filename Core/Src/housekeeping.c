@@ -18,7 +18,7 @@ housekeeping_packet_t get_housekeeping(){
 	hk.flash_temp = get_temp(TEMP3);
 	hk.gate_temp = get_temp(TEMP4);
 	hk.imagenum = get_image_num();
-	hk.software_version = 0x01;
+	hk.software_version = software_ver;
 	return hk;
 }
 

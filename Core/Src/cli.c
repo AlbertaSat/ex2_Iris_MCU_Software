@@ -517,10 +517,8 @@ void handle_i2c16_8_cmd(const char *cmd){
 }
 
 housekeeping_packet_t get_housekeeping_packet(){
-	//uint8_t *out
 	housekeeping_packet_t hk;
 	hk = get_housekeeping();
-//	memcpy(out, (uint8_t *)&hk, sizeof(housekeeping_packet_t));
 	return hk;
 }
 

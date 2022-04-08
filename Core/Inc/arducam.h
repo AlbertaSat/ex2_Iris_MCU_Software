@@ -46,7 +46,6 @@
 #define VSYNC_LEVEL_MASK   		0x02  //0 = High active , 		1 = Low active
 #define ARDUCHIP_TIM       		0x03  //Timming control
 #define ARDUCHIP_FRAMES			0x01  //FRAME control register, Bit[2:0] = Number of frames to be captured																		//On 5MP_Plus platforms bit[2:0] = 7 means continuous capture until frame buffer is full
-
 struct sensor_reg {
 	uint16_t reg;
 	uint16_t val;

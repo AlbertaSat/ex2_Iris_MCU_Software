@@ -86,7 +86,7 @@ void Error_Handler(void);
 #define CAN_S_Pin GPIO_PIN_5
 #define CAN_S_GPIO_Port GPIOB
 /* USER CODE BEGIN Private defines */
-#define software_ver = 0x11
+#define software_ver 0x11
 #define VIS_SENSOR 0
 #define NIR_SENSOR 1
 

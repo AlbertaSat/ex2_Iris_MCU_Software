@@ -5,7 +5,7 @@
 #include "I2C.h"
 
 #define BUFFER_MAX_SIZE 4096
-
+uint8_t image_number = 0;
 void arducam_delay_ms(int ms) {
     HAL_Delay(ms);
 }
@@ -413,40 +413,7 @@ static void dump_uart_jpg(uint32_t length, uint8_t sensor) {
         }
     }
 }
-//static void dump_uart_jpg(uint32_t length, uint8_t sensor) {
-//    uint8_t prev = 0, curr = 0;
-//    bool found_header = false;
-//    uint32_t i;
-//    char buf[64];
-//
-//    for (i=0; i<length; i++) {
-//        prev = curr;
-//        curr = read_fifo(sensor);
-//        if ((curr == 0xd9) && (prev == 0xff)) {
-//            // found the footer - break
-//            sprintf(buf, "%02x ", curr);
-//            DBG_PUT(buf);
-//            found_header = false;
-//            break;
-//        }
-//
-//        if (found_header) {
-//            sprintf(buf, "%02x ", curr);
-//            DBG_PUT(buf);
-//        }
-//        else if ((curr == 0xd8) && (prev = 0xff)) {
-//            found_header = true;
-//            sprintf(buf, "%02x %02x ", prev, curr);
-//            DBG_PUT(buf);
-//        }
-//    }
-//
-//    if (found_header) {
-//        // We found the header but not the footer :-(
-//        sprintf(buf, "ff d9 ");
-//        DBG_PUT(buf);
-//    }
-//}
+
 
 static void dump_uart_raw(uint32_t length, uint8_t sensor) {
     char buf[4];
@@ -502,7 +469,10 @@ void SingleCapTransfer(int format, uint8_t sensor) {
 }
 
 uint8_t get_image_num(){
-	// todo: Actually implement image counting
-	return 0;
+	return image_number;
+}
+
+void set_image_num(uint8_t num){
+	image_number = num;
 }
 
