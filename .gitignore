@@ -135,3 +135,5 @@ host/yuv2rgb
 *.prefs
 *.xml
 *.xml
+
+.settings/language.settings.xml
