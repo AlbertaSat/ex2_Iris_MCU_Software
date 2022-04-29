@@ -93,6 +93,29 @@ typedef enum {
         device  => 139264 bytes/block * 2048 blocks  = 285,212,672 bytes (2176 Mb, 272 MB, 0x11_000_000 addrs)
     */
 
+    typedef struct __attribute__((__packed__)) {
+	char signature[4];
+	uint16_t revision;
+	uint16_t feature_support;
+	uint16_t optional_cmd_support;
+	uint8_t reserved_1[22];
+	char device_manufacturer[12];
+	char device_model[20];
+	uint8_t manufacturer_id;
+	uint16_t date;
+	uint8_t reserved_2[13];
+	uint32_t data_bytes_per_page;
+	uint16_t spare_bytes_per_page;
+	uint32_t data_bytes_per_partial_page;
+	uint16_t spare_bytes_per_partial_page;
+	uint32_t pages_per_block;
+	uint32_t blocks_per_unit;
+	uint8_t num_logical_units;
+	uint8_t num_addr_cycles;
+	uint8_t num_bits_per_cell;
+	uint16_t max_bad_blocks_per_unit;
+    } NAND_Parameter_Page_t;
+
     /* ADDRESSING DEFINITIONS (see Datasheet page 11) */
     typedef uint32_t NAND_Addr; // logical address type. Max FLASH_SIZE_BYTES
 
@@ -274,7 +297,7 @@ NAND_ReturnType NAND_Send_Dummy_Byte(void);
 
 /* identification operations */
 NAND_ReturnType NAND_Read_ID(NAND_ID *nand_ID);
-// NAND_ReturnType NAND_Read_Param_Page(param_page_t *ppage);
+NAND_ReturnType NAND_Read_Param_Page(NAND_Parameter_Page_t *ppage);
 
 /* feature operations */
 NAND_ReturnType NAND_Check_Busy(void);
@@ -284,6 +307,9 @@ NAND_ReturnType NAND_Set_Features(RegisterAddr reg_addr, uint8_t reg);
 /* read operations */
 NAND_ReturnType NAND_Page_Read(PhysicalAddrs *addr, uint16_t length, uint8_t *buffer);
 // NAND_ReturnType NAND_Spare_Read(PhysicalAddrs *addr, uint8_t *buffer);
+
+NAND_ReturnType NAND_Cache_Read(uint16_t, uint16_t length, uint8_t *buffer);
+NAND_ReturnType NAND_Page_Load(uint32_t paddr);
 
 /* write operations */
 NAND_ReturnType NAND_Page_Program(PhysicalAddrs *addr,  uint16_t length, uint8_t *buffer);
