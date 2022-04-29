@@ -54,6 +54,11 @@ NAND_ReturnType NAND_Init(void) {
         return Ret_WrongID;
     }
 
+    /* Unlock the block locks (page 38) */
+    if (NAND_Set_Features(SPI_NAND_BLKLOCK_REG_ADDR, 0) != Ret_Success) {
+        return Ret_Failed;
+    }
+
     // TODO:
     // build bad block table
     // finally, run power on self test (POST)

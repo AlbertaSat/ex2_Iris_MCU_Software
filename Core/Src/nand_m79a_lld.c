@@ -65,30 +65,37 @@ NAND_ReturnType NAND_Reset(void) {
  * @param[in] None
  * @return NAND_ReturnType 
  */
+
+#define MAX_ATTEMPTS 10
+
 NAND_ReturnType NAND_Wait_Until_Ready(void) {
     uint8_t timeout_counter = 0;
-    uint8_t max_attempts = 100;
 
-    /* SPI Transaction set up */
-    uint8_t data_rx;
+    /* SPI Transaction set up for NAND_SPI_Receive */
+    uint8_t data_rx = 0;
     SPI_Params rx = { .buffer = &data_rx, .length = 1 };
 
-    /* check once if any operations in progress */
-    NAND_ReturnType status = NAND_Check_Busy();
+    NAND_Get_Features(SPI_NAND_STATUS_REG_ADDR, &data_rx);
 
     /* if busy, keep polling for until reaching max_attempts. if still busy, return busy */
-    if (status == Ret_NANDBusy) {
-        while (CHECK_OIP(data_rx)) {
-            if (timeout_counter < max_attempts) {
-                NAND_SPI_Receive(&rx);
-                timeout_counter += 1;
-            } else {
-                return Ret_NANDBusy;
-            }
-        }
+    while (CHECK_OIP(data_rx)) {
+	if (timeout_counter < MAX_ATTEMPTS) {
+	    NAND_SPI_Receive(&rx);
+	    //NAND_Get_Features(SPI_NAND_STATUS_REG_ADDR, &data_rx);
+	    timeout_counter += 1;
+	} else {
+	    return Ret_NANDBusy;
+	}
     }
+
+    /* Check the Program Failed bit */
+    if (data_rx & SPI_NAND_PF) {
+	return Ret_Failed;
+    }
+
     return Ret_Success;
 }
+
 
 /**
  * @brief Send a dummy byte to NAND via SPI
@@ -135,6 +142,32 @@ NAND_ReturnType NAND_Read_ID(NAND_ID *nand_ID) {
     return Ret_Success;
 }
 
+NAND_ReturnType NAND_Read_Param_Page(NAND_Parameter_Page_t *parameters) {
+    uint8_t cfg_data = 0;
+    NAND_ReturnType rc;
+
+    rc = NAND_Get_Features(SPI_NAND_CFG_REG_ADDR, &cfg_data);
+    if (rc != Ret_Success) {
+        return rc;
+    }
+
+    /* Set CFG1 = 1 */
+    rc = NAND_Set_Features(SPI_NAND_CFG_REG_ADDR, (cfg_data | 0x40));
+    if (rc != Ret_Success) {
+        return rc;
+    }
+
+    rc = NAND_Page_Load(1);
+    if (rc != Ret_Success) {
+        return rc;
+    }
+
+    rc = NAND_Cache_Read(0, sizeof(*parameters), (uint8_t *) parameters);
+
+    rc |= NAND_Set_Features(SPI_NAND_CFG_REG_ADDR, cfg_data);
+    return rc;
+}
+
 /******************************************************************************
  *                              Feature Operations
  *****************************************************************************/
@@ -179,9 +212,7 @@ NAND_ReturnType NAND_Get_Features(RegisterAddr reg_addr, uint8_t *reg) {
     SPI_Params tx = { .buffer = command, .length = 2 };
     SPI_Params rx = { .buffer = reg,     .length = 1 };
 
-    NAND_SPI_ReturnType status = NAND_SPI_SendReceive(&tx, &rx);
-
-    if (status == SPI_OK) {
+    if (NAND_SPI_SendReceive(&tx, &rx) == SPI_OK) {
         return Ret_Success;
     } else {
         return Ret_Failed;
@@ -209,9 +240,7 @@ NAND_ReturnType NAND_Set_Features(RegisterAddr reg_addr, uint8_t reg) {
     uint8_t command[] = {SPI_NAND_SET_FEATURES, reg_addr, reg};
     SPI_Params tx = { .buffer = command, .length = 3 };
 
-    NAND_SPI_ReturnType status = NAND_SPI_Send(&tx);
-
-    if (status == SPI_OK) {
+    if (NAND_SPI_Send(&tx) == SPI_OK) {
         return Ret_Success;
     } else {
         return Ret_Failed;
@@ -222,6 +251,35 @@ NAND_ReturnType NAND_Set_Features(RegisterAddr reg_addr, uint8_t reg) {
 /******************************************************************************
  *                              Read Operations
  *****************************************************************************/
+
+NAND_ReturnType NAND_Cache_Read(uint16_t col, uint16_t length, uint8_t *buffer) {
+    /* Command 3: READ FROM CACHE. See datasheet page 18 for details */
+    uint8_t command_cache_read[4] = {SPI_NAND_READ_CACHE_X1, BYTE_1(col), BYTE_0(col), DUMMY_BYTE};
+
+    SPI_Params tx_cache_read = {.buffer = command_cache_read, .length = 4};
+    SPI_Params rx_cache_read = {.buffer = buffer, .length = length};
+    // TODO: Check if we can read just 2048 data bits per page. Datasheet shows 2176 bytes including the spare locations.  
+
+    if (NAND_SPI_SendReceive(&tx_cache_read, &rx_cache_read) != SPI_OK) {
+        return Ret_ReadFailed;
+    }
+
+    return Ret_Success;
+}
+
+NAND_ReturnType NAND_Page_Load(uint32_t paddr) {
+    /* PAGE READ. See datasheet page 16 for details */
+    uint8_t command_page_read[4] = {SPI_NAND_PAGE_READ, BYTE_2(paddr), BYTE_1(paddr), BYTE_0(paddr)};
+
+    SPI_Params tx_page_read = {.buffer = command_page_read, .length = 4};
+
+    if (NAND_SPI_Send(&tx_page_read) != SPI_OK) {
+        return Ret_ReadFailed;
+    }
+
+    /* Command 2: Wait for data to be loaded into cache */
+    return NAND_Wait_Until_Ready();
+}
 
 /**
  * @brief Read bytes stored in a page.
@@ -236,45 +294,18 @@ NAND_ReturnType NAND_Set_Features(RegisterAddr reg_addr, uint8_t reg) {
  * @return NAND_ReturnType 
  */
 NAND_ReturnType NAND_Page_Read(PhysicalAddrs *addr, uint16_t length, uint8_t *buffer) {
-    
-    NAND_SPI_ReturnType status;
+    NAND_ReturnType status;
 
     if (length > PAGE_DATA_SIZE) {
         return Ret_ReadFailed;
     }
 
     /* Command 1: PAGE READ. See datasheet page 16 for details */
-    uint32_t row = addr->rowAddr;
-    uint8_t command_page_read[4] = {SPI_NAND_PAGE_READ, BYTE_2(row), BYTE_1(row), BYTE_0(row)};
-
-    SPI_Params tx_page_read = {.buffer = command_page_read, .length = 4};
-
-    status = NAND_SPI_Send(&tx_page_read);
-
-    if (status != SPI_OK) {
-        return Ret_ReadFailed;
+    if ((status = NAND_Page_Load(addr->rowAddr)) != Ret_Success) {
+	return status;
     }
-
-    /* Command 2: Wait for data to be loaded into cache */
-    if (NAND_Wait_Until_Ready() != Ret_Success) {
-        return Ret_ReadFailed;
-    }
-
     /* Command 3: READ FROM CACHE. See datasheet page 18 for details */
-    uint32_t col = addr->colAddr;
-    uint8_t command_cache_read[4] = {SPI_NAND_READ_CACHE_X1, BYTE_1(col), BYTE_0(col), DUMMY_BYTE};
-
-    SPI_Params tx_cache_read = {.buffer = command_cache_read, .length = 4};
-    SPI_Params rx_cache_read = {.buffer = buffer, .length = length};
-    // TODO: Check if we can read just 2048 data bits per page. Datasheet shows 2176 bytes including the spare locations.  
-
-    status = NAND_SPI_SendReceive(&tx_cache_read, &rx_cache_read);
-
-    if (status != SPI_OK) {
-        return Ret_ReadFailed;
-    }
-
-    return Ret_Success;
+    return NAND_Cache_Read(addr->colAddr, length, buffer);
 }
 
 
@@ -302,9 +333,6 @@ NAND_ReturnType NAND_Page_Read(PhysicalAddrs *addr, uint16_t length, uint8_t *bu
  * @return NAND_ReturnType 
  */
 NAND_ReturnType NAND_Page_Program(PhysicalAddrs *addr, uint16_t length, uint8_t *buffer) {
-
-    NAND_SPI_ReturnType status;
-
     if (length > PAGE_DATA_SIZE) {
         return Ret_WriteFailed;
     }
@@ -320,35 +348,21 @@ NAND_ReturnType NAND_Page_Program(PhysicalAddrs *addr, uint16_t length, uint8_t 
     SPI_Params tx_data = {.buffer = buffer, .length = PAGE_DATA_SIZE}; 
     // TODO: Check if we can write just 2048 data bits per page. Datasheet shows 2176 bytes including the spare locations.  
 
-    status = NAND_SPI_Send_Command_Data(&tx_cmd, &tx_data);
-
-    if (status != SPI_OK) {
+    if (NAND_SPI_Send_Command_Data(&tx_cmd, &tx_data) != SPI_OK) {
         return Ret_WriteFailed;
     }
 
     /* Command 3: PROGRAM EXECUTE. See datasheet page 31 for details */
     uint32_t row = addr->rowAddr;
     uint8_t command_exec[4] = {SPI_NAND_PROGRAM_EXEC, BYTE_2(row), BYTE_1(row), BYTE_0(row)};
-
     SPI_Params exec_cmd = {.buffer = command_exec, .length = 4};
 
-    status = NAND_SPI_Send(&exec_cmd);
-
-    if (status != SPI_OK) {
+    if (NAND_SPI_Send(&exec_cmd) != SPI_OK) {
         return Ret_WriteFailed;
     }
 
     /* Make sure the device is ready and then disable writes. */
-    if (NAND_Wait_Until_Ready() != Ret_Success) {
-        return Ret_WriteFailed;
-    }
-
-    /* Command 4: WRITE DISABLE */
-    __write_disable();
-
-    // TODO: check program fail bit in status register and return that. 
-
-    return Ret_Success;
+    return NAND_Wait_Until_Ready();
 }
 
 
