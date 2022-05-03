@@ -52,8 +52,6 @@
 NAND_ReturnType __map_logical_addr(NAND_Addr *address, PhysicalAddrs *addr_struct);
 
 
-
-
 /******************************************************************************
  *                              List of APIs
  *****************************************************************************/
@@ -63,9 +61,20 @@ NAND_ReturnType NAND_Init(void);
 NAND_ReturnType NAND_Read (NAND_Addr *address, uint16_t length, uint8_t *buffer);
 NAND_ReturnType NAND_Write(NAND_Addr *address, uint16_t length, uint8_t *buffer);
 
+/* A simple append-only file system API */
 
+struct file_handle;
+typedef struct file_handle FileHandle_t;
 
+NAND_ReturnType NAND_File_Format(int reformat);
 
+FileHandle_t* NAND_File_Create(uint32_t id);
+FileHandle_t* NAND_File_Open(int32_t relative_offset);
 
+NAND_ReturnType NAND_File_Write(FileHandle_t *fh, uint16_t length, uint8_t *buffer);
+NAND_ReturnType NAND_File_Read(FileHandle_t *fh, uint16_t *length, uint8_t *buffer);
+
+NAND_ReturnType NAND_File_Write_Close(FileHandle_t *fh);
+NAND_ReturnType NAND_File_Read_Close(FileHandle_t *fh);
 
 #endif /* NAND_M79A_H */
