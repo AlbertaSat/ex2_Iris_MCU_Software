@@ -80,10 +80,8 @@ static void MX_USART1_UART_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-//static inline void DBG_PUT(char *str) {
-//    HAL_UART_Transmit(&huart1, (uint8_t *) str, strlen(str), 100);
-//}
-
+uint8_t state = receiving;
+uint8_t RX_Data = 0x00;
 /* USER CODE END 0 */
 
 /**
@@ -93,7 +91,6 @@ static void MX_USART1_UART_Init(void);
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-  char buf[64];
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -121,56 +118,32 @@ int main(void)
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
   // init nand flash
-  NAND_SPI_Init(&hspi2);
-
-
-
+//  NAND_SPI_Init(&hspi2);
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-   char cmd[64];
-   char *ptr = cmd;
-   // manually iterate versioning
-   DBG_PUT("-----------------------------------\r\n");
-   DBG_PUT("Iris Electronics Unit Test Software\r\nVersion 1.05.0; 2022-03-21\r\n");
-   DBG_PUT("-----------------------------------\r\n");
-//   init_temp_sensors();
-//   sensor_togglepower(1);
-//   reset_sensors();
-   while (1)
-   {
-       HAL_StatusTypeDef rc = HAL_UART_Receive(&huart1, (uint8_t *) ptr, 1, 20000);
+  while (1)
+  {
+//	  switch (state){
+//			case idle:
+//				break;
+//			case receiving:
+//				HAL_SPI_Receive_IT(&hspi1, &RX_Data, sizeof(RX_Data));
+//				state = idle;
+//				break;
+//			case transmitting:
+//				HAL_SPI_Transmit_IT(&hspi1, &RX_Data, sizeof(RX_Data));
+//				break;
+//			case handling_command:
+//				handle_command(RX_Data);
+//				state = receiving;
+//				break;
+//		  }
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-       /* Build up the command one byte at a time */
-       if (rc != HAL_OK) {
-           if (rc != HAL_TIMEOUT) {
-               sprintf(buf, "UART read error: %x\r\n", rc);
-               DBG_PUT(buf);
-           }
-           continue;
-       }
-       /* Command is complete when we get EOL of some sort */
-       if (*ptr == '\n' || *ptr == '\r') {
-           *ptr = 0;
-           DBG_PUT("\r\n");
-           handle_command(cmd);
-           ptr = cmd;
-       }
-       else {
-           *(ptr + 1) = 0;
-           DBG_PUT(ptr);
-
-           if (*ptr == 0x7f) { // handle backspace
-               if (ptr > cmd)
-                   --ptr;
-           }
-           else
-               ++ptr;
-       }
-   }
+  }
   /* USER CODE END 3 */
 }
 
@@ -333,7 +306,7 @@ static void MX_SPI1_Init(void)
   hspi1.Init.DataSize = SPI_DATASIZE_8BIT;
   hspi1.Init.CLKPolarity = SPI_POLARITY_LOW;
   hspi1.Init.CLKPhase = SPI_PHASE_1EDGE;
-  hspi1.Init.NSS = SPI_NSS_SOFT;
+  hspi1.Init.NSS = SPI_NSS_HARD_INPUT;
   hspi1.Init.FirstBit = SPI_FIRSTBIT_MSB;
   hspi1.Init.TIMode = SPI_TIMODE_DISABLE;
   hspi1.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
@@ -438,16 +411,16 @@ static void MX_GPIO_Init(void)
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOA, USART2_CS1_Pin|USART2_CS2_Pin|USART2_MOSI_Pin|USART2_CLK_Pin
-                          |WP__Pin|CAM_EN_Pin|NAND_CS2_Pin|SPI1_NSS_Pin, GPIO_PIN_RESET);
+                          |WP__Pin|CAM_EN_Pin|NAND_CS2_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOB, TEST_OUT1_Pin|NAND_CS1_Pin|CAN_TX_Pin|CAN_RX_Pin
                           |CAN_S_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pins : USART2_CS1_Pin USART2_CS2_Pin USART2_MOSI_Pin USART2_CLK_Pin
-                           CAM_EN_Pin NAND_CS2_Pin SPI1_NSS_Pin */
+                           CAM_EN_Pin NAND_CS2_Pin */
   GPIO_InitStruct.Pin = USART2_CS1_Pin|USART2_CS2_Pin|USART2_MOSI_Pin|USART2_CLK_Pin
-                          |CAM_EN_Pin|NAND_CS2_Pin|SPI1_NSS_Pin;
+                          |CAM_EN_Pin|NAND_CS2_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
@@ -478,7 +451,20 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+void HAL_SPI_TxCpltCallback (SPI_HandleTypeDef * hspi)
+{
+	state = receiving;
+}
 
+void HAL_SPI_RxCpltCallback(SPI_HandleTypeDef * hspi)
+
+{
+	state = handling_command;
+	char buf[64];
+	sprintf(buf, "0x%x\r\n", RX_Data);
+	DBG_PUT(buf);
+
+}
 /* USER CODE END 4 */
 
 /**

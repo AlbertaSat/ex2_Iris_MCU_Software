@@ -522,93 +522,79 @@ housekeeping_packet_t get_housekeeping_packet(){
 	return hk;
 }
 
-void handle_command(char *cmd) {
-	char *c;
+void handle_command(uint8_t cmd) {
+
 	housekeeping_packet_t hk;
-    switch(*cmd) {
-    case 'g':
+    switch(cmd) {
+    case GET_HK:
     	hk = get_housekeeping_packet();
     	decode_hk_packet(hk);
     	break;
-    case 'c':
+    case CAPTURE_IMAGE:
     	handle_capture_cmd(cmd);
     	break;
-    case 'f':
-        handle_format_cmd(cmd);
-        break;
+//    case 'f':
+//        handle_format_cmd(cmd);
+//        break;
 
-    case 'r':
-		handle_reg_cmd(cmd);
+//    case 'r':
+//		handle_reg_cmd(cmd);
+//		break;
+//
+//    case 'w':
+//        handle_width_cmd(cmd);
+//        break;
+//    case 't':
+//    	//CHECK_LED_I2C_SPI_TS();
+//    	for (int i=0; i<150; i++){
+//    	testTempSensor();
+//    	HAL_Delay(1000);
+//    	}
+//    	break;
+//    case 's':
+//    	switch(*(cmd+1)){
+//			case 'c':
+//				scan_i2c();
+//				break;
+//
+//			case 'a':;
+//				const char *c = next_token(cmd);
+//				switch(*c){
+//					case 'v':
+//						handle_saturation_cmd(c, VIS_SENSOR);
+//						break;
+//					case 'n':
+//						handle_saturation_cmd(c, NIR_SENSOR);
+//						break;
+//					default:
+//						DBG_PUT("Target Error\r\n");
+//						break;
+//				}
+//    	}
+//    	break;
+	case SENSOR_ACTIVE:
+		sensor_togglepower(1);
 		break;
-
-    case 'w':
-        handle_width_cmd(cmd);
-        break;
-    case 't':
-    	//CHECK_LED_I2C_SPI_TS();
-    	for (int i=0; i<150; i++){
-    	testTempSensor();
-    	HAL_Delay(1000);
-    	}
-    	break;
-    case 's':
-    	switch(*(cmd+1)){
-			case 'c':
-				scan_i2c();
-				break;
-
-			case 'a':;
-				const char *c = next_token(cmd);
-				switch(*c){
-					case 'v':
-						handle_saturation_cmd(c, VIS_SENSOR);
-						break;
-					case 'n':
-						handle_saturation_cmd(c, NIR_SENSOR);
-						break;
-					default:
-						DBG_PUT("Target Error\r\n");
-						break;
-				}
-    	}
-    	break;
-
-    case 'p':	; //janky use of semicolon??
-    	const char *p = next_token(cmd);
-    	switch(*(p+1)){
-    		case 'n':
-    			sensor_togglepower(1);
-    			break;
-    		case 'f':
-    			sensor_togglepower(0);
-    			break;
-    		default:
-    			DBG_PUT("Use either on or off\r\n");
-    			break;
-    	}
-    	break;
-	case 'i':;
-		switch(*(cmd+1)){
-			case '2':
-				handle_i2c16_8_cmd(cmd); // needs to handle 16 / 8 bit stuff
-				break;
-			default:;
-				const char *i = next_token(cmd);
-				switch(*i){
-					case 'n':
-						init_nand_flash();
-						break;
-					case 's':
-						reset_sensors();
-						break;
-				}
-		}
+	case SENSOR_IDLE:
+		sensor_togglepower(0);
 		break;
-
-
-    case 'h':
-    default:
-        help();
-        break;
-    }
+	}
+//	case 'i':;
+//		switch(*(cmd+1)){
+//			case '2':
+//				handle_i2c16_8_cmd(cmd); // needs to handle 16 / 8 bit stuff
+//				break;
+//			default:;
+//				const char *i = next_token(cmd);
+//				switch(*i){
+//					case 'n':
+//						init_nand_flash();
+//						break;
+//					case 's':
+//						reset_sensors();
+//						break;
+//				}
+//		}
+//		break;
+//    }
 }
