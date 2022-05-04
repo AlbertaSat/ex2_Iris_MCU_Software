@@ -24,6 +24,7 @@
  * to physical locations using low level drivers.
  */
 
+#include <string.h>
 #include "nand_m79a.h"
 
 /******************************************************************************
@@ -67,9 +68,261 @@ NAND_ReturnType NAND_Init(void) {
 
 }
 
+/* A simple append-only file system. The SUPER_BLOCK keeps the start block of each file
+ * in an inode, which also keeps a 4-byte user-specified file identifier. The extent of
+ * each file is from the sblock to the next inode's sblock (minus 1). Files are written
+ * by writing to the next PAGE_DATA_SIZE block, wrapping around to SUPER_BLOCK+1 when the
+ * end of the device is reached. Reads are normally from the last file written, which is
+ * at offset 0 from the head of the circular list of inodes. However, all the old files
+ * remain until they are over-written, so the open API allows any inode to be specified.
+ */
+
+/* Use this block for the Super Block. Note that it may have to be changed if we wear it out! */
+#define SUPER_BLOCK 0
+static uint8_t Super_Block[PAGE_DATA_SIZE];
+
+/* Use this to mark the file system as formatted. */
+static const char* Magic = "NFS 0.1";
+#define MAGIC_LEN 8
+
+struct inode {
+    uint32_t id;
+    uint32_t sblock;
+};
+
+/* Super block contents. The inodes array is a circular list with head at next_inode. */
+struct super_block {
+    char magic[MAGIC_LEN];
+    uint32_t inode_cnt;
+    uint32_t next_inode;
+    struct inode inodes[0];
+};
+
+/* The file blocks can also be viewed as an array managed as a circular list.
+ * The address of the last block on the device is MAX_BLOCK_PAGE-1.
+ */
+#define MAX_BLOCK_PAGE (NUM_BLOCKS * NUM_PAGES_PER_BLOCK)
+
+/* The file handle is used to keep track of the next block for I/O. last_block is used
+ * to remember EOF for reads.
+ */
+struct file_handle {
+    uint32_t next_block;
+    uint32_t last_block;
+};
+
+char buf[64];
+
+static inline int check_magic(const struct super_block *sb) {
+    return memcmp(sb->magic, Magic, MAGIC_LEN);
+}
+
+/**
+ * @brief Initialize the File System by configuring the Super Block.
+ * @note  This function must be called before the File System is used for the first time.
+ *
+ * @param[in] reformat     force reformatting by setting this parameter to non-zero 
+ * @return NAND_ReturnType Ret_Success if the Super Block was written successfully
+ */
+NAND_ReturnType NAND_File_Format(int reformat) {
+    NAND_ReturnType rc = Ret_Success;
+    PhysicalAddrs paddr = { 0 };
+    struct super_block *sblock = (struct super_block *) Super_Block;
+    
+    paddr.rowAddr = SUPER_BLOCK;
+    if ((rc = NAND_Page_Read(&paddr, PAGE_DATA_SIZE, Super_Block)) != Ret_Success) {
+        return rc;
+    }
+
+    /* If the Magic number is already present, then the disk has already been formatted).
+     * You can reformat the chip by setting the reformat argument to non-zero.
+     */
+    if (reformat == 0) {
+        if (check_magic(sblock) == 0) {
+            return Ret_Success;
+        }
+    }
+
+    /* Initialize the super block */
+    memset(Super_Block, 0, sizeof(Super_Block));
+    memcpy(sblock->magic, Magic, MAGIC_LEN);
+
+    sblock->inode_cnt = (PAGE_DATA_SIZE - sizeof(struct super_block))/sizeof(struct inode);
+    /* initialize the first inode */
+    int ix = 0;
+    sblock->next_inode = ix;
+    sblock->inodes[ix].id = ix;
+    sblock->inodes[ix].sblock = SUPER_BLOCK + 1;
+
+    /* Format the file system by writing the super block. */
+    return NAND_Page_Program(&paddr, sizeof(Super_Block), Super_Block);    
+}
+
+/* Using a static FP makes the API look a bit like fopen(), but does restrict us to one open
+ * file at a time.
+ */
+static struct file_handle fh;
+
+/**
+ * @brief A file is created by getting a FileHandle_t* that points to the next block to write.
+ *
+ * @param[in] id         An optional 4 byte "name" for the file.
+ * @return FileHandle_t* An opaque cookie used for each write.
+ */
+FileHandle_t* NAND_File_Create(uint32_t id) {
+    struct super_block *sblock = (struct super_block *) Super_Block;
+
+    if (check_magic(sblock) != 0) {
+        return 0; // FS is not formatted
+    }
+
+    uint32_t ix = sblock->next_inode;
+    sblock->inodes[ix].id = id;
+    fh.next_block = sblock->inodes[ix].sblock;
+
+    return &fh;
+}
+
+/**
+ * @brief Update the super block to remember the file location.
+ *
+ * @param[in] fh           The file handle returned by NAND_File_Create ()
+ * @return NAND_ReturnType Ret_Success if the Super Block was written successfully
+ */
+NAND_ReturnType NAND_File_Write_Close(FileHandle_t *fh) {
+    struct super_block *sblock = (struct super_block *) Super_Block;
+
+    /* Write the end of this file as the start block of the next file */
+    uint32_t ix = sblock->next_inode + 1;
+    if (ix >= sblock->inode_cnt) {
+        ix = 0; // reached the end of the super-block - wrap around
+    }
+    sblock->next_inode = ix;
+    sblock->inodes[ix].sblock = fh->next_block;
+
+    /* Save the new super block contents. */
+    PhysicalAddrs paddr = { .rowAddr = SUPER_BLOCK, .colAddr = 0 };
+    return NAND_Page_Program(&paddr, sizeof(Super_Block), Super_Block);    
+}
+
+/**
+ * @brief A file is opened for reading by finding its start block in the inode list
+ *
+ * @param[in] relative_offset Use the inode of the file this far back from the head
+ *                            of the inode list. For example, 0 is the current head,
+ *                            which is the most recent file, 1 is the one before that etc.
+ * @return FileHandle_t* An opaque cookie used for each read.
+ */
+FileHandle_t* NAND_File_Open(int32_t relative_offset) {
+    struct super_block *sblock = (struct super_block *) Super_Block;
+
+    if (check_magic(sblock) != 0) {
+        return 0; // FS is not formatted
+    }
+
+    if (relative_offset >= sblock->inode_cnt) {
+        return 0; // relative offset can't wrap around
+    }
+
+    /* Caveat emptor: don't go too far back, i.e. to uninitialized inodes! */
+    int32_t ix = sblock->next_inode - 1;
+    ix -= relative_offset;
+    if (ix < 0) {
+        ix += sblock->inode_cnt;
+    }
+    fh.next_block = sblock->inodes[ix].sblock;
+    if (ix == (sblock->inode_cnt - 1)) {  // wrap around
+        fh.last_block = sblock->inodes[0].sblock;
+    }
+    else {
+        fh.last_block = sblock->inodes[ix + 1].sblock;
+    }
+
+    if (fh.next_block >= fh.last_block) {
+        /* The only way we can start with the last block less than the first block
+         * is if the file wraps around the end of the device. Unwrap it for now, by
+         * adding MAX_BLOCK_PAGE, then adjust later when the read wraps.
+         */
+        fh.last_block += MAX_BLOCK_PAGE;
+    }
+
+    return &fh;
+}
+
+NAND_ReturnType NAND_File_Read_Close(FileHandle_t *fh) {
+    /* We don't have to update the super block on a read, so close is just for symmetry */
+    return Ret_Success;
+}
+
 /******************************************************************************
  *                              Reads and Writes
  *****************************************************************************/
+
+
+/**
+ * @brief Read the next block in the file
+ * 
+ * @param[in,out] fh        pointer to file handle returned by NAND_Open
+ * @param[in,out] length    number of bytes to read - must equal PAGE_DATA_SIZE
+ * @param[out]    buffer    pointer to the start of the data read from NAND
+ * @return NAND_ReturnType  Ret_Success if the block was written successfully
+ */
+NAND_ReturnType NAND_File_Read(FileHandle_t *fh, uint16_t *length, uint8_t *buffer) {
+    if (fh->next_block >= fh->last_block) {
+        *length = 0;
+        return Ret_Success; // End of File reached
+    }
+    if (length != PAGE_DATA_SIZE) {
+        return Ret_Failed; // Must read full blocks
+    }
+
+    PhysicalAddrs paddr = { .rowAddr = fh->next_block, .colAddr = 0 };
+    NAND_ReturnType rc;
+    if ((rc = NAND_Page_Read(&paddr, PAGE_DATA_SIZE, buffer)) != Ret_Success) {
+        return rc; // An actual read failure
+    }
+
+    fh->next_block += 1;
+    if (fh->next_block >= MAX_BLOCK_PAGE) {
+        /* We've reached the end of the device. Wrap around to the beginning,
+         * but step over the super block. Also re-wrap the end_block.
+         */
+        fh->next_block = SUPER_BLOCK + 1;
+        fh->last_block -= MAX_BLOCK_PAGE;
+    }
+    return rc;
+ }
+
+ /**
+ * @brief Write the next block in the file
+ * 
+ * @param[in,out] fh       pointer to file handle returned by NAND_Open
+ * @param[in] length       number of bytes to write - must equal PAGE_DATA_SIZE
+ * @param[in] buffer       pointer to the start of the data to write to NAND
+ * @return NAND_ReturnType Ret_Success if the block was written successfully
+ */
+NAND_ReturnType NAND_File_Write(FileHandle_t *fh, uint16_t length, uint8_t *buffer) {
+    PhysicalAddrs paddr = { .rowAddr = fh->next_block, .colAddr = 0 };
+    NAND_ReturnType rc;
+
+    if (length != PAGE_DATA_SIZE) {
+        return Ret_Failed; // Must write full blocks
+    }
+
+    if ((rc = NAND_Page_Program(&paddr, PAGE_DATA_SIZE, buffer)) != Ret_Success) {
+        return rc; // An actual write failure
+    }
+
+    fh->next_block += 1;
+    if (fh->next_block >= MAX_BLOCK_PAGE) {
+        /* We've reached the end of the device. Wrap around to the beginning,
+         * but step over the super block.
+         */
+        fh->next_block = SUPER_BLOCK + 1;
+    }
+    return rc;
+ }
+
 
 /**
  * @brief Work in progress; Read an arbitrary amount of bytes from the NAND
