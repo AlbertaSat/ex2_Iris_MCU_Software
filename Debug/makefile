@@ -34,34 +34,34 @@ $(wildcard ../makefile.init) \
 $(wildcard ../makefile.targets) \
 
 
-BUILD_ARTIFACT_NAME := SPI_CH_TEST
+BUILD_ARTIFACT_NAME := ex2_Iris_MCU_Software
 BUILD_ARTIFACT_EXTENSION := elf
 BUILD_ARTIFACT_PREFIX :=
 BUILD_ARTIFACT := $(BUILD_ARTIFACT_PREFIX)$(BUILD_ARTIFACT_NAME)$(if $(BUILD_ARTIFACT_EXTENSION),.$(BUILD_ARTIFACT_EXTENSION),)
 
 # Add inputs and outputs from these tool invocations to the build variables 
 EXECUTABLES += \
-SPI_CH_TEST.elf \
+ex2_Iris_MCU_Software.elf \
 
 MAP_FILES += \
-SPI_CH_TEST.map \
+ex2_Iris_MCU_Software.map \
 
 SIZE_OUTPUT += \
 default.size.stdout \
 
 OBJDUMP_LIST += \
-SPI_CH_TEST.list \
+ex2_Iris_MCU_Software.list \
 
 
 # All Target
 all: main-build
 
 # Main-build Target
-main-build: SPI_CH_TEST.elf secondary-outputs
+main-build: ex2_Iris_MCU_Software.elf secondary-outputs
 
 # Tool invocations
-SPI_CH_TEST.elf SPI_CH_TEST.map: $(OBJS) $(USER_OBJS) /home/liam/Desktop/SPI_CH_TEST/STM32L071CBTX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-gcc -o "SPI_CH_TEST.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m0plus -T"/home/liam/Desktop/SPI_CH_TEST/STM32L071CBTX_FLASH.ld" --specs=nosys.specs -Wl,-Map="SPI_CH_TEST.map" -Wl,--gc-sections -static --specs=nano.specs -mfloat-abi=soft -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+ex2_Iris_MCU_Software.elf ex2_Iris_MCU_Software.map: $(OBJS) $(USER_OBJS) /home/liam/Desktop/ex2_Iris_MCU_Software/STM32L071CBTX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-gcc -o "ex2_Iris_MCU_Software.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m0plus -T"/home/liam/Desktop/ex2_Iris_MCU_Software/STM32L071CBTX_FLASH.ld" --specs=nosys.specs -Wl,-Map="ex2_Iris_MCU_Software.map" -Wl,--gc-sections -static --specs=nano.specs -mfloat-abi=soft -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 
@@ -70,14 +70,14 @@ default.size.stdout: $(EXECUTABLES) makefile objects.list $(OPTIONAL_TOOL_DEPS)
 	@echo 'Finished building: $@'
 	@echo ' '
 
-SPI_CH_TEST.list: $(EXECUTABLES) makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-objdump -h -S $(EXECUTABLES) > "SPI_CH_TEST.list"
+ex2_Iris_MCU_Software.list: $(EXECUTABLES) makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-objdump -h -S $(EXECUTABLES) > "ex2_Iris_MCU_Software.list"
 	@echo 'Finished building: $@'
 	@echo ' '
 
 # Other Targets
 clean:
-	-$(RM) SPI_CH_TEST.elf SPI_CH_TEST.list SPI_CH_TEST.map default.size.stdout
+	-$(RM) default.size.stdout ex2_Iris_MCU_Software.elf ex2_Iris_MCU_Software.list ex2_Iris_MCU_Software.map
 	-@echo ' '
 
 secondary-outputs: $(SIZE_OUTPUT) $(OBJDUMP_LIST)

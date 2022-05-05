@@ -85,6 +85,7 @@ void Error_Handler(void);
 #define receiving 1
 #define transmitting 2
 #define handling_command 3
+#define processin 4
 
 
 

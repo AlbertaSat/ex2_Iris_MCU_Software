@@ -96,7 +96,7 @@ int main(void)
   /* MCU Configuration--------------------------------------------------------*/
 
   /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
-  HAL_Init();
+	  HAL_Init();
 
   /* USER CODE BEGIN Init */
 
@@ -133,15 +133,21 @@ int main(void)
 				break;
 			case receiving:
 				state = idle;
-				HAL_SPI_Receive_IT(&hspi1, &RX_Data, sizeof(RX_Data));
+//				HAL_SPI_Receive_IT(&hspi1, &RX_Data, sizeof(RX_Data));
+				HAL_SPI_TransmitReceive_IT(&hspi1, &RX_Data, &RX_Data, sizeof(RX_Data));
 				break;
 			case transmitting:
+				state = idle;
 				HAL_SPI_Transmit_IT(&hspi1, &RX_Data, sizeof(RX_Data));
 				break;
 			case handling_command:
 				handle_command(RX_Data);
-				state = receiving;
+				state = transmitting;
+//				state = processin;
 				break;
+//			case processin:
+//				break;
+//				}
 		  }
     /* USER CODE END WHILE */
 
@@ -454,6 +460,9 @@ static void MX_GPIO_Init(void)
 void HAL_SPI_TxCpltCallback (SPI_HandleTypeDef * hspi)
 {
 	state = receiving;
+	char buf[64];
+	sprintf(buf, "Sent 0x%x\r\n", RX_Data);
+	DBG_PUT(buf);
 }
 
 void HAL_SPI_RxCpltCallback(SPI_HandleTypeDef * hspi)
@@ -464,6 +473,13 @@ void HAL_SPI_RxCpltCallback(SPI_HandleTypeDef * hspi)
 	sprintf(buf, "Received 0x%x\r\n", RX_Data);
 	DBG_PUT(buf);
 
+}
+void HAL_SPI_TxRxCpltCallback(SPI_HandleTypeDef * hspi)
+{
+		state = receiving;
+//		char buf[64];
+//		sprintf(buf, "Received 0x%x\r\n", RX_Data);
+//		DBG_PUT(buf);
 }
 /* USER CODE END 4 */
 
