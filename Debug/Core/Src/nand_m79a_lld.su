@@ -1,0 +1,15 @@
+../Core/Src/nand_m79a_lld.c:39:17:NAND_Reset	32	static
+../Core/Src/nand_m79a_lld.c:71:17:NAND_Wait_Until_Ready	32	static
+../Core/Src/nand_m79a_lld.c:105:17:NAND_Send_Dummy_Byte	32	static
+../Core/Src/nand_m79a_lld.c:129:17:NAND_Read_ID	48	static
+../Core/Src/nand_m79a_lld.c:145:17:NAND_Read_Param_Page	32	static
+../Core/Src/nand_m79a_lld.c:184:17:NAND_Check_Busy	16	static
+../Core/Src/nand_m79a_lld.c:210:17:NAND_Get_Features	40	static
+../Core/Src/nand_m79a_lld.c:236:17:NAND_Set_Features	32	static
+../Core/Src/nand_m79a_lld.c:255:17:NAND_Cache_Read	40	static
+../Core/Src/nand_m79a_lld.c:270:17:NAND_Page_Load	32	static
+../Core/Src/nand_m79a_lld.c:296:17:NAND_Page_Read	40	static
+../Core/Src/nand_m79a_lld.c:335:17:NAND_Page_Program	64	static
+../Core/Src/nand_m79a_lld.c:393:17:NAND_Block_Erase	32	static
+../Core/Src/nand_m79a_lld.c:455:21:__write_enable	24	static
+../Core/Src/nand_m79a_lld.c:467:21:__write_disable	24	static

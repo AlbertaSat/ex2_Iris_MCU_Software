@@ -55,7 +55,7 @@
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
-I2C_HandleTypeDef hi2c1;
+ I2C_HandleTypeDef hi2c1;
 I2C_HandleTypeDef hi2c2;
 
 SPI_HandleTypeDef hspi1;
@@ -119,27 +119,30 @@ int main(void)
   /* USER CODE BEGIN 2 */
   // init nand flash
 //  NAND_SPI_Init(&hspi2);
+  DBG_PUT("-----------------------------------\r\n");
+  DBG_PUT("Iris Electronics Long Duration Test Software\r\nVersion 1.01.0; 2022-05-04\r\nSlave Side\r\n");
+  DBG_PUT("-----------------------------------\r\n");
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-//	  switch (state){
-//			case idle:
-//				break;
-//			case receiving:
-//				HAL_SPI_Receive_IT(&hspi1, &RX_Data, sizeof(RX_Data));
-//				state = idle;
-//				break;
-//			case transmitting:
-//				HAL_SPI_Transmit_IT(&hspi1, &RX_Data, sizeof(RX_Data));
-//				break;
-//			case handling_command:
-//				handle_command(RX_Data);
-//				state = receiving;
-//				break;
-//		  }
+	  switch (state){
+			case idle:
+				break;
+			case receiving:
+				state = idle;
+				HAL_SPI_Receive_IT(&hspi1, &RX_Data, sizeof(RX_Data));
+				break;
+			case transmitting:
+				HAL_SPI_Transmit_IT(&hspi1, &RX_Data, sizeof(RX_Data));
+				break;
+			case handling_command:
+				handle_command(RX_Data);
+				state = receiving;
+				break;
+		  }
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -160,21 +163,25 @@ void SystemClock_Config(void)
   /** Configure the main internal regulator output voltage
   */
   __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
+
   /** Initializes the RCC Oscillators according to the specified parameters
   * in the RCC_OscInitTypeDef structure.
   */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
-  RCC_OscInitStruct.HSEState = RCC_HSE_BYPASS;
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_MSI;
+  RCC_OscInitStruct.MSIState = RCC_MSI_ON;
+  RCC_OscInitStruct.MSICalibrationValue = 0;
+  RCC_OscInitStruct.MSIClockRange = RCC_MSIRANGE_5;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_NONE;
   if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
   {
     Error_Handler();
   }
+
   /** Initializes the CPU, AHB and APB buses clocks
   */
   RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
                               |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
-  RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_HSE;
+  RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_MSI;
   RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
   RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1;
   RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
@@ -208,7 +215,7 @@ static void MX_I2C1_Init(void)
 
   /* USER CODE END I2C1_Init 1 */
   hi2c1.Instance = I2C1;
-  hi2c1.Init.Timing = 0x00303D5B;
+  hi2c1.Init.Timing = 0x00000708;
   hi2c1.Init.OwnAddress1 = 0;
   hi2c1.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
   hi2c1.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
@@ -220,12 +227,14 @@ static void MX_I2C1_Init(void)
   {
     Error_Handler();
   }
+
   /** Configure Analogue filter
   */
   if (HAL_I2CEx_ConfigAnalogFilter(&hi2c1, I2C_ANALOGFILTER_ENABLE) != HAL_OK)
   {
     Error_Handler();
   }
+
   /** Configure Digital filter
   */
   if (HAL_I2CEx_ConfigDigitalFilter(&hi2c1, 0) != HAL_OK)
@@ -254,7 +263,7 @@ static void MX_I2C2_Init(void)
 
   /* USER CODE END I2C2_Init 1 */
   hi2c2.Instance = I2C2;
-  hi2c2.Init.Timing = 0x00303D5B;
+  hi2c2.Init.Timing = 0x00000708;
   hi2c2.Init.OwnAddress1 = 0;
   hi2c2.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
   hi2c2.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
@@ -266,12 +275,14 @@ static void MX_I2C2_Init(void)
   {
     Error_Handler();
   }
+
   /** Configure Analogue filter
   */
   if (HAL_I2CEx_ConfigAnalogFilter(&hi2c2, I2C_ANALOGFILTER_ENABLE) != HAL_OK)
   {
     Error_Handler();
   }
+
   /** Configure Digital filter
   */
   if (HAL_I2CEx_ConfigDigitalFilter(&hi2c2, 0) != HAL_OK)
@@ -404,7 +415,6 @@ static void MX_GPIO_Init(void)
   GPIO_InitTypeDef GPIO_InitStruct = {0};
 
   /* GPIO Ports Clock Enable */
-  __HAL_RCC_GPIOC_CLK_ENABLE();
   __HAL_RCC_GPIOH_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
   __HAL_RCC_GPIOB_CLK_ENABLE();
@@ -414,13 +424,12 @@ static void MX_GPIO_Init(void)
                           |WP__Pin|CAM_EN_Pin|NAND_CS2_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOB, TEST_OUT1_Pin|NAND_CS1_Pin|CAN_TX_Pin|CAN_RX_Pin
-                          |CAN_S_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOB, TEST_OUT1_Pin|NAND_CS1_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pins : USART2_CS1_Pin USART2_CS2_Pin USART2_MOSI_Pin USART2_CLK_Pin
-                           CAM_EN_Pin NAND_CS2_Pin */
+                           WP__Pin CAM_EN_Pin NAND_CS2_Pin */
   GPIO_InitStruct.Pin = USART2_CS1_Pin|USART2_CS2_Pin|USART2_MOSI_Pin|USART2_CLK_Pin
-                          |CAM_EN_Pin|NAND_CS2_Pin;
+                          |WP__Pin|CAM_EN_Pin|NAND_CS2_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
@@ -432,21 +441,12 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(USART2_MISO_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : TEST_OUT1_Pin NAND_CS1_Pin CAN_TX_Pin CAN_RX_Pin
-                           CAN_S_Pin */
-  GPIO_InitStruct.Pin = TEST_OUT1_Pin|NAND_CS1_Pin|CAN_TX_Pin|CAN_RX_Pin
-                          |CAN_S_Pin;
+  /*Configure GPIO pins : TEST_OUT1_Pin NAND_CS1_Pin */
+  GPIO_InitStruct.Pin = TEST_OUT1_Pin|NAND_CS1_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
-
-  /*Configure GPIO pin : WP__Pin */
-  GPIO_InitStruct.Pin = WP__Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStruct.Pull = GPIO_PULLDOWN;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(WP__GPIO_Port, &GPIO_InitStruct);
 
 }
 
@@ -461,7 +461,7 @@ void HAL_SPI_RxCpltCallback(SPI_HandleTypeDef * hspi)
 {
 	state = handling_command;
 	char buf[64];
-	sprintf(buf, "0x%x\r\n", RX_Data);
+	sprintf(buf, "Received 0x%x\r\n", RX_Data);
 	DBG_PUT(buf);
 
 }
@@ -498,4 +498,3 @@ void assert_failed(uint8_t *file, uint32_t line)
   /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */
-

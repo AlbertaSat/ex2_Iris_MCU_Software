@@ -14,6 +14,7 @@ extern I2C_HandleTypeDef hi2c2;
 
 int VIS_DETECTED = 0;
 int NIR_DETECTED = 0;
+int imagenum = 0;
 static inline const char* next_token(const char *ptr) {
     /* move to the next space */
     while(*ptr && *ptr != ' ') ptr++;
@@ -523,15 +524,27 @@ housekeeping_packet_t get_housekeeping_packet(){
 }
 
 void handle_command(uint8_t cmd) {
-
+	char buf[64];
 	housekeeping_packet_t hk;
     switch(cmd) {
     case GET_HK:
+    	DBG_PUT("Getting Housekeeping Data:\r\n");
     	hk = get_housekeeping_packet();
     	decode_hk_packet(hk);
     	break;
     case CAPTURE_IMAGE:
-    	handle_capture_cmd(cmd);
+//    	handle_capture_cmd(cmd);
+    	imagenum++;
+    	sprintf(buf, "(Placeholder)Captured Image %d\r\n", imagenum);
+    	DBG_PUT(buf);
+    	break;
+    case GET_IMAGE_NUM:
+    	sprintf(buf, "Current Image: %d\r\n", imagenum);
+    	DBG_PUT(buf);
+    	break;
+    case COUNT_IMAGES:
+    	sprintf(buf, "Number of Images: %d\r\n", imagenum);
+    	DBG_PUT(buf);
     	break;
 //    case 'f':
 //        handle_format_cmd(cmd);
@@ -574,9 +587,11 @@ void handle_command(uint8_t cmd) {
 //    	break;
 	case SENSOR_ACTIVE:
 		sensor_togglepower(1);
+//		DBG_PUT("Sensor Power Actived\r\n");
 		break;
 	case SENSOR_IDLE:
 		sensor_togglepower(0);
+//		DBG_PUT("Sensor Power Deactivated\r\n");
 		break;
 	}
 //	case 'i':;

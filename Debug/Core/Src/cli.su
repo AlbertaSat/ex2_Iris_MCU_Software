@@ -1,0 +1,15 @@
+../Core/Inc/debug.h:10:20:DBG_PUT	16	static
+../Core/Src/cli.c:18:27:next_token	16	static
+../Core/Src/cli.c:27:13:help	8	static
+../Core/Src/cli.c:45:13:handle_format_cmd	120	static
+../Core/Src/cli.c:103:13:handle_reg_cmd	120	static
+../Core/Src/cli.c:180:13:handle_width_cmd	112	static
+../Core/Src/cli.c:255:13:handle_capture_cmd	24	static
+../Core/Src/cli.c:284:6:reset_sensors	88	static
+../Core/Src/cli.c:371:6:scan_i2c	96	static
+../Core/Src/cli.c:386:6:sensor_togglepower	16	static
+../Core/Src/cli.c:399:13:handle_saturation_cmd	96	static
+../Core/Src/cli.c:418:6:init_nand_flash	160	static
+../Core/Src/cli.c:451:6:handle_i2c16_8_cmd	128	static
+../Core/Src/cli.c:520:23:get_housekeeping_packet	40	static
+../Core/Src/cli.c:526:6:handle_command	104	static

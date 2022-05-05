@@ -1,0 +1,13 @@
+../Core/Src/nand_m79a.c:41:17:NAND_Init	16	static
+../Core/Src/nand_m79a.c:116:19:check_magic	16	static
+../Core/Src/nand_m79a.c:127:17:NAND_File_Format	48	static
+../Core/Src/nand_m79a.c:172:15:NAND_File_Create	24	static
+../Core/Src/nand_m79a.c:192:17:NAND_File_Write_Close	48	static
+../Core/Src/nand_m79a.c:216:15:NAND_File_Open	24	static
+../Core/Src/nand_m79a.c:252:17:NAND_File_Read_Close	16	static
+../Core/Src/nand_m79a.c:270:17:NAND_File_Read	48	static
+../Core/Src/nand_m79a.c:304:17:NAND_File_Write	48	static
+../Core/Src/nand_m79a.c:335:17:NAND_Read	56	static
+../Core/Src/nand_m79a.c:392:17:NAND_Write	56	static
+../Core/Src/nand_m79a.c:451:17:__map_logical_addr	16	static
+../Core/Src/nand_m79a.c:462:17:__run_POST	8	static

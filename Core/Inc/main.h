@@ -77,12 +77,6 @@ void Error_Handler(void);
 #define CAM_EN_GPIO_Port GPIOA
 #define NAND_CS2_Pin GPIO_PIN_12
 #define NAND_CS2_GPIO_Port GPIOA
-#define CAN_TX_Pin GPIO_PIN_3
-#define CAN_TX_GPIO_Port GPIOB
-#define CAN_RX_Pin GPIO_PIN_4
-#define CAN_RX_GPIO_Port GPIOB
-#define CAN_S_Pin GPIO_PIN_5
-#define CAN_S_GPIO_Port GPIOB
 /* USER CODE BEGIN Private defines */
 #define software_ver 0x11
 #define VIS_SENSOR 0
