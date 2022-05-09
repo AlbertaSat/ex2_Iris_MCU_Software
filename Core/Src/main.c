@@ -128,27 +128,26 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	  switch (state){
-			case idle:
-				break;
-			case receiving:
-				state = idle;
-//				HAL_SPI_Receive_IT(&hspi1, &RX_Data, sizeof(RX_Data));
-				HAL_SPI_TransmitReceive_IT(&hspi1, &RX_Data, &RX_Data, sizeof(RX_Data));
-				break;
-			case transmitting:
-				state = idle;
-				HAL_SPI_Transmit_IT(&hspi1, &RX_Data, sizeof(RX_Data));
-				break;
-			case handling_command:
-				handle_command(RX_Data);
-				state = transmitting;
-//				state = processin;
-				break;
-//			case processin:
+	  _toggleLED();
+	  HAL_Delay(250);
+//	  switch (state){
+//			case idle:
 //				break;
-//				}
-		  }
+//			case receiving:
+//				state = idle;
+////				HAL_SPI_Receive_IT(&hspi1, &RX_Data, sizeof(RX_Data));
+//				HAL_SPI_TransmitReceive_IT(&hspi1, &RX_Data, &RX_Data, sizeof(RX_Data));
+//				break;
+//			case transmitting:
+//				state = idle;
+//				HAL_SPI_Transmit_IT(&hspi1, &RX_Data, sizeof(RX_Data));
+//				break;
+//			case handling_command:
+//				handle_command(RX_Data);
+//				state = transmitting;
+//				break;
+
+//		  }
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */

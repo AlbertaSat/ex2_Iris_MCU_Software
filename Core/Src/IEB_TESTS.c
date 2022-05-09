@@ -121,7 +121,7 @@ void printTemp(uint16_t temp, uint8_t sensor){
 	char buf[64];
 	float high = (float)(temp >> 8) - 0x40;
 	float low = (float)((temp&0xFF) >> 4) * 0.0625;
-	sprintf(buf,"Sensor 0x%x Temperature: %2.3f C\n", sensor, high+low);
-	DBG_PUT(buf);
+//	sprintf(buf,"Sensor 0x%x Temperature: %2.3f C\n", sensor, high+low);
+//	DBG_PUT(buf);
 
 }
