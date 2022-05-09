@@ -519,7 +519,7 @@ void handle_i2c16_8_cmd(const char *cmd){
 
 housekeeping_packet_t get_housekeeping_packet(){
 	housekeeping_packet_t hk;
-	hk = get_housekeeping();
+	hk = _get_housekeeping();
 	return hk;
 }
 
