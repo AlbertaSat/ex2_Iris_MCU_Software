@@ -482,6 +482,105 @@ Discarded input sections
  .debug_macro   0x0000000000000000       0x20 ./Core/Src/IEB_TESTS.o
  .debug_macro   0x0000000000000000       0xdc ./Core/Src/IEB_TESTS.o
  .debug_macro   0x0000000000000000       0xb2 ./Core/Src/IEB_TESTS.o
+ .group         0x0000000000000000        0xc ./Core/Src/SPI_IT.o
+ .group         0x0000000000000000        0xc ./Core/Src/SPI_IT.o
+ .group         0x0000000000000000        0xc ./Core/Src/SPI_IT.o
+ .group         0x0000000000000000        0xc ./Core/Src/SPI_IT.o
+ .group         0x0000000000000000        0xc ./Core/Src/SPI_IT.o
+ .group         0x0000000000000000        0xc ./Core/Src/SPI_IT.o
+ .group         0x0000000000000000        0xc ./Core/Src/SPI_IT.o
+ .group         0x0000000000000000        0xc ./Core/Src/SPI_IT.o
+ .group         0x0000000000000000        0xc ./Core/Src/SPI_IT.o
+ .group         0x0000000000000000        0xc ./Core/Src/SPI_IT.o
+ .group         0x0000000000000000        0xc ./Core/Src/SPI_IT.o
+ .group         0x0000000000000000        0xc ./Core/Src/SPI_IT.o
+ .group         0x0000000000000000        0xc ./Core/Src/SPI_IT.o
+ .group         0x0000000000000000        0xc ./Core/Src/SPI_IT.o
+ .group         0x0000000000000000        0xc ./Core/Src/SPI_IT.o
+ .group         0x0000000000000000        0xc ./Core/Src/SPI_IT.o
+ .group         0x0000000000000000        0xc ./Core/Src/SPI_IT.o
+ .group         0x0000000000000000        0xc ./Core/Src/SPI_IT.o
+ .group         0x0000000000000000        0xc ./Core/Src/SPI_IT.o
+ .group         0x0000000000000000        0xc ./Core/Src/SPI_IT.o
+ .group         0x0000000000000000        0xc ./Core/Src/SPI_IT.o
+ .group         0x0000000000000000        0xc ./Core/Src/SPI_IT.o
+ .group         0x0000000000000000        0xc ./Core/Src/SPI_IT.o
+ .group         0x0000000000000000        0xc ./Core/Src/SPI_IT.o
+ .group         0x0000000000000000        0xc ./Core/Src/SPI_IT.o
+ .group         0x0000000000000000        0xc ./Core/Src/SPI_IT.o
+ .group         0x0000000000000000        0xc ./Core/Src/SPI_IT.o
+ .group         0x0000000000000000        0xc ./Core/Src/SPI_IT.o
+ .group         0x0000000000000000        0xc ./Core/Src/SPI_IT.o
+ .group         0x0000000000000000        0xc ./Core/Src/SPI_IT.o
+ .group         0x0000000000000000        0xc ./Core/Src/SPI_IT.o
+ .group         0x0000000000000000        0xc ./Core/Src/SPI_IT.o
+ .group         0x0000000000000000        0xc ./Core/Src/SPI_IT.o
+ .group         0x0000000000000000        0xc ./Core/Src/SPI_IT.o
+ .group         0x0000000000000000        0xc ./Core/Src/SPI_IT.o
+ .group         0x0000000000000000        0xc ./Core/Src/SPI_IT.o
+ .group         0x0000000000000000        0xc ./Core/Src/SPI_IT.o
+ .group         0x0000000000000000        0xc ./Core/Src/SPI_IT.o
+ .group         0x0000000000000000        0xc ./Core/Src/SPI_IT.o
+ .group         0x0000000000000000        0xc ./Core/Src/SPI_IT.o
+ .text          0x0000000000000000        0x0 ./Core/Src/SPI_IT.o
+ .data          0x0000000000000000        0x0 ./Core/Src/SPI_IT.o
+ .bss           0x0000000000000000        0x0 ./Core/Src/SPI_IT.o
+ .text.SPI1_IT_Transmit
+                0x0000000000000000       0x20 ./Core/Src/SPI_IT.o
+ .text.SPI1_IT_Recieve
+                0x0000000000000000       0x20 ./Core/Src/SPI_IT.o
+ .debug_info    0x0000000000000000      0x659 ./Core/Src/SPI_IT.o
+ .debug_abbrev  0x0000000000000000      0x172 ./Core/Src/SPI_IT.o
+ .debug_aranges
+                0x0000000000000000       0x28 ./Core/Src/SPI_IT.o
+ .debug_ranges  0x0000000000000000       0x18 ./Core/Src/SPI_IT.o
+ .debug_macro   0x0000000000000000      0x1dd ./Core/Src/SPI_IT.o
+ .debug_macro   0x0000000000000000      0xa4e ./Core/Src/SPI_IT.o
+ .debug_macro   0x0000000000000000      0x125 ./Core/Src/SPI_IT.o
+ .debug_macro   0x0000000000000000       0x2e ./Core/Src/SPI_IT.o
+ .debug_macro   0x0000000000000000       0x28 ./Core/Src/SPI_IT.o
+ .debug_macro   0x0000000000000000       0x22 ./Core/Src/SPI_IT.o
+ .debug_macro   0x0000000000000000       0x8e ./Core/Src/SPI_IT.o
+ .debug_macro   0x0000000000000000       0x51 ./Core/Src/SPI_IT.o
+ .debug_macro   0x0000000000000000      0x103 ./Core/Src/SPI_IT.o
+ .debug_macro   0x0000000000000000       0x6a ./Core/Src/SPI_IT.o
+ .debug_macro   0x0000000000000000      0x1df ./Core/Src/SPI_IT.o
+ .debug_macro   0x0000000000000000       0x1c ./Core/Src/SPI_IT.o
+ .debug_macro   0x0000000000000000       0x22 ./Core/Src/SPI_IT.o
+ .debug_macro   0x0000000000000000       0xaf ./Core/Src/SPI_IT.o
+ .debug_macro   0x0000000000000000      0x4da ./Core/Src/SPI_IT.o
+ .debug_macro   0x0000000000000000      0x11f ./Core/Src/SPI_IT.o
+ .debug_macro   0x0000000000000000     0x873b ./Core/Src/SPI_IT.o
+ .debug_macro   0x0000000000000000       0x66 ./Core/Src/SPI_IT.o
+ .debug_macro   0x0000000000000000     0x355c ./Core/Src/SPI_IT.o
+ .debug_macro   0x0000000000000000      0x174 ./Core/Src/SPI_IT.o
+ .debug_macro   0x0000000000000000       0x5b ./Core/Src/SPI_IT.o
+ .debug_macro   0x0000000000000000      0x8b5 ./Core/Src/SPI_IT.o
+ .debug_macro   0x0000000000000000      0x807 ./Core/Src/SPI_IT.o
+ .debug_macro   0x0000000000000000      0x197 ./Core/Src/SPI_IT.o
+ .debug_macro   0x0000000000000000      0x13f ./Core/Src/SPI_IT.o
+ .debug_macro   0x0000000000000000      0x1b5 ./Core/Src/SPI_IT.o
+ .debug_macro   0x0000000000000000       0x82 ./Core/Src/SPI_IT.o
+ .debug_macro   0x0000000000000000      0x28e ./Core/Src/SPI_IT.o
+ .debug_macro   0x0000000000000000      0x1e9 ./Core/Src/SPI_IT.o
+ .debug_macro   0x0000000000000000      0x13e ./Core/Src/SPI_IT.o
+ .debug_macro   0x0000000000000000      0x4b5 ./Core/Src/SPI_IT.o
+ .debug_macro   0x0000000000000000      0x22c ./Core/Src/SPI_IT.o
+ .debug_macro   0x0000000000000000       0x5b ./Core/Src/SPI_IT.o
+ .debug_macro   0x0000000000000000       0xa5 ./Core/Src/SPI_IT.o
+ .debug_macro   0x0000000000000000      0x18d ./Core/Src/SPI_IT.o
+ .debug_macro   0x0000000000000000       0x16 ./Core/Src/SPI_IT.o
+ .debug_macro   0x0000000000000000      0x22c ./Core/Src/SPI_IT.o
+ .debug_macro   0x0000000000000000      0x5ba ./Core/Src/SPI_IT.o
+ .debug_macro   0x0000000000000000       0x44 ./Core/Src/SPI_IT.o
+ .debug_macro   0x0000000000000000      0x170 ./Core/Src/SPI_IT.o
+ .debug_macro   0x0000000000000000       0xac ./Core/Src/SPI_IT.o
+ .debug_line    0x0000000000000000      0x6c8 ./Core/Src/SPI_IT.o
+ .debug_str     0x0000000000000000    0x6c304 ./Core/Src/SPI_IT.o
+ .comment       0x0000000000000000       0x51 ./Core/Src/SPI_IT.o
+ .debug_frame   0x0000000000000000       0x50 ./Core/Src/SPI_IT.o
+ .ARM.attributes
+                0x0000000000000000       0x2c ./Core/Src/SPI_IT.o
  .group         0x0000000000000000        0xc ./Core/Src/arducam.o
  .group         0x0000000000000000        0xc ./Core/Src/arducam.o
  .group         0x0000000000000000        0xc ./Core/Src/arducam.o
@@ -593,7 +692,7 @@ Discarded input sections
                 0x0000000000000000       0x90 ./Core/Src/arducam.o
  .text.arducam_get_resolution
                 0x0000000000000000       0xb8 ./Core/Src/arducam.o
- .rodata        0x0000000000000000       0xf6 ./Core/Src/arducam.o
+ .rodata        0x0000000000000000       0x92 ./Core/Src/arducam.o
  .text.arducam_set_resolution
                 0x0000000000000000      0x1b8 ./Core/Src/arducam.o
  .text.arducam_wait_for_ready
@@ -634,12 +733,12 @@ Discarded input sections
  .text.dump_uart_raw
                 0x0000000000000000       0x88 ./Core/Src/arducam.o
  .text.SingleCapTransfer
-                0x0000000000000000      0x128 ./Core/Src/arducam.o
+                0x0000000000000000       0x84 ./Core/Src/arducam.o
  .text.get_image_num
                 0x0000000000000000       0x14 ./Core/Src/arducam.o
  .text.set_image_num
                 0x0000000000000000       0x20 ./Core/Src/arducam.o
- .debug_info    0x0000000000000000     0x1252 ./Core/Src/arducam.o
+ .debug_info    0x0000000000000000     0x123e ./Core/Src/arducam.o
  .debug_abbrev  0x0000000000000000      0x365 ./Core/Src/arducam.o
  .debug_aranges
                 0x0000000000000000       0xf8 ./Core/Src/arducam.o
@@ -716,10 +815,10 @@ Discarded input sections
  .debug_macro   0x0000000000000000       0x40 ./Core/Src/arducam.o
  .debug_macro   0x0000000000000000       0x16 ./Core/Src/arducam.o
  .debug_macro   0x0000000000000000       0x20 ./Core/Src/arducam.o
- .debug_line    0x0000000000000000      0xf8d ./Core/Src/arducam.o
+ .debug_line    0x0000000000000000      0xf77 ./Core/Src/arducam.o
  .debug_str     0x0000000000000000    0x70617 ./Core/Src/arducam.o
  .comment       0x0000000000000000       0x51 ./Core/Src/arducam.o
- .debug_frame   0x0000000000000000      0x3b4 ./Core/Src/arducam.o
+ .debug_frame   0x0000000000000000      0x3b0 ./Core/Src/arducam.o
  .ARM.attributes
                 0x0000000000000000       0x2c ./Core/Src/arducam.o
  .group         0x0000000000000000        0xc ./Core/Src/cli.o
@@ -834,11 +933,11 @@ Discarded input sections
  .text.handle_i2c16_8_cmd
                 0x0000000000000000      0x190 ./Core/Src/cli.o
  .text.get_housekeeping_packet
-                0x0000000000000000       0x2a ./Core/Src/cli.o
+                0x0000000000000000       0x22 ./Core/Src/cli.o
  .text.handle_command
-                0x0000000000000000       0xd8 ./Core/Src/cli.o
- .debug_info    0x0000000000000000     0x1424 ./Core/Src/cli.o
- .debug_abbrev  0x0000000000000000      0x36e ./Core/Src/cli.o
+                0x0000000000000000       0xd0 ./Core/Src/cli.o
+ .debug_info    0x0000000000000000     0x1412 ./Core/Src/cli.o
+ .debug_abbrev  0x0000000000000000      0x359 ./Core/Src/cli.o
  .debug_aranges
                 0x0000000000000000       0x90 ./Core/Src/cli.o
  .debug_ranges  0x0000000000000000       0x80 ./Core/Src/cli.o
@@ -920,12 +1019,199 @@ Discarded input sections
  .debug_macro   0x0000000000000000       0x3a ./Core/Src/cli.o
  .debug_macro   0x0000000000000000       0xb8 ./Core/Src/cli.o
  .debug_macro   0x0000000000000000       0x52 ./Core/Src/cli.o
- .debug_line    0x0000000000000000      0xec1 ./Core/Src/cli.o
- .debug_str     0x0000000000000000    0x71854 ./Core/Src/cli.o
+ .debug_line    0x0000000000000000      0xeb9 ./Core/Src/cli.o
+ .debug_str     0x0000000000000000    0x71843 ./Core/Src/cli.o
  .comment       0x0000000000000000       0x51 ./Core/Src/cli.o
  .debug_frame   0x0000000000000000      0x1f8 ./Core/Src/cli.o
  .ARM.attributes
                 0x0000000000000000       0x2c ./Core/Src/cli.o
+ .group         0x0000000000000000        0xc ./Core/Src/command_handler.o
+ .group         0x0000000000000000        0xc ./Core/Src/command_handler.o
+ .group         0x0000000000000000        0xc ./Core/Src/command_handler.o
+ .group         0x0000000000000000        0xc ./Core/Src/command_handler.o
+ .group         0x0000000000000000        0xc ./Core/Src/command_handler.o
+ .group         0x0000000000000000        0xc ./Core/Src/command_handler.o
+ .group         0x0000000000000000        0xc ./Core/Src/command_handler.o
+ .group         0x0000000000000000        0xc ./Core/Src/command_handler.o
+ .group         0x0000000000000000        0xc ./Core/Src/command_handler.o
+ .group         0x0000000000000000        0xc ./Core/Src/command_handler.o
+ .group         0x0000000000000000        0xc ./Core/Src/command_handler.o
+ .group         0x0000000000000000        0xc ./Core/Src/command_handler.o
+ .group         0x0000000000000000        0xc ./Core/Src/command_handler.o
+ .group         0x0000000000000000        0xc ./Core/Src/command_handler.o
+ .group         0x0000000000000000        0xc ./Core/Src/command_handler.o
+ .group         0x0000000000000000        0xc ./Core/Src/command_handler.o
+ .group         0x0000000000000000        0xc ./Core/Src/command_handler.o
+ .group         0x0000000000000000        0xc ./Core/Src/command_handler.o
+ .group         0x0000000000000000        0xc ./Core/Src/command_handler.o
+ .group         0x0000000000000000        0xc ./Core/Src/command_handler.o
+ .group         0x0000000000000000        0xc ./Core/Src/command_handler.o
+ .group         0x0000000000000000        0xc ./Core/Src/command_handler.o
+ .group         0x0000000000000000        0xc ./Core/Src/command_handler.o
+ .group         0x0000000000000000        0xc ./Core/Src/command_handler.o
+ .group         0x0000000000000000        0xc ./Core/Src/command_handler.o
+ .group         0x0000000000000000        0xc ./Core/Src/command_handler.o
+ .group         0x0000000000000000        0xc ./Core/Src/command_handler.o
+ .group         0x0000000000000000        0xc ./Core/Src/command_handler.o
+ .group         0x0000000000000000        0xc ./Core/Src/command_handler.o
+ .group         0x0000000000000000        0xc ./Core/Src/command_handler.o
+ .group         0x0000000000000000        0xc ./Core/Src/command_handler.o
+ .group         0x0000000000000000        0xc ./Core/Src/command_handler.o
+ .group         0x0000000000000000        0xc ./Core/Src/command_handler.o
+ .group         0x0000000000000000        0xc ./Core/Src/command_handler.o
+ .group         0x0000000000000000        0xc ./Core/Src/command_handler.o
+ .group         0x0000000000000000        0xc ./Core/Src/command_handler.o
+ .group         0x0000000000000000        0xc ./Core/Src/command_handler.o
+ .group         0x0000000000000000        0xc ./Core/Src/command_handler.o
+ .group         0x0000000000000000        0xc ./Core/Src/command_handler.o
+ .group         0x0000000000000000        0xc ./Core/Src/command_handler.o
+ .group         0x0000000000000000        0xc ./Core/Src/command_handler.o
+ .group         0x0000000000000000        0xc ./Core/Src/command_handler.o
+ .group         0x0000000000000000        0xc ./Core/Src/command_handler.o
+ .group         0x0000000000000000        0xc ./Core/Src/command_handler.o
+ .group         0x0000000000000000        0xc ./Core/Src/command_handler.o
+ .group         0x0000000000000000        0xc ./Core/Src/command_handler.o
+ .group         0x0000000000000000        0xc ./Core/Src/command_handler.o
+ .group         0x0000000000000000        0xc ./Core/Src/command_handler.o
+ .group         0x0000000000000000        0xc ./Core/Src/command_handler.o
+ .group         0x0000000000000000        0xc ./Core/Src/command_handler.o
+ .group         0x0000000000000000        0xc ./Core/Src/command_handler.o
+ .group         0x0000000000000000        0xc ./Core/Src/command_handler.o
+ .group         0x0000000000000000        0xc ./Core/Src/command_handler.o
+ .group         0x0000000000000000        0xc ./Core/Src/command_handler.o
+ .group         0x0000000000000000        0xc ./Core/Src/command_handler.o
+ .group         0x0000000000000000        0xc ./Core/Src/command_handler.o
+ .group         0x0000000000000000        0xc ./Core/Src/command_handler.o
+ .group         0x0000000000000000        0xc ./Core/Src/command_handler.o
+ .group         0x0000000000000000        0xc ./Core/Src/command_handler.o
+ .group         0x0000000000000000        0xc ./Core/Src/command_handler.o
+ .group         0x0000000000000000        0xc ./Core/Src/command_handler.o
+ .group         0x0000000000000000        0xc ./Core/Src/command_handler.o
+ .group         0x0000000000000000        0xc ./Core/Src/command_handler.o
+ .group         0x0000000000000000        0xc ./Core/Src/command_handler.o
+ .group         0x0000000000000000        0xc ./Core/Src/command_handler.o
+ .group         0x0000000000000000        0xc ./Core/Src/command_handler.o
+ .group         0x0000000000000000        0xc ./Core/Src/command_handler.o
+ .group         0x0000000000000000        0xc ./Core/Src/command_handler.o
+ .group         0x0000000000000000        0xc ./Core/Src/command_handler.o
+ .group         0x0000000000000000        0xc ./Core/Src/command_handler.o
+ .group         0x0000000000000000        0xc ./Core/Src/command_handler.o
+ .text          0x0000000000000000        0x0 ./Core/Src/command_handler.o
+ .data          0x0000000000000000        0x0 ./Core/Src/command_handler.o
+ .bss           0x0000000000000000        0x0 ./Core/Src/command_handler.o
+ .data.ack      0x0000000000000000        0x1 ./Core/Src/command_handler.o
+ .bss.total_image_num
+                0x0000000000000000        0x1 ./Core/Src/command_handler.o
+ .bss.hk        0x0000000000000000        0xa ./Core/Src/command_handler.o
+ .text.take_image
+                0x0000000000000000       0x78 ./Core/Src/command_handler.o
+ .text.transfer_image
+                0x0000000000000000        0xa ./Core/Src/command_handler.o
+ .text.get_image_length
+                0x0000000000000000       0x1a ./Core/Src/command_handler.o
+ .text.count_images
+                0x0000000000000000       0x18 ./Core/Src/command_handler.o
+ .text.sensor_idle
+                0x0000000000000000       0x1a ./Core/Src/command_handler.o
+ .text.sensor_active
+                0x0000000000000000       0x44 ./Core/Src/command_handler.o
+ .text.get_housekeeping
+                0x0000000000000000       0x40 ./Core/Src/command_handler.o
+ .text.update_sensor_I2C_regs
+                0x0000000000000000        0xa ./Core/Src/command_handler.o
+ .text.update_current_limits
+                0x0000000000000000        0xa ./Core/Src/command_handler.o
+ .text._transfer_images_to_flash
+                0x0000000000000000        0xa ./Core/Src/command_handler.o
+ .text._iterate_image_number
+                0x0000000000000000       0x1c ./Core/Src/command_handler.o
+ .text._initalize_sensor
+                0x0000000000000000       0xb0 ./Core/Src/command_handler.o
+ .text._program_sensor
+                0x0000000000000000      0x1a0 ./Core/Src/command_handler.o
+ .debug_info    0x0000000000000000      0x637 ./Core/Src/command_handler.o
+ .debug_abbrev  0x0000000000000000      0x261 ./Core/Src/command_handler.o
+ .debug_aranges
+                0x0000000000000000       0x80 ./Core/Src/command_handler.o
+ .debug_ranges  0x0000000000000000       0x70 ./Core/Src/command_handler.o
+ .debug_macro   0x0000000000000000      0x3ac ./Core/Src/command_handler.o
+ .debug_macro   0x0000000000000000      0xa4e ./Core/Src/command_handler.o
+ .debug_macro   0x0000000000000000      0x125 ./Core/Src/command_handler.o
+ .debug_macro   0x0000000000000000       0x2e ./Core/Src/command_handler.o
+ .debug_macro   0x0000000000000000       0x28 ./Core/Src/command_handler.o
+ .debug_macro   0x0000000000000000       0x22 ./Core/Src/command_handler.o
+ .debug_macro   0x0000000000000000       0x8e ./Core/Src/command_handler.o
+ .debug_macro   0x0000000000000000       0x51 ./Core/Src/command_handler.o
+ .debug_macro   0x0000000000000000      0x103 ./Core/Src/command_handler.o
+ .debug_macro   0x0000000000000000       0x6a ./Core/Src/command_handler.o
+ .debug_macro   0x0000000000000000      0x1df ./Core/Src/command_handler.o
+ .debug_macro   0x0000000000000000       0x1c ./Core/Src/command_handler.o
+ .debug_macro   0x0000000000000000       0x22 ./Core/Src/command_handler.o
+ .debug_macro   0x0000000000000000       0xaf ./Core/Src/command_handler.o
+ .debug_macro   0x0000000000000000      0x4da ./Core/Src/command_handler.o
+ .debug_macro   0x0000000000000000      0x11f ./Core/Src/command_handler.o
+ .debug_macro   0x0000000000000000     0x873b ./Core/Src/command_handler.o
+ .debug_macro   0x0000000000000000       0x66 ./Core/Src/command_handler.o
+ .debug_macro   0x0000000000000000     0x355c ./Core/Src/command_handler.o
+ .debug_macro   0x0000000000000000      0x174 ./Core/Src/command_handler.o
+ .debug_macro   0x0000000000000000       0x5b ./Core/Src/command_handler.o
+ .debug_macro   0x0000000000000000      0x8b5 ./Core/Src/command_handler.o
+ .debug_macro   0x0000000000000000      0x807 ./Core/Src/command_handler.o
+ .debug_macro   0x0000000000000000      0x197 ./Core/Src/command_handler.o
+ .debug_macro   0x0000000000000000      0x13f ./Core/Src/command_handler.o
+ .debug_macro   0x0000000000000000      0x1b5 ./Core/Src/command_handler.o
+ .debug_macro   0x0000000000000000       0x82 ./Core/Src/command_handler.o
+ .debug_macro   0x0000000000000000      0x28e ./Core/Src/command_handler.o
+ .debug_macro   0x0000000000000000      0x1e9 ./Core/Src/command_handler.o
+ .debug_macro   0x0000000000000000      0x13e ./Core/Src/command_handler.o
+ .debug_macro   0x0000000000000000      0x4b5 ./Core/Src/command_handler.o
+ .debug_macro   0x0000000000000000      0x22c ./Core/Src/command_handler.o
+ .debug_macro   0x0000000000000000       0x5b ./Core/Src/command_handler.o
+ .debug_macro   0x0000000000000000       0xa5 ./Core/Src/command_handler.o
+ .debug_macro   0x0000000000000000      0x18d ./Core/Src/command_handler.o
+ .debug_macro   0x0000000000000000       0x16 ./Core/Src/command_handler.o
+ .debug_macro   0x0000000000000000      0x22c ./Core/Src/command_handler.o
+ .debug_macro   0x0000000000000000      0x5ba ./Core/Src/command_handler.o
+ .debug_macro   0x0000000000000000       0x44 ./Core/Src/command_handler.o
+ .debug_macro   0x0000000000000000      0x170 ./Core/Src/command_handler.o
+ .debug_macro   0x0000000000000000       0xac ./Core/Src/command_handler.o
+ .debug_macro   0x0000000000000000       0x22 ./Core/Src/command_handler.o
+ .debug_macro   0x0000000000000000       0x52 ./Core/Src/command_handler.o
+ .debug_macro   0x0000000000000000       0x18 ./Core/Src/command_handler.o
+ .debug_macro   0x0000000000000000       0x3c ./Core/Src/command_handler.o
+ .debug_macro   0x0000000000000000       0x34 ./Core/Src/command_handler.o
+ .debug_macro   0x0000000000000000       0x16 ./Core/Src/command_handler.o
+ .debug_macro   0x0000000000000000       0x35 ./Core/Src/command_handler.o
+ .debug_macro   0x0000000000000000      0x341 ./Core/Src/command_handler.o
+ .debug_macro   0x0000000000000000       0x10 ./Core/Src/command_handler.o
+ .debug_macro   0x0000000000000000       0x16 ./Core/Src/command_handler.o
+ .debug_macro   0x0000000000000000       0x43 ./Core/Src/command_handler.o
+ .debug_macro   0x0000000000000000       0x34 ./Core/Src/command_handler.o
+ .debug_macro   0x0000000000000000       0x10 ./Core/Src/command_handler.o
+ .debug_macro   0x0000000000000000       0x58 ./Core/Src/command_handler.o
+ .debug_macro   0x0000000000000000       0x71 ./Core/Src/command_handler.o
+ .debug_macro   0x0000000000000000       0x1c ./Core/Src/command_handler.o
+ .debug_macro   0x0000000000000000      0x12a ./Core/Src/command_handler.o
+ .debug_macro   0x0000000000000000       0x10 ./Core/Src/command_handler.o
+ .debug_macro   0x0000000000000000       0x1c ./Core/Src/command_handler.o
+ .debug_macro   0x0000000000000000       0x52 ./Core/Src/command_handler.o
+ .debug_macro   0x0000000000000000       0x22 ./Core/Src/command_handler.o
+ .debug_macro   0x0000000000000000       0x10 ./Core/Src/command_handler.o
+ .debug_macro   0x0000000000000000       0x52 ./Core/Src/command_handler.o
+ .debug_macro   0x0000000000000000       0xd5 ./Core/Src/command_handler.o
+ .debug_macro   0x0000000000000000       0x1c ./Core/Src/command_handler.o
+ .debug_macro   0x0000000000000000       0x3d ./Core/Src/command_handler.o
+ .debug_macro   0x0000000000000000       0x16 ./Core/Src/command_handler.o
+ .debug_macro   0x0000000000000000      0x145 ./Core/Src/command_handler.o
+ .debug_macro   0x0000000000000000       0xdc ./Core/Src/command_handler.o
+ .debug_macro   0x0000000000000000       0x16 ./Core/Src/command_handler.o
+ .debug_macro   0x0000000000000000       0x20 ./Core/Src/command_handler.o
+ .debug_line    0x0000000000000000      0xaaa ./Core/Src/command_handler.o
+ .debug_str     0x0000000000000000    0x702af ./Core/Src/command_handler.o
+ .comment       0x0000000000000000       0x51 ./Core/Src/command_handler.o
+ .debug_frame   0x0000000000000000      0x18c ./Core/Src/command_handler.o
+ .ARM.attributes
+                0x0000000000000000       0x2c ./Core/Src/command_handler.o
  .group         0x0000000000000000        0xc ./Core/Src/housekeeping.o
  .group         0x0000000000000000        0xc ./Core/Src/housekeeping.o
  .group         0x0000000000000000        0xc ./Core/Src/housekeeping.o
@@ -1002,7 +1288,7 @@ Discarded input sections
  .data          0x0000000000000000        0x0 ./Core/Src/housekeeping.o
  .bss           0x0000000000000000        0x0 ./Core/Src/housekeeping.o
  .text.DBG_PUT  0x0000000000000000       0x2c ./Core/Src/housekeeping.o
- .text.get_housekeeping
+ .text._get_housekeeping
                 0x0000000000000000       0x6c ./Core/Src/housekeeping.o
  .rodata        0x0000000000000000       0x88 ./Core/Src/housekeeping.o
  .text.decode_hk_packet
@@ -1086,7 +1372,7 @@ Discarded input sections
  .debug_macro   0x0000000000000000       0x16 ./Core/Src/housekeeping.o
  .debug_macro   0x0000000000000000       0x20 ./Core/Src/housekeeping.o
  .debug_line    0x0000000000000000      0x978 ./Core/Src/housekeeping.o
- .debug_str     0x0000000000000000    0x704b8 ./Core/Src/housekeeping.o
+ .debug_str     0x0000000000000000    0x704b9 ./Core/Src/housekeeping.o
  .comment       0x0000000000000000       0x51 ./Core/Src/housekeeping.o
  .debug_frame   0x0000000000000000       0x70 ./Core/Src/housekeeping.o
  .ARM.attributes
@@ -5422,8 +5708,10 @@ LOAD /opt/st/stm32cubeide_1.9.0/plugins/com.st.stm32cube.ide.mcu.externaltools.g
 LOAD /opt/st/stm32cubeide_1.9.0/plugins/com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32.10.3-2021.10.linux64_1.0.0.202111181127/tools/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v6-m/nofp/crt0.o
 LOAD ./Core/Src/I2C.o
 LOAD ./Core/Src/IEB_TESTS.o
+LOAD ./Core/Src/SPI_IT.o
 LOAD ./Core/Src/arducam.o
 LOAD ./Core/Src/cli.o
+LOAD ./Core/Src/command_handler.o
 LOAD ./Core/Src/housekeeping.o
 LOAD ./Core/Src/main.o
 LOAD ./Core/Src/nand_m79a.o
