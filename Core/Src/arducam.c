@@ -429,17 +429,14 @@ static void dump_uart_raw(uint32_t length, uint8_t sensor) {
 }
 
 void SingleCapTransfer(int format, uint8_t sensor) {
-    char buf[64];
-
+//    char buf[64];
     write_reg(ARDUCHIP_TIM, VSYNC_LEVEL_MASK, sensor);   //VSYNC is active HIGH
-
-    sprintf(buf, "Single Capture Transfer type %x\r\n", format);
-    DBG_PUT(buf);
-
+//    sprintf(buf, "Single Capture Transfer type %x\r\n", format);
+//    DBG_PUT(buf);
     uint8_t val;
     rdSensorReg16_8(REG_FORMAT_CTL, &val, sensor);
-    sprintf(buf, "format reg: 0x%02x\r\n", val);
-    DBG_PUT(buf);
+//    sprintf(buf, "format reg: 0x%02x\r\n", val);
+//    DBG_PUT(buf);
 
     flush_fifo(sensor);
     clear_fifo_flag(sensor);
@@ -447,23 +444,24 @@ void SingleCapTransfer(int format, uint8_t sensor) {
     while(!get_bit(ARDUCHIP_TRIG , CAP_DONE_MASK, sensor)){}
 
     uint32_t length = read_fifo_length(sensor);
-    sprintf(buf, "Capture complete! FIFO len 0x%lx\r\n", length);
-    DBG_PUT(buf);
-    DBG_PUT("JPG");
+//    sprintf(buf, "Capture complete! FIFO len 0x%lx\r\n", length);
+//    DBG_PUT(buf);
+//    DBG_PUT("JPG");
 
-    switch(format) {
-    case BMP:
-        dump_uart_bmp(sensor);
-        break;
-    case JPEG:
-        dump_uart_jpg(length, sensor);
-        break;
-    case RAW:
-        dump_uart_raw(length*2, sensor);
-        break;
-    default:
-        break;
-    }
+    // not needed for what we're doing
+//    switch(format) {
+//    case BMP:
+//        dump_uart_bmp(sensor);
+//        break;
+//    case JPEG:
+//        dump_uart_jpg(length, sensor);
+//        break;
+//    case RAW:
+//        dump_uart_raw(length*2, sensor);
+//        break;
+//    default:
+//        break;
+//    }
 
     DBG_PUT("\04");
 }
