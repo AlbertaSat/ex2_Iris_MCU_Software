@@ -11,5 +11,5 @@
 ../Core/Src/cli.c:399:13:handle_saturation_cmd	96	static
 ../Core/Src/cli.c:418:6:init_nand_flash	160	static
 ../Core/Src/cli.c:451:6:handle_i2c16_8_cmd	128	static
-../Core/Src/cli.c:520:23:get_housekeeping_packet	40	static
+../Core/Src/cli.c:520:23:get_housekeeping_packet	32	static
 ../Core/Src/cli.c:526:6:handle_command	104	static
