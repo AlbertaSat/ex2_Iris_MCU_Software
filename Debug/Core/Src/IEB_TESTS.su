@@ -4,4 +4,4 @@
 ../Core/Src/IEB_TESTS.c:53:6:_testArducamSensor	16	static
 ../Core/Src/IEB_TESTS.c:80:6:_testScanI2C	96	static
 ../Core/Src/IEB_TESTS.c:105:6:testTempSensor	24	static
-../Core/Src/IEB_TESTS.c:120:6:printTemp	104	static
+../Core/Src/IEB_TESTS.c:120:6:printTemp	88	static
