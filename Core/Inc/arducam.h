@@ -2,6 +2,7 @@
 #define ARDUCAM_DEFH
 
 #include "arducam.h"
+//#include "ov5642_regs.h"
 #include <stdbool.h>
 #include <stdio.h>
 #define byte uint8_t
