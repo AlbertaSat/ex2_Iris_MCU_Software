@@ -52,6 +52,9 @@ default.size.stdout \
 OBJDUMP_LIST += \
 ex2_Iris_MCU_Software.list \
 
+OBJCOPY_BIN += \
+ex2_Iris_MCU_Software.bin \
+
 
 # All Target
 all: main-build
@@ -75,12 +78,17 @@ ex2_Iris_MCU_Software.list: $(EXECUTABLES) makefile objects.list $(OPTIONAL_TOOL
 	@echo 'Finished building: $@'
 	@echo ' '
 
+ex2_Iris_MCU_Software.bin: $(EXECUTABLES) makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-objcopy  -O binary $(EXECUTABLES) "ex2_Iris_MCU_Software.bin"
+	@echo 'Finished building: $@'
+	@echo ' '
+
 # Other Targets
 clean:
-	-$(RM) default.size.stdout ex2_Iris_MCU_Software.elf ex2_Iris_MCU_Software.list ex2_Iris_MCU_Software.map
+	-$(RM) default.size.stdout ex2_Iris_MCU_Software.bin ex2_Iris_MCU_Software.elf ex2_Iris_MCU_Software.list ex2_Iris_MCU_Software.map
 	-@echo ' '
 
-secondary-outputs: $(SIZE_OUTPUT) $(OBJDUMP_LIST)
+secondary-outputs: $(SIZE_OUTPUT) $(OBJDUMP_LIST) $(OBJCOPY_BIN)
 
 fail-specified-linker-script-missing:
 	@echo 'Error: Cannot find the specified linker script. Check the linker settings in the build configuration.'

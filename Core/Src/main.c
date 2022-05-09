@@ -122,14 +122,18 @@ int main(void)
   DBG_PUT("-----------------------------------\r\n");
   DBG_PUT("Iris Electronics Long Duration Test Software\r\nVersion 1.01.0; 2022-05-04\r\nSlave Side\r\n");
   DBG_PUT("-----------------------------------\r\n");
+  init_temp_sensors();
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+
 	  _toggleLED();
-	  HAL_Delay(250);
+	  _testScanI2C();
+	  testTempSensor();
+	  HAL_Delay(2500);
 //	  switch (state){
 //			case idle:
 //				break;
