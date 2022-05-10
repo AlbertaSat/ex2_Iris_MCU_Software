@@ -13,7 +13,7 @@ uint16_t get_configuration(uint8_t addr){
 }
 
 void set_configuration(uint8_t addr, uint16_t val){
-	i2c2_write_8_16(addr, 0x00, _flip_byte_order(val));
+	i2c2_write8_16(addr, 0x00, _flip_byte_order(val));
 	return;
 }
 
@@ -42,7 +42,7 @@ uint16_t get_calibration(uint8_t addr){
 	return rtn;
 }
 void set_calibration(uint8_t addr, uint16_t val){
-	i2c2_write_8_16(addr, 0x05, _flip_byte_order(val));
+	i2c2_write8_16(addr, 0x05, _flip_byte_order(val));
 	return;
 }
 
@@ -52,7 +52,7 @@ uint16_t get_enable(uint8_t addr){
 }
 
 void set_enable(uint8_t addr, uint16_t val){
-	i2c2_write_8_16(addr, 0x06, _flip_byte_order(val));
+	i2c2_write8_16(addr, 0x06, _flip_byte_order(val));
 	return;
 }
 
@@ -62,7 +62,7 @@ uint16_t get_alert_limit(uint8_t addr){
 }
 
 void set_alert_limit(uint8_t addr, uint16_t val){
-	i2c2_write_8_16(addr, 0x07, _flip_byte_order(val));
+	i2c2_write8_16(addr, 0x07, _flip_byte_order(val));
 	return;
 }
 
