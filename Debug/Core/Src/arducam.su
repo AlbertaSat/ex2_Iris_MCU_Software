@@ -24,5 +24,4 @@
 ../Core/Src/arducam.c:357:13:dump_uart_jpg	120	static
 ../Core/Src/arducam.c:418:13:dump_uart_raw	40	static
 ../Core/Src/arducam.c:431:6:SingleCapTransfer	24	static
-../Core/Src/arducam.c:469:9:get_image_num	8	static
-../Core/Src/arducam.c:473:6:set_image_num	16	static
+../Core/Src/arducam.c:470:6:set_image_num	16	static
