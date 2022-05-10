@@ -466,9 +466,6 @@ void SingleCapTransfer(int format, uint8_t sensor) {
     DBG_PUT("\04");
 }
 
-uint8_t get_image_num(){
-	return image_number;
-}
 
 void set_image_num(uint8_t num){
 	image_number = num;
