@@ -6,7 +6,11 @@
 ../Core/Src/I2C.c:52:6:i2c2_write16_8	96	static
 ../Core/Src/I2C.c:57:9:i2c2_read8_8	112	static
 ../Core/Src/I2C.c:61:6:i2c2_write8_8	96	static
-../Core/Src/I2C.c:66:6:hi2c_read16_8	112	static
-../Core/Src/I2C.c:77:6:hi2c_write16_8	112	static
-../Core/Src/I2C.c:91:9:hi2c_read8_8	112	static
-../Core/Src/I2C.c:104:6:hi2c_write8_8	112	static
+../Core/Src/I2C.c:67:10:i2c2_read8_16	112	static
+../Core/Src/I2C.c:72:6:i2c2_write8_16	96	static
+../Core/Src/I2C.c:78:6:hi2c_read16_8	112	static
+../Core/Src/I2C.c:89:6:hi2c_write16_8	112	static
+../Core/Src/I2C.c:103:9:hi2c_read8_8	112	static
+../Core/Src/I2C.c:116:6:hi2c_write8_8	112	static
+../Core/Src/I2C.c:129:10:hi2c_read8_16	112	static
+../Core/Src/I2C.c:142:6:hi2c_write8_16	112	static
