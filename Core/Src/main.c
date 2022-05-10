@@ -120,7 +120,7 @@ int main(void)
   // init nand flash
 //  NAND_SPI_Init(&hspi2);
   DBG_PUT("-----------------------------------\r\n");
-  DBG_PUT("Iris Electronics Long Duration Test Software\r\nVersion 1.01.0; 2022-05-04\r\nSlave Side\r\n");
+  DBG_PUT("Iris Electronics Test Software\r\nSlave Side\r\n");
   DBG_PUT("-----------------------------------\r\n");
   init_temp_sensors();
   /* USER CODE END 2 */
@@ -129,29 +129,26 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-
-	  _toggleLED();
-	  _testScanI2C();
-	  testTempSensor();
-	  HAL_Delay(2500);
-//	  switch (state){
-//			case idle:
-//				break;
-//			case receiving:
-//				state = idle;
-////				HAL_SPI_Receive_IT(&hspi1, &RX_Data, sizeof(RX_Data));
+	  switch (state){
+			case idle:
+				break;
+			case receiving:
+				state = idle;
+				HAL_SPI_Receive_IT(&hspi1, &RX_Data, sizeof(RX_Data));
 //				HAL_SPI_TransmitReceive_IT(&hspi1, &RX_Data, &RX_Data, sizeof(RX_Data));
-//				break;
-//			case transmitting:
-//				state = idle;
+				break;
+			case transmitting:
+				state = receiving;
 //				HAL_SPI_Transmit_IT(&hspi1, &RX_Data, sizeof(RX_Data));
-//				break;
-//			case handling_command:
-//				handle_command(RX_Data);
-//				state = transmitting;
-//				break;
+				HAL_SPI_Transmit(&hspi1, &RX_Data, sizeof(RX_Data), 1000);
+				RX_Data = 0x00;
+				break;
+			case handling_command:
+				state = transmitting;
+				handle_command(RX_Data);
+				break;
 
-//		  }
+		  }
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -460,12 +457,13 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
-void HAL_SPI_TxCpltCallback (SPI_HandleTypeDef * hspi)
+void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef * hspi)
 {
 	state = receiving;
 	char buf[64];
 	sprintf(buf, "Sent 0x%x\r\n", RX_Data);
 	DBG_PUT(buf);
+	RX_Data = 0x00;
 }
 
 void HAL_SPI_RxCpltCallback(SPI_HandleTypeDef * hspi)
