@@ -534,12 +534,12 @@ void handle_command(uint8_t cmd) {
     	break;
     case CAPTURE_IMAGE:
 //    	handle_capture_cmd(cmd);
-    	imagenum++;
-    	sprintf(buf, "(Placeholder)Captured Image %d\r\n", imagenum);
+    	iterate_image_num();
+    	sprintf(buf, "(Placeholder)Captured Image %d\r\n", get_image_num());
     	DBG_PUT(buf);
     	break;
     case GET_IMAGE_NUM:
-    	sprintf(buf, "Current Image: %d\r\n", imagenum);
+    	sprintf(buf, "Current Image: %d\r\n", get_image_num());
     	DBG_PUT(buf);
     	break;
     case COUNT_IMAGES:
