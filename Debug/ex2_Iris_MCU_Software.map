@@ -1278,6 +1278,127 @@ Discarded input sections
  .debug_frame   0x0000000000000000       0x70 ./Core/Src/housekeeping.o
  .ARM.attributes
                 0x0000000000000000       0x2c ./Core/Src/housekeeping.o
+ .group         0x0000000000000000        0xc ./Core/Src/ina231.o
+ .group         0x0000000000000000        0xc ./Core/Src/ina231.o
+ .group         0x0000000000000000        0xc ./Core/Src/ina231.o
+ .group         0x0000000000000000        0xc ./Core/Src/ina231.o
+ .group         0x0000000000000000        0xc ./Core/Src/ina231.o
+ .group         0x0000000000000000        0xc ./Core/Src/ina231.o
+ .group         0x0000000000000000        0xc ./Core/Src/ina231.o
+ .group         0x0000000000000000        0xc ./Core/Src/ina231.o
+ .group         0x0000000000000000        0xc ./Core/Src/ina231.o
+ .group         0x0000000000000000        0xc ./Core/Src/ina231.o
+ .group         0x0000000000000000        0xc ./Core/Src/ina231.o
+ .group         0x0000000000000000        0xc ./Core/Src/ina231.o
+ .group         0x0000000000000000        0xc ./Core/Src/ina231.o
+ .group         0x0000000000000000        0xc ./Core/Src/ina231.o
+ .group         0x0000000000000000        0xc ./Core/Src/ina231.o
+ .group         0x0000000000000000        0xc ./Core/Src/ina231.o
+ .group         0x0000000000000000        0xc ./Core/Src/ina231.o
+ .group         0x0000000000000000        0xc ./Core/Src/ina231.o
+ .group         0x0000000000000000        0xc ./Core/Src/ina231.o
+ .group         0x0000000000000000        0xc ./Core/Src/ina231.o
+ .group         0x0000000000000000        0xc ./Core/Src/ina231.o
+ .group         0x0000000000000000        0xc ./Core/Src/ina231.o
+ .group         0x0000000000000000        0xc ./Core/Src/ina231.o
+ .group         0x0000000000000000        0xc ./Core/Src/ina231.o
+ .group         0x0000000000000000        0xc ./Core/Src/ina231.o
+ .group         0x0000000000000000        0xc ./Core/Src/ina231.o
+ .group         0x0000000000000000        0xc ./Core/Src/ina231.o
+ .group         0x0000000000000000        0xc ./Core/Src/ina231.o
+ .group         0x0000000000000000        0xc ./Core/Src/ina231.o
+ .group         0x0000000000000000        0xc ./Core/Src/ina231.o
+ .group         0x0000000000000000        0xc ./Core/Src/ina231.o
+ .group         0x0000000000000000        0xc ./Core/Src/ina231.o
+ .group         0x0000000000000000        0xc ./Core/Src/ina231.o
+ .group         0x0000000000000000        0xc ./Core/Src/ina231.o
+ .group         0x0000000000000000        0xc ./Core/Src/ina231.o
+ .group         0x0000000000000000        0xc ./Core/Src/ina231.o
+ .group         0x0000000000000000        0xc ./Core/Src/ina231.o
+ .group         0x0000000000000000        0xc ./Core/Src/ina231.o
+ .group         0x0000000000000000        0xc ./Core/Src/ina231.o
+ .group         0x0000000000000000        0xc ./Core/Src/ina231.o
+ .text          0x0000000000000000        0x0 ./Core/Src/ina231.o
+ .data          0x0000000000000000        0x0 ./Core/Src/ina231.o
+ .bss           0x0000000000000000        0x0 ./Core/Src/ina231.o
+ .text.get_configuration
+                0x0000000000000000       0x36 ./Core/Src/ina231.o
+ .text.set_configuration
+                0x0000000000000000       0x34 ./Core/Src/ina231.o
+ .text.get_shunt_voltage
+                0x0000000000000000       0x36 ./Core/Src/ina231.o
+ .text.get_bus_voltage
+                0x0000000000000000       0x36 ./Core/Src/ina231.o
+ .text.get_power
+                0x0000000000000000       0x36 ./Core/Src/ina231.o
+ .text.get_current
+                0x0000000000000000       0x36 ./Core/Src/ina231.o
+ .text.get_calibration
+                0x0000000000000000       0x36 ./Core/Src/ina231.o
+ .text.set_calibration
+                0x0000000000000000       0x34 ./Core/Src/ina231.o
+ .text.get_enable
+                0x0000000000000000       0x36 ./Core/Src/ina231.o
+ .text.set_enable
+                0x0000000000000000       0x34 ./Core/Src/ina231.o
+ .text.get_alert_limit
+                0x0000000000000000       0x36 ./Core/Src/ina231.o
+ .text.set_alert_limit
+                0x0000000000000000       0x34 ./Core/Src/ina231.o
+ .text._flip_byte_order
+                0x0000000000000000       0x4e ./Core/Src/ina231.o
+ .debug_info    0x0000000000000000      0x462 ./Core/Src/ina231.o
+ .debug_abbrev  0x0000000000000000      0x10e ./Core/Src/ina231.o
+ .debug_aranges
+                0x0000000000000000       0x80 ./Core/Src/ina231.o
+ .debug_ranges  0x0000000000000000       0x70 ./Core/Src/ina231.o
+ .debug_macro   0x0000000000000000      0x1dd ./Core/Src/ina231.o
+ .debug_macro   0x0000000000000000      0xa4e ./Core/Src/ina231.o
+ .debug_macro   0x0000000000000000      0x125 ./Core/Src/ina231.o
+ .debug_macro   0x0000000000000000       0x2e ./Core/Src/ina231.o
+ .debug_macro   0x0000000000000000       0x28 ./Core/Src/ina231.o
+ .debug_macro   0x0000000000000000       0x22 ./Core/Src/ina231.o
+ .debug_macro   0x0000000000000000       0x8e ./Core/Src/ina231.o
+ .debug_macro   0x0000000000000000       0x51 ./Core/Src/ina231.o
+ .debug_macro   0x0000000000000000      0x103 ./Core/Src/ina231.o
+ .debug_macro   0x0000000000000000       0x6a ./Core/Src/ina231.o
+ .debug_macro   0x0000000000000000      0x1df ./Core/Src/ina231.o
+ .debug_macro   0x0000000000000000       0x1c ./Core/Src/ina231.o
+ .debug_macro   0x0000000000000000       0x22 ./Core/Src/ina231.o
+ .debug_macro   0x0000000000000000       0xaf ./Core/Src/ina231.o
+ .debug_macro   0x0000000000000000      0x4da ./Core/Src/ina231.o
+ .debug_macro   0x0000000000000000      0x11f ./Core/Src/ina231.o
+ .debug_macro   0x0000000000000000     0x873b ./Core/Src/ina231.o
+ .debug_macro   0x0000000000000000       0x66 ./Core/Src/ina231.o
+ .debug_macro   0x0000000000000000     0x355c ./Core/Src/ina231.o
+ .debug_macro   0x0000000000000000      0x174 ./Core/Src/ina231.o
+ .debug_macro   0x0000000000000000       0x5b ./Core/Src/ina231.o
+ .debug_macro   0x0000000000000000      0x8b5 ./Core/Src/ina231.o
+ .debug_macro   0x0000000000000000      0x807 ./Core/Src/ina231.o
+ .debug_macro   0x0000000000000000      0x197 ./Core/Src/ina231.o
+ .debug_macro   0x0000000000000000      0x13f ./Core/Src/ina231.o
+ .debug_macro   0x0000000000000000      0x1b5 ./Core/Src/ina231.o
+ .debug_macro   0x0000000000000000       0x82 ./Core/Src/ina231.o
+ .debug_macro   0x0000000000000000      0x28e ./Core/Src/ina231.o
+ .debug_macro   0x0000000000000000      0x1e9 ./Core/Src/ina231.o
+ .debug_macro   0x0000000000000000      0x13e ./Core/Src/ina231.o
+ .debug_macro   0x0000000000000000      0x4b5 ./Core/Src/ina231.o
+ .debug_macro   0x0000000000000000      0x22c ./Core/Src/ina231.o
+ .debug_macro   0x0000000000000000       0x5b ./Core/Src/ina231.o
+ .debug_macro   0x0000000000000000       0xa5 ./Core/Src/ina231.o
+ .debug_macro   0x0000000000000000      0x18d ./Core/Src/ina231.o
+ .debug_macro   0x0000000000000000       0x16 ./Core/Src/ina231.o
+ .debug_macro   0x0000000000000000      0x22c ./Core/Src/ina231.o
+ .debug_macro   0x0000000000000000      0x5ba ./Core/Src/ina231.o
+ .debug_macro   0x0000000000000000       0x44 ./Core/Src/ina231.o
+ .debug_macro   0x0000000000000000      0x170 ./Core/Src/ina231.o
+ .debug_macro   0x0000000000000000       0xac ./Core/Src/ina231.o
+ .debug_line    0x0000000000000000      0x81e ./Core/Src/ina231.o
+ .debug_str     0x0000000000000000    0x6bf8b ./Core/Src/ina231.o
+ .comment       0x0000000000000000       0x51 ./Core/Src/ina231.o
+ .debug_frame   0x0000000000000000      0x1d0 ./Core/Src/ina231.o
+ .ARM.attributes
+                0x0000000000000000       0x2c ./Core/Src/ina231.o
  .group         0x0000000000000000        0xc ./Core/Src/main.o
  .group         0x0000000000000000        0xc ./Core/Src/main.o
  .group         0x0000000000000000        0xc ./Core/Src/main.o
@@ -5436,6 +5557,7 @@ LOAD ./Core/Src/arducam.o
 LOAD ./Core/Src/cli.o
 LOAD ./Core/Src/command_handler.o
 LOAD ./Core/Src/housekeeping.o
+LOAD ./Core/Src/ina231.o
 LOAD ./Core/Src/main.o
 LOAD ./Core/Src/nand_m79a.o
 LOAD ./Core/Src/nand_m79a_lld.o
