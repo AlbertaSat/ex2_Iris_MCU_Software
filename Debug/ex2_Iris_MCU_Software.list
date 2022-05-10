@@ -7,43 +7,43 @@ Idx Name          Size      VMA       LMA       File off  Algn
                   CONTENTS, ALLOC, LOAD, READONLY, DATA
   1 .text         00004b48  080000c0  080000c0  000100c0  2**2
                   CONTENTS, ALLOC, LOAD, READONLY, CODE
-  2 .rodata       00000408  08004c08  08004c08  00014c08  2**2
+  2 .rodata       00000460  08004c08  08004c08  00014c08  2**2
                   CONTENTS, ALLOC, LOAD, READONLY, DATA
-  3 .ARM.extab    00000000  08005010  08005010  00020070  2**0
+  3 .ARM.extab    00000000  08005068  08005068  00020070  2**0
                   CONTENTS
-  4 .ARM          00000008  08005010  08005010  00015010  2**2
+  4 .ARM          00000008  08005068  08005068  00015068  2**2
                   CONTENTS, ALLOC, LOAD, READONLY, DATA
-  5 .preinit_array 00000000  08005018  08005018  00020070  2**0
+  5 .preinit_array 00000000  08005070  08005070  00020070  2**0
                   CONTENTS, ALLOC, LOAD, DATA
-  6 .init_array   00000004  08005018  08005018  00015018  2**2
+  6 .init_array   00000004  08005070  08005070  00015070  2**2
                   CONTENTS, ALLOC, LOAD, DATA
-  7 .fini_array   00000004  0800501c  0800501c  0001501c  2**2
+  7 .fini_array   00000004  08005074  08005074  00015074  2**2
                   CONTENTS, ALLOC, LOAD, DATA
-  8 .data         00000070  20000000  08005020  00020000  2**2
+  8 .data         00000070  20000000  08005078  00020000  2**2
                   CONTENTS, ALLOC, LOAD, DATA
-  9 .bss          00000200  20000070  08005090  00020070  2**2
+  9 .bss          00000200  20000070  080050e8  00020070  2**2
                   ALLOC
- 10 ._user_heap_stack 00000600  20000270  08005090  00020270  2**0
+ 10 ._user_heap_stack 00000600  20000270  080050e8  00020270  2**0
                   ALLOC
  11 .ARM.attributes 00000028  00000000  00000000  00020070  2**0
                   CONTENTS, READONLY
- 12 .debug_info   0000f9bc  00000000  00000000  00020098  2**0
+ 12 .debug_info   0000fb66  00000000  00000000  00020098  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 13 .debug_abbrev 00002414  00000000  00000000  0002fa54  2**0
+ 13 .debug_abbrev 00002414  00000000  00000000  0002fbfe  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 14 .debug_aranges 00000ce0  00000000  00000000  00031e68  2**3
+ 14 .debug_aranges 00000d00  00000000  00000000  00032018  2**3
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 15 .debug_ranges 00000be8  00000000  00000000  00032b48  2**3
+ 15 .debug_ranges 00000c08  00000000  00000000  00032d18  2**3
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 16 .debug_macro  00013c0f  00000000  00000000  00033730  2**0
+ 16 .debug_macro  00013c0f  00000000  00000000  00033920  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 17 .debug_line   00010f3c  00000000  00000000  0004733f  2**0
+ 17 .debug_line   00010fcb  00000000  00000000  0004752f  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 18 .debug_str    000742fc  00000000  00000000  0005827b  2**0
+ 18 .debug_str    00074336  00000000  00000000  000584fa  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 19 .comment      00000050  00000000  00000000  000cc577  2**0
+ 19 .comment      00000050  00000000  00000000  000cc830  2**0
                   CONTENTS, READONLY
- 20 .debug_frame  000032f4  00000000  00000000  000cc5c8  2**2
+ 20 .debug_frame  00003388  00000000  00000000  000cc880  2**2
                   CONTENTS, READONLY, DEBUGGING, OCTETS
 
 Disassembly of section .text:
@@ -1056,10 +1056,10 @@ void _testScanI2C(){
  80007f0:	b014      	add	sp, #80	; 0x50
  80007f2:	bdb0      	pop	{r4, r5, r7, pc}
  80007f4:	200000d8 	.word	0x200000d8
- 80007f8:	08004df4 	.word	0x08004df4
- 80007fc:	08004e10 	.word	0x08004e10
- 8000800:	08004e24 	.word	0x08004e24
- 8000804:	08004e38 	.word	0x08004e38
+ 80007f8:	08004e4c 	.word	0x08004e4c
+ 80007fc:	08004e68 	.word	0x08004e68
+ 8000800:	08004e7c 	.word	0x08004e7c
+ 8000804:	08004e90 	.word	0x08004e90
 
 08000808 <testTempSensor>:
 
@@ -1132,7 +1132,7 @@ void testTempSensor(void){
  8000882:	b003      	add	sp, #12
  8000884:	bd90      	pop	{r4, r7, pc}
  8000886:	46c0      	nop			; (mov r8, r8)
- 8000888:	08004e4c 	.word	0x08004e4c
+ 8000888:	08004ea4 	.word	0x08004ea4
 
 0800088c <printTemp>:
 
@@ -1166,7 +1166,7 @@ void printTemp(uint16_t temp, uint8_t sensor){
  80008ba:	46bd      	mov	sp, r7
  80008bc:	b013      	add	sp, #76	; 0x4c
  80008be:	bd90      	pop	{r4, r7, pc}
- 80008c0:	08004e50 	.word	0x08004e50
+ 80008c0:	08004ea8 	.word	0x08004ea8
 
 080008c4 <DBG_PUT>:
 static inline void DBG_PUT(char *str) {
@@ -1267,8 +1267,8 @@ int main(void)
   {
  8000944:	e7f4      	b.n	8000930 <main+0x40>
  8000946:	46c0      	nop			; (mov r8, r8)
- 8000948:	08004e74 	.word	0x08004e74
- 800094c:	08004e9c 	.word	0x08004e9c
+ 8000948:	08004ecc 	.word	0x08004ecc
+ 800094c:	08004ef4 	.word	0x08004ef4
  8000950:	000009c4 	.word	0x000009c4
 
 08000954 <SystemClock_Config>:
@@ -2963,7 +2963,7 @@ LoopForever:
   ldr r1, =_edata
  80011ec:	20000070 	.word	0x20000070
   ldr r2, =_sidata
- 80011f0:	08005020 	.word	0x08005020
+ 80011f0:	08005078 	.word	0x08005078
   ldr r2, =_sbss
  80011f4:	20000070 	.word	0x20000070
   ldr r4, =_ebss
@@ -7436,7 +7436,7 @@ HAL_StatusTypeDef HAL_RCC_OscConfig(RCC_OscInitTypeDef  *RCC_OscInitStruct)
  8002a14:	fffeffff 	.word	0xfffeffff
  8002a18:	fffbffff 	.word	0xfffbffff
  8002a1c:	ffffe0ff 	.word	0xffffe0ff
- 8002a20:	08004f10 	.word	0x08004f10
+ 8002a20:	08004f68 	.word	0x08004f68
  8002a24:	20000000 	.word	0x20000000
  8002a28:	20000004 	.word	0x20000004
  8002a2c:	ffff1fff 	.word	0xffff1fff
@@ -8596,7 +8596,7 @@ HAL_StatusTypeDef HAL_RCC_ClockConfig(RCC_ClkInitTypeDef  *RCC_ClkInitStruct, ui
  8003048:	40021000 	.word	0x40021000
  800304c:	fffff8ff 	.word	0xfffff8ff
  8003050:	ffffc7ff 	.word	0xffffc7ff
- 8003054:	08004f10 	.word	0x08004f10
+ 8003054:	08004f68 	.word	0x08004f68
  8003058:	20000000 	.word	0x20000000
  800305c:	20000004 	.word	0x20000004
 
@@ -8820,7 +8820,7 @@ uint32_t HAL_RCC_GetSysClockFreq(void)
  8003198:	40021000 	.word	0x40021000
  800319c:	003d0900 	.word	0x003d0900
  80031a0:	00f42400 	.word	0x00f42400
- 80031a4:	08004f28 	.word	0x08004f28
+ 80031a4:	08004f80 	.word	0x08004f80
 
 080031a8 <HAL_RCC_GetHCLKFreq>:
   * @note   The SystemCoreClock CMSIS variable is used to store System Clock Frequency
@@ -8869,7 +8869,7 @@ uint32_t HAL_RCC_GetPCLK1Freq(void)
  80031dc:	bd80      	pop	{r7, pc}
  80031de:	46c0      	nop			; (mov r8, r8)
  80031e0:	40021000 	.word	0x40021000
- 80031e4:	08004f20 	.word	0x08004f20
+ 80031e4:	08004f78 	.word	0x08004f78
 
 080031e8 <HAL_RCC_GetPCLK2Freq>:
   * @note   Each time PCLK2 changes, this function must be called to update the
@@ -8899,7 +8899,7 @@ uint32_t HAL_RCC_GetPCLK2Freq(void)
  8003208:	bd80      	pop	{r7, pc}
  800320a:	46c0      	nop			; (mov r8, r8)
  800320c:	40021000 	.word	0x40021000
- 8003210:	08004f20 	.word	0x08004f20
+ 8003210:	08004f78 	.word	0x08004f78
 
 08003214 <HAL_RCCEx_PeriphCLKConfig>:
   * @retval HAL status
@@ -11272,11 +11272,11 @@ HAL_StatusTypeDef UART_SetConfig(UART_HandleTypeDef *huart)
  8003f1e:	b00e      	add	sp, #56	; 0x38
  8003f20:	bdb0      	pop	{r4, r5, r7, pc}
  8003f22:	46c0      	nop			; (mov r8, r8)
- 8003f24:	08004f34 	.word	0x08004f34
+ 8003f24:	08004f8c 	.word	0x08004f8c
  8003f28:	40021000 	.word	0x40021000
  8003f2c:	003d0900 	.word	0x003d0900
  8003f30:	00f42400 	.word	0x00f42400
- 8003f34:	08004f58 	.word	0x08004f58
+ 8003f34:	08004fb0 	.word	0x08004fb0
 
 08003f38 <UART_AdvFeatureConfig>:
   * @brief Configure the UART peripheral advanced features.
@@ -11945,10 +11945,10 @@ __STATIC_FORCEINLINE void __set_PRIMASK(uint32_t priMask)
  80042f6:	4798      	blx	r3
  80042f8:	3601      	adds	r6, #1
  80042fa:	e7f2      	b.n	80042e2 <__libc_init_array+0x1e>
- 80042fc:	08005018 	.word	0x08005018
- 8004300:	08005018 	.word	0x08005018
- 8004304:	08005018 	.word	0x08005018
- 8004308:	0800501c 	.word	0x0800501c
+ 80042fc:	08005070 	.word	0x08005070
+ 8004300:	08005070 	.word	0x08005070
+ 8004304:	08005070 	.word	0x08005070
+ 8004308:	08005074 	.word	0x08005074
 
 0800430c <memcpy>:
  800430c:	2300      	movs	r3, #0
@@ -12337,9 +12337,9 @@ __STATIC_FORCEINLINE void __set_PRIMASK(uint32_t priMask)
  8004618:	f000 f87c 	bl	8004714 <_printf_i>
  800461c:	e7ea      	b.n	80045f4 <_svfiprintf_r+0x1c0>
  800461e:	46c0      	nop			; (mov r8, r8)
- 8004620:	08004f7c 	.word	0x08004f7c
- 8004624:	08004f82 	.word	0x08004f82
- 8004628:	08004f86 	.word	0x08004f86
+ 8004620:	08004fd4 	.word	0x08004fd4
+ 8004624:	08004fda 	.word	0x08004fda
+ 8004628:	08004fde 	.word	0x08004fde
  800462c:	00000000 	.word	0x00000000
  8004630:	08004371 	.word	0x08004371
 
@@ -12714,8 +12714,8 @@ __STATIC_FORCEINLINE void __set_PRIMASK(uint32_t priMask)
  800492a:	e7e9      	b.n	8004900 <_printf_i+0x1ec>
  800492c:	2500      	movs	r5, #0
  800492e:	e7f7      	b.n	8004920 <_printf_i+0x20c>
- 8004930:	08004f8d 	.word	0x08004f8d
- 8004934:	08004f9e 	.word	0x08004f9e
+ 8004930:	08004fe5 	.word	0x08004fe5
+ 8004934:	08004ff6 	.word	0x08004ff6
 
 08004938 <__retarget_lock_acquire_recursive>:
  8004938:	4770      	bx	lr
