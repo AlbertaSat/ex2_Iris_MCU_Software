@@ -24,6 +24,7 @@ extern const struct sensor_reg OV5642_QVGA_Preview[];
 uint8_t ack = 0xAA;
 uint8_t total_image_num = 0; // This will cause issues with total num of images once board resets. todo: fix
 housekeeping_packet_t hk;
+
 void take_image(){
 	/*
 	 * Todo: Determine whether or not we want to have individual sensor control, or just cap both at the same time (ish)
@@ -78,13 +79,13 @@ void transfer_image(){
 void get_image_length(){
 	// todo:	@RON:   Need a way to get image length from NAND flash
 	//  				- Expecting a 32 bit integer for image size
-	uint32_t image_length = 0x0000;
+	uint32_t image_length = 0x000000;
 	SPI1_IT_Transmit(&image_length);
 	return;
 }
 
 void count_images(){
-	//todo: Consider implementing a function to count images in flash rather than iterating a local counter
+	//todo: @ron - can we consider implementing a function to count images in flash rather than iterating a local counter
 	SPI1_IT_Transmit(&total_image_num);
 	return;
 }
@@ -160,8 +161,12 @@ void _transfer_images_to_flash(){
 	return;
 }
 
-void _iterate_image_number(){
+void iterate_image_num(){
 	total_image_num += 2;
+}
+
+uint8_t get_image_num(){
+	return total_image_num;
 }
 
 void _initalize_sensor(uint8_t sensor){
