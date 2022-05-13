@@ -82,13 +82,8 @@ NAND_ReturnType NAND_Init(void) {
 static uint8_t Super_Block[PAGE_DATA_SIZE];
 
 /* Use this to mark the file system as formatted. */
-static const char* Magic = "NFS 0.1";
+static const char* Magic = "NFS 0.2";
 #define MAGIC_LEN 8
-
-struct inode {
-    uint32_t id;
-    uint32_t sblock;
-};
 
 /* Super block contents. The inodes array is a circular list with head at next_inode. */
 struct super_block {
@@ -102,16 +97,6 @@ struct super_block {
  * The address of the last block on the device is MAX_BLOCK_PAGE-1.
  */
 #define MAX_BLOCK_PAGE (NUM_BLOCKS * NUM_PAGES_PER_BLOCK)
-
-/* The file handle is used to keep track of the next block for I/O. last_block is used
- * to remember EOF for reads.
- */
-struct file_handle {
-    uint32_t next_block;
-    uint32_t last_block;
-};
-
-char buf[64];
 
 static inline int check_magic(const struct super_block *sb) {
     return memcmp(sb->magic, Magic, MAGIC_LEN);
@@ -179,6 +164,7 @@ FileHandle_t* NAND_File_Create(uint32_t id) {
     uint32_t ix = sblock->next_inode;
     sblock->inodes[ix].id = id;
     fh.next_block = sblock->inodes[ix].sblock;
+    fh.total_len = 0;
 
     return &fh;
 }
@@ -191,14 +177,19 @@ FileHandle_t* NAND_File_Create(uint32_t id) {
  */
 NAND_ReturnType NAND_File_Write_Close(FileHandle_t *fh) {
     struct super_block *sblock = (struct super_block *) Super_Block;
+    uint32_t ix = sblock->next_inode;
+
+    /* Update the current on-flash inode with the length */
+    sblock->inodes[ix].length = fh->total_len;
 
     /* Write the end of this file as the start block of the next file */
-    uint32_t ix = sblock->next_inode + 1;
+    ix += 1;
     if (ix >= sblock->inode_cnt) {
         ix = 0; // reached the end of the super-block - wrap around
     }
     sblock->next_inode = ix;
     sblock->inodes[ix].sblock = fh->next_block;
+    sblock->inodes[ix].length = 0;
 
     /* Save the new super block contents. */
     PhysicalAddrs paddr = { .rowAddr = SUPER_BLOCK, .colAddr = 0 };
@@ -213,7 +204,7 @@ NAND_ReturnType NAND_File_Write_Close(FileHandle_t *fh) {
  *                            which is the most recent file, 1 is the one before that etc.
  * @return FileHandle_t* An opaque cookie used for each read.
  */
-FileHandle_t* NAND_File_Open(int32_t relative_offset) {
+FileHandle_t* NAND_File_Open(uint32_t relative_offset) {
     struct super_block *sblock = (struct super_block *) Super_Block;
 
     if (check_magic(sblock) != 0) {
@@ -230,6 +221,7 @@ FileHandle_t* NAND_File_Open(int32_t relative_offset) {
     if (ix < 0) {
         ix += sblock->inode_cnt;
     }
+    fh.total_len = sblock->inodes[ix].length;
     fh.next_block = sblock->inodes[ix].sblock;
     if (ix == (sblock->inode_cnt - 1)) {  // wrap around
         fh.last_block = sblock->inodes[0].sblock;
@@ -261,27 +253,29 @@ NAND_ReturnType NAND_File_Read_Close(FileHandle_t *fh) {
 
 /**
  * @brief Read the next block in the file
+ * @note All reads should be length PAGE_DATA_SIZE except the last (partial) page
  * 
  * @param[in,out] fh        pointer to file handle returned by NAND_Open
- * @param[in,out] length    number of bytes to read - must equal PAGE_DATA_SIZE
+ * @param[in,out] length    number of bytes to read - see note
  * @param[out]    buffer    pointer to the start of the data read from NAND
- * @return NAND_ReturnType  Ret_Success if the block was written successfully
+ * @return NAND_ReturnType  Ret_Success if the block was read successfully
  */
 NAND_ReturnType NAND_File_Read(FileHandle_t *fh, uint16_t *length, uint8_t *buffer) {
     if (fh->next_block >= fh->last_block) {
         *length = 0;
         return Ret_Success; // End of File reached
     }
-    if (length != PAGE_DATA_SIZE) {
-        return Ret_Failed; // Must read full blocks
+    if (*length > PAGE_DATA_SIZE) {
+        return Ret_Failed; // Can only read one block at a time
     }
 
     PhysicalAddrs paddr = { .rowAddr = fh->next_block, .colAddr = 0 };
     NAND_ReturnType rc;
-    if ((rc = NAND_Page_Read(&paddr, PAGE_DATA_SIZE, buffer)) != Ret_Success) {
+    if ((rc = NAND_Page_Read(&paddr, *length, buffer)) != Ret_Success) {
         return rc; // An actual read failure
     }
 
+    fh->total_len -= *length;
     fh->next_block += 1;
     if (fh->next_block >= MAX_BLOCK_PAGE) {
         /* We've reached the end of the device. Wrap around to the beginning,
@@ -295,9 +289,10 @@ NAND_ReturnType NAND_File_Read(FileHandle_t *fh, uint16_t *length, uint8_t *buff
 
  /**
  * @brief Write the next block in the file
+ * @note All writess should be length PAGE_DATA_SIZE except the last (partial) page
  * 
  * @param[in,out] fh       pointer to file handle returned by NAND_Open
- * @param[in] length       number of bytes to write - must equal PAGE_DATA_SIZE
+ * @param[in] length       number of bytes to write - see note
  * @param[in] buffer       pointer to the start of the data to write to NAND
  * @return NAND_ReturnType Ret_Success if the block was written successfully
  */
@@ -305,14 +300,15 @@ NAND_ReturnType NAND_File_Write(FileHandle_t *fh, uint16_t length, uint8_t *buff
     PhysicalAddrs paddr = { .rowAddr = fh->next_block, .colAddr = 0 };
     NAND_ReturnType rc;
 
-    if (length != PAGE_DATA_SIZE) {
-        return Ret_Failed; // Must write full blocks
+    if (length > PAGE_DATA_SIZE) {
+        return Ret_Failed; // Can only write one block at a time
     }
 
-    if ((rc = NAND_Page_Program(&paddr, PAGE_DATA_SIZE, buffer)) != Ret_Success) {
+    if ((rc = NAND_Page_Program(&paddr, length, buffer)) != Ret_Success) {
         return rc; // An actual write failure
     }
 
+    fh->total_len += length;
     fh->next_block += 1;
     if (fh->next_block >= MAX_BLOCK_PAGE) {
         /* We've reached the end of the device. Wrap around to the beginning,
@@ -323,6 +319,105 @@ NAND_ReturnType NAND_File_Write(FileHandle_t *fh, uint16_t length, uint8_t *buff
     return rc;
  }
 
+
+/**
+ * @brief Get the length of a file
+ *
+ * @param[in] relative_offset Use the inode of the file this far back from the head
+ *                            of the inode list. For example, 0 is the current head,
+ *                            which is the most recent file, 1 is the one before that etc.
+ * @return uint32_t           The length of the file specified or 0 if there was an error
+ */
+uint32_t NAND_File_Length(uint32_t relative_offset) {
+    struct super_block *sblock = (struct super_block *) Super_Block;
+
+    if (check_magic(sblock) != 0) {
+        return 0; // FS is not formatted
+    }
+
+    if (relative_offset >= sblock->inode_cnt) {
+        return 0; // relative offset can't wrap around
+    }
+
+    /* Caveat emptor: don't go too far back, i.e. to uninitialized inodes! */
+    int32_t ix = sblock->next_inode - 1;
+    ix -= relative_offset;
+    if (ix < 0) {
+        ix += sblock->inode_cnt;
+    }
+
+    return sblock->inodes[ix].length;
+}
+
+/**
+ * @brief Get the inode of a particular file. The caller provides a struct inode
+ * to fill in, and the index of the inode is returned. This index can be used as
+ * input to NAND_File_List_Next to list the "next" file.
+ *
+ * @param[in] relative_offset Use the inode of the file this far back from the head
+ *                            of the inode list. For example, 0 is the current head,
+ *                            which is the most recent file, 1 is the one before that etc.
+ * @param[out] inode          The address of a struct inode for the result
+ * @return int                inode index - a negative number indicates error
+ */
+int NAND_File_List_First(uint32_t relative_offset, struct inode *inode) {
+    struct super_block *sblock = (struct super_block *) Super_Block;
+
+    if (check_magic(sblock) != 0) {
+        return -2; // FS is not formatted
+    }
+
+    if (relative_offset >= sblock->inode_cnt) {
+        return -3; // relative offset can't wrap around
+    }
+
+    /* Caveat emptor: don't go too far back, i.e. to uninitialized inodes! */
+    int32_t ix = sblock->next_inode - 1;
+    ix -= relative_offset;
+    if (ix < 0) {
+        ix += sblock->inode_cnt;
+    }
+
+    if (inode) {
+        *inode = sblock->inodes[ix];
+    }
+    if (sblock->inodes[ix].length == 0) {
+        return -1;
+    }
+    return ix;
+}
+
+/**
+ * @brief Given a cookie containing the inode index from a prior call to this
+ * function or NAND_File_List_First(), return the "next" file listing (inode).
+ *
+ * @param[in] cookie          the inode index returned by a previous list call
+ * @param[out] inode          The address of a struct inode for the result
+ * @return int                inode index - a negative number indicates error
+ */
+int NAND_File_List_Next(int cookie, struct inode *inode) {
+    struct super_block *sblock = (struct super_block *) Super_Block;
+
+    uint32_t ix;
+    if (cookie == 0) {
+        ix = sblock->inode_cnt - 1;
+    }
+    else {
+        ix = cookie - 1;
+    }
+
+    if (ix == sblock->next_inode || sblock->inodes[ix].length == 0) {
+        /* Either wrapped around or hit the last file */
+        if (inode) {
+            memset(inode, 0, sizeof(*inode));
+        }
+        return -1;
+    }
+    if (inode) {
+        *inode = sblock->inodes[ix];
+    }
+    return ix;
+}
 
 /**
  * @brief Work in progress; Read an arbitrary amount of bytes from the NAND
