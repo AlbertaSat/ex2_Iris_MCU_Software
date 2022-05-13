@@ -63,18 +63,35 @@ NAND_ReturnType NAND_Write(NAND_Addr *address, uint16_t length, uint8_t *buffer)
 
 /* A simple append-only file system API */
 
-struct file_handle;
-typedef struct file_handle FileHandle_t;
+struct inode {
+    uint32_t id;
+    uint32_t length;
+    uint32_t sblock;
+};
+
+/* The file handle is used to keep track of the next block for I/O. last_block is used
+ * to remember EOF for reads.
+ */
+typedef struct file_handle {
+    uint32_t next_block;
+    uint32_t last_block;
+    uint32_t total_len;
+} FileHandle_t;
 
 NAND_ReturnType NAND_File_Format(int reformat);
 
 FileHandle_t* NAND_File_Create(uint32_t id);
-FileHandle_t* NAND_File_Open(int32_t relative_offset);
+FileHandle_t* NAND_File_Open(uint32_t relative_offset);
 
 NAND_ReturnType NAND_File_Write(FileHandle_t *fh, uint16_t length, uint8_t *buffer);
 NAND_ReturnType NAND_File_Read(FileHandle_t *fh, uint16_t *length, uint8_t *buffer);
 
 NAND_ReturnType NAND_File_Write_Close(FileHandle_t *fh);
 NAND_ReturnType NAND_File_Read_Close(FileHandle_t *fh);
+
+uint32_t NAND_File_Length(uint32_t relative_offset);
+
+int NAND_File_List_First(uint32_t relative_offset, struct inode *inode);
+int NAND_File_List_Next(int cookie, struct inode *inode);
 
 #endif /* NAND_M79A_H */
