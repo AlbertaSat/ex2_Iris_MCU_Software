@@ -8,6 +8,7 @@
 #include "nand_m79a.h"
 #include "IEB_TESTS.h"
 #include "housekeeping.h"
+#include "command_handler.h"
 int format = JPEG;
 extern I2C_HandleTypeDef hi2c2;
 //extern struct housekeeping_packet hk;
@@ -529,6 +530,7 @@ void handle_command(uint8_t cmd) {
     switch(cmd) {
     case GET_HK:
     	DBG_PUT("Getting Housekeeping Data:\r\n");
+//    	get_housekeeping();
     	hk = get_housekeeping_packet();
     	decode_hk_packet(hk);
     	break;
