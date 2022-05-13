@@ -32,7 +32,9 @@ Core/Src/cli.o: ../Core/Src/cli.c \
  ../Core/Inc/debug.h ../Core/Inc/main.h ../Core/Inc/nand_m79a.h \
  ../Core/Inc/nand_m79a_lld.h ../Core/Inc/nand_spi.h \
  ../Core/Inc/IEB_TESTS.h ../Core/Inc/spi_bitbang.h ../Core/Inc/debug.h \
- ../Core/Inc/I2C.h ../Core/Inc/housekeeping.h
+ ../Core/Inc/I2C.h ../Core/Inc/housekeeping.h \
+ ../Core/Inc/command_handler.h ../Core/Inc/main.h ../Core/Inc/SPI_IT.h \
+ ../Core/Inc/housekeeping.h
 ../Drivers/STM32L0xx_HAL_Driver/Inc/stm32l0xx_hal.h:
 ../Core/Inc/stm32l0xx_hal_conf.h:
 ../Drivers/STM32L0xx_HAL_Driver/Inc/stm32l0xx_hal_rcc.h:
@@ -74,4 +76,8 @@ Core/Src/cli.o: ../Core/Src/cli.c \
 ../Core/Inc/spi_bitbang.h:
 ../Core/Inc/debug.h:
 ../Core/Inc/I2C.h:
+../Core/Inc/housekeeping.h:
+../Core/Inc/command_handler.h:
+../Core/Inc/main.h:
+../Core/Inc/SPI_IT.h:
 ../Core/Inc/housekeeping.h:
