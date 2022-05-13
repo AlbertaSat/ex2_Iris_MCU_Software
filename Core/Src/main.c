@@ -96,7 +96,7 @@ int main(void)
   /* MCU Configuration--------------------------------------------------------*/
 
   /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
-	  HAL_Init();
+  HAL_Init();
 
   /* USER CODE BEGIN Init */
 
@@ -139,6 +139,7 @@ int main(void)
 				break;
 			case transmitting:
 				state = receiving;
+//				HAL_Delay(100);
 //				HAL_SPI_Transmit_IT(&hspi1, &RX_Data, sizeof(RX_Data));
 				HAL_SPI_Transmit(&hspi1, &RX_Data, sizeof(RX_Data), 1000);
 				RX_Data = 0x00;
@@ -181,7 +182,7 @@ void SystemClock_Config(void)
   if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
   {
     Error_Handler();
-  }
+
 
   /** Initializes the CPU, AHB and APB buses clocks
   */
@@ -203,6 +204,7 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
+}
 }
 
 /**
