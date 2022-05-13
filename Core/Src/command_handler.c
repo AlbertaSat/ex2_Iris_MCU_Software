@@ -2,7 +2,7 @@
  * command_handler.c
  *
  *  Created on: May 9, 2022
- *      Author: liam
+ *      Author: Liam
  */
 #include "command_handler.h"
 #include "string.h"
@@ -121,6 +121,9 @@ void get_housekeeping(){
 	hk = _get_housekeeping();
 	char buffer[sizeof(hk)];
 	memcpy(buffer, &hk, sizeof(hk));
+//	uint8_t k = 0xAA;
+//	HAL_SPI_Transmit(&hspi1, &k, sizeof(k), 1000);
+//	HAL_SPI_Transmit(&hspi1, &buffer, sizeof(buffer), 1000);
 	SPI1_IT_Transmit((uint8_t *) buffer); // not sure this is how it's supposed to work
 	return;
 }
