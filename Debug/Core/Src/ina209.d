@@ -1,4 +1,4 @@
-Core/Src/ina231.o: ../Core/Src/ina231.c ../Core/Inc/ina231.h \
+Core/Src/ina209.o: ../Core/Src/ina209.c ../Core/Inc/ina209.h \
  ../Core/Inc/main.h ../Drivers/STM32L0xx_HAL_Driver/Inc/stm32l0xx_hal.h \
  ../Core/Inc/stm32l0xx_hal_conf.h \
  ../Drivers/STM32L0xx_HAL_Driver/Inc/stm32l0xx_hal_rcc.h \
@@ -28,7 +28,7 @@ Core/Src/ina231.o: ../Core/Src/ina231.c ../Core/Inc/ina231.h \
  ../Drivers/STM32L0xx_HAL_Driver/Inc/stm32l0xx_hal_spi.h \
  ../Drivers/STM32L0xx_HAL_Driver/Inc/stm32l0xx_hal_uart.h \
  ../Drivers/STM32L0xx_HAL_Driver/Inc/stm32l0xx_hal_uart_ex.h
-../Core/Inc/ina231.h:
+../Core/Inc/ina209.h:
 ../Core/Inc/main.h:
 ../Drivers/STM32L0xx_HAL_Driver/Inc/stm32l0xx_hal.h:
 ../Core/Inc/stm32l0xx_hal_conf.h:
