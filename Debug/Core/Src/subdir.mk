@@ -12,7 +12,7 @@ C_SRCS += \
 ../Core/Src/cli.c \
 ../Core/Src/command_handler.c \
 ../Core/Src/housekeeping.c \
-../Core/Src/ina231.c \
+../Core/Src/ina209.c \
 ../Core/Src/main.c \
 ../Core/Src/nand_m79a.c \
 ../Core/Src/nand_m79a_lld.c \
@@ -34,7 +34,7 @@ OBJS += \
 ./Core/Src/cli.o \
 ./Core/Src/command_handler.o \
 ./Core/Src/housekeeping.o \
-./Core/Src/ina231.o \
+./Core/Src/ina209.o \
 ./Core/Src/main.o \
 ./Core/Src/nand_m79a.o \
 ./Core/Src/nand_m79a_lld.o \
@@ -56,7 +56,7 @@ C_DEPS += \
 ./Core/Src/cli.d \
 ./Core/Src/command_handler.d \
 ./Core/Src/housekeeping.d \
-./Core/Src/ina231.d \
+./Core/Src/ina209.d \
 ./Core/Src/main.d \
 ./Core/Src/nand_m79a.d \
 ./Core/Src/nand_m79a_lld.d \
@@ -78,7 +78,7 @@ Core/Src/%.o Core/Src/%.su: ../Core/Src/%.c Core/Src/subdir.mk
 clean: clean-Core-2f-Src
 
 clean-Core-2f-Src:
-	-$(RM) ./Core/Src/I2C.d ./Core/Src/I2C.o ./Core/Src/I2C.su ./Core/Src/IEB_TESTS.d ./Core/Src/IEB_TESTS.o ./Core/Src/IEB_TESTS.su ./Core/Src/SPI_IT.d ./Core/Src/SPI_IT.o ./Core/Src/SPI_IT.su ./Core/Src/arducam.d ./Core/Src/arducam.o ./Core/Src/arducam.su ./Core/Src/cli.d ./Core/Src/cli.o ./Core/Src/cli.su ./Core/Src/command_handler.d ./Core/Src/command_handler.o ./Core/Src/command_handler.su ./Core/Src/housekeeping.d ./Core/Src/housekeeping.o ./Core/Src/housekeeping.su ./Core/Src/ina231.d ./Core/Src/ina231.o ./Core/Src/ina231.su ./Core/Src/main.d ./Core/Src/main.o ./Core/Src/main.su ./Core/Src/nand_m79a.d ./Core/Src/nand_m79a.o ./Core/Src/nand_m79a.su ./Core/Src/nand_m79a_lld.d ./Core/Src/nand_m79a_lld.o ./Core/Src/nand_m79a_lld.su ./Core/Src/nand_spi.d ./Core/Src/nand_spi.o ./Core/Src/nand_spi.su ./Core/Src/printf.d ./Core/Src/printf.o ./Core/Src/printf.su ./Core/Src/spi_bitbang.d ./Core/Src/spi_bitbang.o ./Core/Src/spi_bitbang.su ./Core/Src/stm32l0xx_hal_msp.d ./Core/Src/stm32l0xx_hal_msp.o ./Core/Src/stm32l0xx_hal_msp.su ./Core/Src/stm32l0xx_it.d ./Core/Src/stm32l0xx_it.o ./Core/Src/stm32l0xx_it.su ./Core/Src/syscalls.d ./Core/Src/syscalls.o ./Core/Src/syscalls.su ./Core/Src/sysmem.d ./Core/Src/sysmem.o ./Core/Src/sysmem.su ./Core/Src/system_stm32l0xx.d ./Core/Src/system_stm32l0xx.o ./Core/Src/system_stm32l0xx.su ./Core/Src/tmp421.d ./Core/Src/tmp421.o ./Core/Src/tmp421.su
+	-$(RM) ./Core/Src/I2C.d ./Core/Src/I2C.o ./Core/Src/I2C.su ./Core/Src/IEB_TESTS.d ./Core/Src/IEB_TESTS.o ./Core/Src/IEB_TESTS.su ./Core/Src/SPI_IT.d ./Core/Src/SPI_IT.o ./Core/Src/SPI_IT.su ./Core/Src/arducam.d ./Core/Src/arducam.o ./Core/Src/arducam.su ./Core/Src/cli.d ./Core/Src/cli.o ./Core/Src/cli.su ./Core/Src/command_handler.d ./Core/Src/command_handler.o ./Core/Src/command_handler.su ./Core/Src/housekeeping.d ./Core/Src/housekeeping.o ./Core/Src/housekeeping.su ./Core/Src/ina209.d ./Core/Src/ina209.o ./Core/Src/ina209.su ./Core/Src/main.d ./Core/Src/main.o ./Core/Src/main.su ./Core/Src/nand_m79a.d ./Core/Src/nand_m79a.o ./Core/Src/nand_m79a.su ./Core/Src/nand_m79a_lld.d ./Core/Src/nand_m79a_lld.o ./Core/Src/nand_m79a_lld.su ./Core/Src/nand_spi.d ./Core/Src/nand_spi.o ./Core/Src/nand_spi.su ./Core/Src/printf.d ./Core/Src/printf.o ./Core/Src/printf.su ./Core/Src/spi_bitbang.d ./Core/Src/spi_bitbang.o ./Core/Src/spi_bitbang.su ./Core/Src/stm32l0xx_hal_msp.d ./Core/Src/stm32l0xx_hal_msp.o ./Core/Src/stm32l0xx_hal_msp.su ./Core/Src/stm32l0xx_it.d ./Core/Src/stm32l0xx_it.o ./Core/Src/stm32l0xx_it.su ./Core/Src/syscalls.d ./Core/Src/syscalls.o ./Core/Src/syscalls.su ./Core/Src/sysmem.d ./Core/Src/sysmem.o ./Core/Src/sysmem.su ./Core/Src/system_stm32l0xx.d ./Core/Src/system_stm32l0xx.o ./Core/Src/system_stm32l0xx.su ./Core/Src/tmp421.d ./Core/Src/tmp421.o ./Core/Src/tmp421.su
 
 .PHONY: clean-Core-2f-Src
 
