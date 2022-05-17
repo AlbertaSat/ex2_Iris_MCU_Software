@@ -56,15 +56,6 @@ uint16_t get_current(uint8_t addr){
 	return rtn;
 }
 
-uint16_t get_calibration(uint8_t addr){
-	uint16_t rtn = _flip_byte_order(i2c2_read8_16(addr, 0x16));
-	return rtn;
-}
-void set_calibration(uint8_t addr, uint16_t val){
-	i2c2_write8_16(addr, 0x16, _flip_byte_order(val));
-	return;
-}
-
 uint16_t get_shunt_voltage_peak_pos(uint8_t addr){
 	uint16_t rtn = _flip_byte_order(i2c2_read8_16(addr, 0x07));
 	return rtn;
@@ -129,8 +120,10 @@ void set_calibration(uint8_t addr, uint16_t val){
 	i2c2_write8_16(addr, 0x16, _flip_byte_order(val));
 	return;
 }
+
 static uint16_t _flip_byte_order(uint16_t input){
-	// Data is transmitted MSB first, but STM is LSB. This flips the byte order.
+	// Data is transmitted MSB first, but STM is LSB.
+	// This flips the byte order.
 	uint16_t rtn = 0x0000;
 	uint8_t lsb = input >> 8;
 	uint8_t msb = input & 0x00FF;
