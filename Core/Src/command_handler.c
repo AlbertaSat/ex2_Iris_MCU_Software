@@ -98,6 +98,7 @@ void count_images(){
 void sensor_idle(){
 	// pull mosfet driver pin low, cutting power to sensors
 	HAL_GPIO_WritePin(CAM_EN_GPIO_Port, CAM_EN_Pin, GPIO_PIN_RESET);
+//	SPI1_IT_Transmit(&ack);
 	return;
 }
 
@@ -106,14 +107,14 @@ void sensor_active(){
 	HAL_GPIO_WritePin(CAM_EN_GPIO_Port, CAM_EN_Pin, GPIO_PIN_SET);
 
 	// initialize sensors
-	_initialize_sensor(VIS_SENSOR);
-	_initialize_sensor(NIR_SENSOR);
+	_initalize_sensor(VIS_SENSOR);
+	_initalize_sensor(NIR_SENSOR);
 
 	// program sensors
 	_program_sensor(JPEG, VIS_SENSOR);
 	_program_sensor(JPEG, NIR_SENSOR);
 
-	SPI1_IT_Transmit(&ack);
+//	SPI1_IT_Transmit(&ack);
 	return;
 }
 
@@ -121,9 +122,6 @@ void get_housekeeping(){
 	hk = _get_housekeeping();
 	char buffer[sizeof(hk)];
 	memcpy(buffer, &hk, sizeof(hk));
-//	uint8_t k = 0xAA;
-//	HAL_SPI_Transmit(&hspi1, &k, sizeof(k), 1000);
-//	HAL_SPI_Transmit(&hspi1, &buffer, sizeof(buffer), 1000);
 	SPI1_IT_Transmit((uint8_t *) buffer); // not sure this is how it's supposed to work
 	return;
 }
@@ -168,8 +166,9 @@ void iterate_image_num(){
 	total_image_num += 2;
 }
 
-uint8_t get_image_num(){
-	return total_image_num;
+void get_image_num(){
+	SPI1_IT_Transmit(&total_image_num);
+	return;
 }
 
 void _initalize_sensor(uint8_t sensor){
@@ -239,6 +238,28 @@ void _program_sensor(uint8_t m_fmt, uint8_t sensor){
 }
 
 
-
+void handle_command(uint8_t cmd) {
+    switch(cmd) {
+    case GET_HK:
+//    	get_housekeeping();
+    	break;
+    case CAPTURE_IMAGE:
+//    	handle_capture_cmd(cmd);
+    	iterate_image_num();
+    	break;
+    case GET_IMAGE_NUM:
+//    	get_image_num();
+    	break;
+    case COUNT_IMAGES:
+//    	count_images();
+    	break;
+	case SENSOR_ACTIVE:
+		sensor_active();
+		break;
+	case SENSOR_IDLE:
+		sensor_idle();
+		break;
+	}
+}
 
 
