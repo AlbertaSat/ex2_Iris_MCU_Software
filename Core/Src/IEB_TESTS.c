@@ -5,7 +5,7 @@
  *      Author: Liam
  */
 #include "IEB_TESTS.h"
-#include "cli.h"
+//#include "cli.h"
 #include "main.h"
 #include "tmp421.h"
 extern I2C_HandleTypeDef hi2c2;
