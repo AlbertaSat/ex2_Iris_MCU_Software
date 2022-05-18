@@ -18,10 +18,13 @@
 
 /*
  * 	TODO:
- * 		- SPI Command Handling
+ * 		  ## pressing ##
+ * 		- Finish updating command_handler.c in accordance to ICD
+ *		- Long waits for stm to handle command fuck up things
+ * 		  ## Not so pressing ##
  * 		- SPI Burst for image readout
- * 		- Endianness
  * 		- Image number iteration / handling
+ * 		-
  */
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
@@ -33,12 +36,12 @@
 #include <stdbool.h>
 #include <string.h>
 #include "arducam.h"
-#include "cli.h"
 #include "spi_bitbang.h"
 #include "nand_m79a.h"
 #include "IEB_TESTS.h"
 #include "tmp421.h"
 #include "housekeeping.h"
+#include "command_handler.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -81,7 +84,7 @@ static void MX_USART1_UART_Init(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 uint8_t state = receiving;
-uint8_t RX_Data = 0x00;
+uint8_t RX_Data = 0xFF;
 /* USER CODE END 0 */
 
 /**
@@ -135,14 +138,13 @@ int main(void)
 			case receiving:
 				state = idle;
 				HAL_SPI_Receive_IT(&hspi1, &RX_Data, sizeof(RX_Data));
-//				HAL_SPI_TransmitReceive_IT(&hspi1, &RX_Data, &RX_Data, sizeof(RX_Data));
 				break;
 			case transmitting:
-				state = receiving;
-//				HAL_Delay(100);
-//				HAL_SPI_Transmit_IT(&hspi1, &RX_Data, sizeof(RX_Data));
+				state = idle;
+				// interrupt this shit hey
 				HAL_SPI_Transmit(&hspi1, &RX_Data, sizeof(RX_Data), 1000);
-				RX_Data = 0x00;
+//				HAL_SPI_Transmit_IT(&hspi1, &RX_Data, sizeof(RX_Data));
+				RX_Data = 0xFF;
 				break;
 			case handling_command:
 				state = transmitting;
@@ -462,9 +464,6 @@ static void MX_GPIO_Init(void)
 void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef * hspi)
 {
 	state = receiving;
-	char buf[64];
-	sprintf(buf, "Sent 0x%x\r\n", RX_Data);
-	DBG_PUT(buf);
 	RX_Data = 0x00;
 }
 
