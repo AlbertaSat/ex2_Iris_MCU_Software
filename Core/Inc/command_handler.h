@@ -21,6 +21,7 @@
 #define GET_HK			0x50
 #define I2C_COMPLEX_SHIT 0x69
 
+void handle_command(uint8_t cmd);
 void take_image();
 void transfer_image();
 void get_image_length();
@@ -30,7 +31,8 @@ void sensor_active();
 void get_housekeeping();
 void update_sensor_I2C_regs();
 void update_current_limits();
-uint8_t get_image_num();
+void get_image_num();
 void iterate_image_num();
+//void _initalize_sensor();
 
 #endif /* INC_COMMAND_HANDLER_H_ */
