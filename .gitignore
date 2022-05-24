@@ -33,3 +33,13 @@ host/vis.jpg(1)
 host/vis1.jpeg
 host/vis1.jpeg(1)
 host/visnew.jpg
+Debug/Core/Src/subdir.mk
+Debug/Core/Src/subdir.mk
+Debug/Core/Src/uart_command_handler.d
+Debug/Core/Src/uart_command_handler.o
+Debug/Core/Src/uart_command_handler.su
+Debug/ex2_Iris_MCU_Software.bin
+Debug/ex2_Iris_MCU_Software.elf
+Debug/ex2_Iris_MCU_Software.list
+Debug/ex2_Iris_MCU_Software.map
+Debug/objects.list
