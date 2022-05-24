@@ -35,16 +35,17 @@ static void help() {
     DBG_PUT("TO RUN TESTS: test\r\n\n\n");
     DBG_PUT("Commands:\r\n");
     DBG_PUT("\tWorking/Tested:\r\n");
-    DBG_PUT("\t\tcapture <vis/nir>\r\n");
+    DBG_PUT("\t\tpower <on/off> | toggles sensor power\r\n");
+    DBG_PUT("\t\tinit sensor | Resets arducam modules to default\r\n");
+    DBG_PUT("\t\tcapture <vis/nir> | capture image from sensor\r\n");
     DBG_PUT("\t\tformat<vis/nir> [JPEG|BMP|RAW]\r\n");
-    DBG_PUT("\t\treg <vis/nir> read <regnum>\r\n\treg write <regnum> <val>\r\n");
-    DBG_PUT("\t\twidth  <vis/nir> [<pixels>]\r\n");
-    DBG_PUT("\t\tpower on/off\r\n");
-    DBG_PUT("\tscan Scan I2C bus 2\r\n");
+    DBG_PUT("\t\t hk | Gets housekeeping\r\n");
+    DBG_PUT("\t\twidth <vis/nir> [<pixels>]\r\n");
+    DBG_PUT("\tscan | Scan I2C bus 2\r\n");
     DBG_PUT("\tNeeds work\r\n");
-    DBG_PUT("\t\tinit sensor Resets arducam modules to default\r\n");
-    DBG_PUT("\t\tinit nand Initialize NAND Flash\r\n");
+    DBG_PUT("\t\tinit nand | Initialize NAND Flash\r\n");
     DBG_PUT("\tNot tested/partially implemented:\r\n");
+    DBG_PUT("\t\treg <vis/nir> read <regnum>\r\n\treg write <regnum> <val>\r\n");
     DBG_PUT("\t\tSaturation [<0..8>]\r\n");
 #endif
 }
@@ -131,16 +132,16 @@ void sensor_active(){
 	// pull mosfet driver pin high, powering sensors
 	HAL_GPIO_WritePin(CAM_EN_GPIO_Port, CAM_EN_Pin, GPIO_PIN_SET);
 
-	// initialize sensors
-	_initalize_sensor(VIS_SENSOR);
-	_initalize_sensor(NIR_SENSOR);
-
-	// program sensors
-	_program_sensor(JPEG, VIS_SENSOR);
-	_program_sensor(JPEG, NIR_SENSOR);
+//	// initialize sensors
+//	_initalize_sensor(VIS_SENSOR);
+//	_initalize_sensor(NIR_SENSOR);
+//
+//	// program sensors
+//	_program_sensor(JPEG, VIS_SENSOR);
+//	_program_sensor(JPEG, NIR_SENSOR);
 
 #ifdef UART_DEBUG
-	DBG_PUT("Sensors active!");
+	DBG_PUT("Sensors active!\r\n");
 #endif
 
 #ifdef SPI_DEBUG
@@ -321,6 +322,7 @@ void init_nand_flash(){
 			// SPI_NACK
 		}
 #endif
+//		DBG_PUT("NAND Flash worked!... \r\n");
 
 }
 
@@ -363,9 +365,6 @@ static inline const char* next_token(const char *ptr) {
 void uart_handle_command(char *cmd) {
 	uint8_t in[sizeof(housekeeping_packet_t)];
     switch(*cmd) {
-    case 'g':
-    	uart_get_hk_packet(&in);
-    	break;
     case 'c':
     	uart_handle_capture_cmd(cmd);
     	break;
@@ -382,7 +381,7 @@ void uart_handle_command(char *cmd) {
     	uart_handle_width_cmd(cmd);
         break;
     case 't':
-    	for (int i=0; i<150; i++){
+    	for (int i=0; i<20; i++){
 		testTempSensor();
     	HAL_Delay(1000);
     	}
@@ -443,9 +442,16 @@ void uart_handle_command(char *cmd) {
 
 
     case 'h':
-    default:
-        help();
-        break;
+    	switch(*(cmd+1)){
+    	case 'k':
+        	uart_get_hk_packet(&in);
+        	break;
+        default:
+            help();
+            break;
+
+    	}
+
     }
 }
 
