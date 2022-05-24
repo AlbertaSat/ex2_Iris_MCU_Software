@@ -258,7 +258,7 @@ NAND_ReturnType NAND_Cache_Read(uint16_t col, uint16_t length, uint8_t *buffer) 
 
     SPI_Params tx_cache_read = {.buffer = command_cache_read, .length = 4};
     SPI_Params rx_cache_read = {.buffer = buffer, .length = length};
-    // TODO: Check if we can read just 2048 data bits per page. Datasheet shows 2176 bytes including the spare locations.  
+    // TODO: Check if we can read just 2048 data bits per page. Datasheet shows 2176 bytes including the spare locations.
 
     if (NAND_SPI_SendReceive(&tx_cache_read, &rx_cache_read) != SPI_OK) {
         return Ret_ReadFailed;
