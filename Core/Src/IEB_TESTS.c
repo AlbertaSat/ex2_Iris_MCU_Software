@@ -119,7 +119,7 @@ void testTempSensor(void){
 
 void printTemp(uint16_t temp, uint8_t sensor){
 	char buf[64];
-	sprintf(buf,"Sensor 0x%x Temperature: 0x%x \r\n", sensor, temp );
+	sprintf(buf,"Sensor 0x%x Temperature: %d.%04d C\r\n", sensor,  (temp >> 8) - 64, ((temp & 0xFF)>>4) * 625);
 	DBG_PUT(buf);
 
 }

@@ -122,14 +122,21 @@ int main(void)
   /* USER CODE BEGIN 2 */
   // init nand flash
 //  NAND_SPI_Init(&hspi2);
+  char cmd[64];
+  char buf[64];
+  char *ptr = cmd;
+#ifdef UART_DEBUG
   DBG_PUT("-----------------------------------\r\n");
-  DBG_PUT("Iris Electronics Test Software\r\nSlave Side\r\n");
+  DBG_PUT("Iris Electronics Test Software\r\nUART Edition\r\n");
   DBG_PUT("-----------------------------------\r\n");
+#endif
+
   init_temp_sensors();
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+#ifdef SPI_DEBUG
   while (1)
   {
 	  switch (state){
@@ -148,14 +155,53 @@ int main(void)
 				break;
 			case handling_command:
 				state = transmitting;
-				handle_command(RX_Data);
+				spi_handle_command(RX_Data);
 				break;
 
 		  }
+  }
+#endif // SPI_DEBUG
+	  // //////////////////////////////////////////////////////////////////////////////////////////
+#ifdef UART_DEBUG
+	   while (1)
+	   {
+	       HAL_StatusTypeDef rc = HAL_UART_Receive(&huart1, (uint8_t *) ptr, 1, 20000);
+	    /* USER CODE END WHILE */
+
+	    /* USER CODE BEGIN 3 */
+	       /* Build up the command one byte at a time */
+	       if (rc != HAL_OK) {
+	           if (rc != HAL_TIMEOUT) {
+	               sprintf(buf, "UART read error: %x\r\n", rc);
+	               DBG_PUT(buf);
+	           }
+	           continue;
+	       }
+	       /* Command is complete when we get EOL of some sort */
+	       if (*ptr == '\n' || *ptr == '\r') {
+	           *ptr = 0;
+	           DBG_PUT("\r\n");
+	           uart_handle_command(cmd);
+	           ptr = cmd;
+	       }
+	       else {
+	           *(ptr + 1) = 0;
+	           DBG_PUT(ptr);
+
+	           if (*ptr == 0x7f) { // handle backspace
+	               if (ptr > cmd)
+	                   --ptr;
+	           }
+	           else
+	               ++ptr;
+	       }
+	   }
+#endif // UART_DEBUG
+
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-  }
+
   /* USER CODE END 3 */
 }
 

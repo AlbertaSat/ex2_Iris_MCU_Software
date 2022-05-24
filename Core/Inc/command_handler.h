@@ -21,7 +21,8 @@
 #define GET_HK			0x50
 #define I2C_COMPLEX_SHIT 0x69
 
-void handle_command(uint8_t cmd);
+void spi_handle_command(uint8_t cmd);
+void uart_handle_command(char *cmd);
 void take_image();
 void transfer_image();
 void get_image_length();

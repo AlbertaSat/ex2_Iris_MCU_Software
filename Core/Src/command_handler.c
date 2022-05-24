@@ -6,6 +6,10 @@
  */
 #include "command_handler.h"
 #include "string.h"
+#include "debug.h"
+#include "uart_command_handler.h"
+#include "nand_m79a.h"
+
 extern SPI_HandleTypeDef hspi1;
 extern const struct sensor_reg OV5642_JPEG_Capture_QSXGA[];
 extern const struct sensor_reg OV5642_QVGA_Preview[];
@@ -24,6 +28,26 @@ extern const struct sensor_reg OV5642_QVGA_Preview[];
 uint8_t ack = 0xAA;
 uint8_t total_image_num = 0; // This will cause issues with total num of images once board resets. todo: fix
 housekeeping_packet_t hk;
+
+static void help() {
+	// UART DEBUG ONLY
+#ifdef UART_DEBUG
+    DBG_PUT("TO RUN TESTS: test\r\n\n\n");
+    DBG_PUT("Commands:\r\n");
+    DBG_PUT("\tWorking/Tested:\r\n");
+    DBG_PUT("\t\tcapture <vis/nir>\r\n");
+    DBG_PUT("\t\tformat<vis/nir> [JPEG|BMP|RAW]\r\n");
+    DBG_PUT("\t\treg <vis/nir> read <regnum>\r\n\treg write <regnum> <val>\r\n");
+    DBG_PUT("\t\twidth  <vis/nir> [<pixels>]\r\n");
+    DBG_PUT("\t\tpower on/off\r\n");
+    DBG_PUT("\tscan Scan I2C bus 2\r\n");
+    DBG_PUT("\tNeeds work\r\n");
+    DBG_PUT("\t\tinit sensor Resets arducam modules to default\r\n");
+    DBG_PUT("\t\tinit nand Initialize NAND Flash\r\n");
+    DBG_PUT("\tNot tested/partially implemented:\r\n");
+    DBG_PUT("\t\tSaturation [<0..8>]\r\n");
+#endif
+}
 
 void take_image(){
 	/*
@@ -99,6 +123,7 @@ void sensor_idle(){
 	// pull mosfet driver pin low, cutting power to sensors
 	HAL_GPIO_WritePin(CAM_EN_GPIO_Port, CAM_EN_Pin, GPIO_PIN_RESET);
 //	SPI1_IT_Transmit(&ack);
+
 	return;
 }
 
@@ -114,7 +139,14 @@ void sensor_active(){
 	_program_sensor(JPEG, VIS_SENSOR);
 	_program_sensor(JPEG, NIR_SENSOR);
 
+#ifdef UART_DEBUG
+	DBG_PUT("Sensors active!");
+#endif
+
+#ifdef SPI_DEBUG
 //	SPI1_IT_Transmit(&ack);
+#endif
+
 	return;
 }
 
@@ -238,7 +270,61 @@ void _program_sensor(uint8_t m_fmt, uint8_t sensor){
 }
 
 
-void handle_command(uint8_t cmd) {
+void init_nand_flash(){
+	FileHandle_t* file;
+	NAND_ReturnType res = NAND_Init();
+#ifdef UART_DEBUG
+		if (res != Ret_Success){
+			DBG_PUT("NAND Initialization failed\r\n");
+		}
+#endif
+#ifdef SPI_DEBUG
+		if(res != Ret_Success){
+			// SPI_NACK
+		}
+#endif
+		res = Ret_Failed;
+		// format super block
+		res =  NAND_File_Format(0);
+#ifdef UART_DEBUG
+		if (res != Ret_Success){
+			DBG_PUT("NAND super block format failed\r\n");
+		}
+#endif
+#ifdef SPI_DEBUG
+		if(res != Ret_Success){
+			// SPI_NACK
+		}
+#endif
+
+		res = Ret_Failed;
+		file = NAND_File_Create(0xAAAAAA);
+		if (!file){
+#ifdef UART_DEBUG
+		DBG_PUT("NAND file creation failed\r\n");
+
+#endif
+#ifdef SPI_DEBUG
+		// SPI_NACK
+
+#endif
+		}
+
+		res = NAND_File_Write_Close(file);
+#ifdef UART_DEBUG
+		if (res != Ret_Success){
+			DBG_PUT("NAND file write close failed\r\n");
+		}
+#endif
+#ifdef SPI_DEBUG
+		if(res != Ret_Success){
+			// SPI_NACK
+		}
+#endif
+
+}
+
+void spi_handle_command(uint8_t cmd) {
     switch(cmd) {
     case GET_HK:
 //    	get_housekeeping();
@@ -262,4 +348,104 @@ void handle_command(uint8_t cmd) {
 	}
 }
 
+
+
+static inline const char* next_token(const char *ptr) {
+    /* move to the next space */
+    while(*ptr && *ptr != ' ') ptr++;
+    /* move past any whitespace */
+    while(*ptr && isspace(*ptr)) ptr++;
+
+    return (*ptr) ? ptr : NULL;
+}
+
+
+void uart_handle_command(char *cmd) {
+	uint8_t in[sizeof(housekeeping_packet_t)];
+    switch(*cmd) {
+    case 'g':
+    	uart_get_hk_packet(&in);
+    	break;
+    case 'c':
+    	uart_handle_capture_cmd(cmd);
+    	break;
+    case 'f':
+    	uart_handle_format_cmd(cmd);
+        break;
+
+    case 'r':
+    	read_nand_flash();
+//		handle_reg_cmd(cmd);
+		break;
+
+    case 'w':
+    	uart_handle_width_cmd(cmd);
+        break;
+    case 't':
+    	for (int i=0; i<150; i++){
+		testTempSensor();
+    	HAL_Delay(1000);
+    	}
+    	break;
+    case 's':
+    	switch(*(cmd+1)){
+			case 'c':
+				uart_scan_i2c();
+				break;
+
+			case 'a':;
+				const char *c = next_token(cmd);
+				switch(*c){
+					case 'v':
+						uart_handle_saturation_cmd(c, VIS_SENSOR);
+						break;
+					case 'n':
+						uart_handle_saturation_cmd(c, NIR_SENSOR);
+						break;
+					default:
+						DBG_PUT("Target Error\r\n");
+						break;
+				}
+    	}
+    	break;
+
+    case 'p':	; //janky use of semicolon??
+    	const char *p = next_token(cmd);
+    	switch(*(p+1)){
+    		case 'n':
+    			sensor_active();
+    			break;
+    		case 'f':
+    			sensor_idle();
+    			break;
+    		default:
+    			DBG_PUT("Use either on or off\r\n");
+    			break;
+    	}
+    	break;
+	case 'i':;
+		switch(*(cmd+1)){
+			case '2':
+				handle_i2c16_8_cmd(cmd); // needs to handle 16 / 8 bit stuff
+				break;
+			default:;
+				const char *i = next_token(cmd);
+				switch(*i){
+					case 'n':
+						init_nand_flash();
+						break;
+					case 's':
+						uart_reset_sensors();
+						break;
+				}
+		}
+		break;
+
+
+    case 'h':
+    default:
+        help();
+        break;
+    }
+}
 
