@@ -34,6 +34,7 @@ void update_sensor_I2C_regs();
 void update_current_limits();
 void get_image_num();
 void iterate_image_num();
+void uart_get_hk_packet(uint8_t *out);
 //void _initalize_sensor();
 
 #endif /* INC_COMMAND_HANDLER_H_ */
