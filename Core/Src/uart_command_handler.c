@@ -476,10 +476,13 @@ void handle_i2c16_8_cmd(const char *cmd){
 
 }
 
-void uart_get_hk_packet(uint8_t *out){
+void uart_get_hk_packet(){
+	// uint8_t *out as arg
 	housekeeping_packet_t hk;
 	hk = _get_housekeeping();
-	memcpy(out, (uint8_t *)&hk, sizeof(housekeeping_packet_t));
+//	memcpy(out, (uint8_t *)&hk, sizeof(housekeeping_packet_t));
+	decode_hk_packet(hk);
+	return;
 }
 
 void read_nand_flash(){
