@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <ctype.h>
+#include <uart_command_handler.h>
 #include "stm32l0xx_hal.h"
-#include "cli.h"
 #include "arducam.h"
 #include "debug.h"
 #include "main.h"
@@ -14,6 +14,7 @@ extern I2C_HandleTypeDef hi2c2;
 
 int VIS_DETECTED = 0;
 int NIR_DETECTED = 0;
+FileHandle_t* file;
 static inline const char* next_token(const char *ptr) {
     /* move to the next space */
     while(*ptr && *ptr != ' ') ptr++;
@@ -23,25 +24,7 @@ static inline const char* next_token(const char *ptr) {
     return (*ptr) ? ptr : NULL;
 }
 
-static void help() {
-    DBG_PUT("TO RUN TESTS: test\r\n\n\n");
-    DBG_PUT("Commands:\r\n");
-    DBG_PUT("\tWorking/Tested:\r\n");
-    DBG_PUT("\t\tcapture <vis/nir>\r\n");
-    DBG_PUT("\t\tformat<vis/nir> [JPEG|BMP|RAW]\r\n");
-    DBG_PUT("\t\treg <vis/nir> read <regnum>\r\n\treg write <regnum> <val>\r\n");
-    DBG_PUT("\t\twidth  <vis/nir> [<pixels>]\r\n");
-    DBG_PUT("\t\tpower on/off\r\n");
-    DBG_PUT("\tscan Scan I2C bus 2\r\n");
-    DBG_PUT("\tNeeds work\r\n");
-    DBG_PUT("\t\tinit sensor Resets arducam modules to default\r\n");
-    DBG_PUT("\t\tinit nand Initialize NAND Flash\r\n");
-    DBG_PUT("\tNot tested/partially implemented:\r\n");
-    DBG_PUT("\t\tSaturation [<0..8>]\r\n");
-
-}
-
-static void handle_format_cmd(const char *cmd) {
+void uart_handle_format_cmd(const char *cmd) {
 	// TODO: Needs to handle sensor input
     const char* format_names[3] = { "BMP", "JPEG", "RAW" };
     char buf[64];
@@ -176,7 +159,7 @@ static void handle_reg_cmd(const char *cmd) {
     DBG_PUT(buf);
 }
 
-static void handle_width_cmd(const char *cmd) {
+void uart_handle_width_cmd(const char *cmd) {
     char buf[64];
     const char *wptr = next_token(cmd);
     if (!wptr) {
@@ -251,7 +234,7 @@ static void handle_width_cmd(const char *cmd) {
         DBG_PUT(buf);
 }
 
-static void handle_capture_cmd(const char *cmd) {
+void uart_handle_capture_cmd(const char *cmd) {
     const char *wptr = next_token(cmd);
 
     int target_sensor;
@@ -280,7 +263,7 @@ static void handle_capture_cmd(const char *cmd) {
 
 }
 
-void reset_sensors(void){
+void uart_reset_sensors(void){
 	char buf[64];
 	  // Reset the CPLD
 
@@ -367,7 +350,7 @@ void reset_sensors(void){
 		    HAL_Delay(1000);
 }
 
-void scan_i2c(){
+void uart_scan_i2c(){
 	 HAL_StatusTypeDef result;
 	 uint8_t i;
 	 char buf[64];
@@ -384,18 +367,27 @@ void scan_i2c(){
 
 void sensor_togglepower(int i){
 	if (i == 1){
-		HAL_GPIO_WritePin(CAM_EN_GPIO_Port, CAM_EN_Pin, GPIO_PIN_SET);
-		DBG_PUT("Sensor Power Enabled.\r\n");
+		write_reg(0x06, 0x03, NIR_SENSOR);
+		write_reg(0x06, 0x03, VIS_SENSOR);
+		DBG_PUT("Sensors awake\r\n");
 		return;
 	}
-	HAL_GPIO_WritePin(CAM_EN_GPIO_Port, CAM_EN_Pin, GPIO_PIN_RESET);
-	DBG_PUT("Sensor Power Disabled.\r\n");
+	write_reg(0x06, 0x05, NIR_SENSOR);
+	write_reg(0x06, 0x05, VIS_SENSOR);
+
+	DBG_PUT("Sensors Idle\r\n");
+//		HAL_GPIO_WritePin(CAM_EN_GPIO_Port, CAM_EN_Pin, GPIO_PIN_SET);
+//		DBG_PUT("Sensor Power Enabled.\r\n");
+		return;
+//	}
+//	HAL_GPIO_WritePin(CAM_EN_GPIO_Port, CAM_EN_Pin, GPIO_PIN_RESET);
+//	DBG_PUT("Sensor Power Disabled.\r\n");
 
 
 }
 
 //todo implement sensor selection
-static void handle_saturation_cmd(const char *cmd, uint8_t sensor) {
+void uart_handle_saturation_cmd(const char *cmd, uint8_t sensor) {
     char buf[64];
     const char *satarg = next_token(cmd);
     int saturation;
@@ -414,38 +406,6 @@ static void handle_saturation_cmd(const char *cmd, uint8_t sensor) {
     DBG_PUT(buf);
 }
 
-void init_nand_flash(){
-		NAND_ReturnType res = NAND_Init();
-		if (res == Ret_Success){
-			DBG_PUT("NAND Flash Initialized Successfully\r\n");
-		}
-		else if(res == Ret_ResetFailed){
-			DBG_PUT("NAND Reset Failed\r\n");
-		}
-		else if(res == Ret_WrongID){
-			DBG_PUT("NAND ID is wrong\r\n");
-		}
-		else{
-			DBG_PUT("Something else is wrong wit the NAND Flash\r\n");
-		}
-		uint8_t rtn[32];
-		char buf[64];
-		NAND_Read(0x1000, 32, rtn);
-		for (int i=0; i<32; i++){
-			sprintf(buf, "%x", rtn[i]);
-			DBG_PUT(buf);
-		}
-		DBG_PUT("\r\n");
-		uint8_t send[32];
-		memcpy(send, "Hello World", 11);
-		NAND_Write(0x1000, 32, send);
-		NAND_Read(0x1000, 32, rtn);
-		for (int i=0; i<32; i++){
-			sprintf(buf, "%x", rtn[i]);
-			DBG_PUT(buf);
-		}
-		DBG_PUT("\r\n");
-}
 
 void handle_i2c16_8_cmd(const char *cmd){
     char buf[64];
@@ -484,9 +444,9 @@ void handle_i2c16_8_cmd(const char *cmd){
 	switch(*rwarg) {
 	case 'r':
 		{
-			uint8_t val;
-			val = i2c2_read8_8(addr, reg); // switch back to 16-8
-			sprintf(buf, "Device 0x%lx register 0x%lx = 0x%02x\r\n", addr, reg, val);
+			uint16_t val;
+			val = i2c2_read8_16(addr, reg); // switch back to 16-8
+			sprintf(buf, "Device 0x%lx register 0x%lx = 0x%x\r\n", addr, reg, val);
 		}
 		break;
 
@@ -516,99 +476,14 @@ void handle_i2c16_8_cmd(const char *cmd){
 
 }
 
-housekeeping_packet_t get_housekeeping_packet(){
+void uart_get_hk_packet(uint8_t *out){
 	housekeeping_packet_t hk;
-	hk = get_housekeeping();
-	return hk;
+	hk = _get_housekeeping();
+	memcpy(out, (uint8_t *)&hk, sizeof(housekeeping_packet_t));
 }
 
-void handle_command(char *cmd) {
-	char *c;
-	housekeeping_packet_t hk;
-    switch(*cmd) {
-    case 'g':
-    	hk = get_housekeeping_packet();
-    	decode_hk_packet(hk);
-    	break;
-    case 'c':
-    	handle_capture_cmd(cmd);
-    	break;
-    case 'f':
-        handle_format_cmd(cmd);
-        break;
-
-    case 'r':
-		handle_reg_cmd(cmd);
-		break;
-
-    case 'w':
-        handle_width_cmd(cmd);
-        break;
-    case 't':
-    	//CHECK_LED_I2C_SPI_TS();
-    	for (int i=0; i<150; i++){
-    	testTempSensor();
-    	HAL_Delay(1000);
-    	}
-    	break;
-    case 's':
-    	switch(*(cmd+1)){
-			case 'c':
-				scan_i2c();
-				break;
-
-			case 'a':;
-				const char *c = next_token(cmd);
-				switch(*c){
-					case 'v':
-						handle_saturation_cmd(c, VIS_SENSOR);
-						break;
-					case 'n':
-						handle_saturation_cmd(c, NIR_SENSOR);
-						break;
-					default:
-						DBG_PUT("Target Error\r\n");
-						break;
-				}
-    	}
-    	break;
-
-    case 'p':	; //janky use of semicolon??
-    	const char *p = next_token(cmd);
-    	switch(*(p+1)){
-    		case 'n':
-    			sensor_togglepower(1);
-    			break;
-    		case 'f':
-    			sensor_togglepower(0);
-    			break;
-    		default:
-    			DBG_PUT("Use either on or off\r\n");
-    			break;
-    	}
-    	break;
-	case 'i':;
-		switch(*(cmd+1)){
-			case '2':
-				handle_i2c16_8_cmd(cmd); // needs to handle 16 / 8 bit stuff
-				break;
-			default:;
-				const char *i = next_token(cmd);
-				switch(*i){
-					case 'n':
-						init_nand_flash();
-						break;
-					case 's':
-						reset_sensors();
-						break;
-				}
-		}
-		break;
-
-
-    case 'h':
-    default:
-        help();
-        break;
-    }
+void read_nand_flash(){
+	return;
 }
+
+

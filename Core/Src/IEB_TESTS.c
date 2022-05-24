@@ -5,7 +5,7 @@
  *      Author: Liam
  */
 #include "IEB_TESTS.h"
-#include "cli.h"
+//#include "cli.h"
 #include "main.h"
 #include "tmp421.h"
 extern I2C_HandleTypeDef hi2c2;
@@ -119,9 +119,7 @@ void testTempSensor(void){
 
 void printTemp(uint16_t temp, uint8_t sensor){
 	char buf[64];
-	float high = (float)(temp >> 8) - 0x40;
-	float low = (float)((temp&0xFF) >> 4) * 0.0625;
-	sprintf(buf,"Sensor 0x%x Temperature: %2.3f C\n", sensor, high+low);
+	sprintf(buf,"Sensor 0x%x Temperature: %d.%04d C\r\n", sensor,  (temp >> 8) - 64, ((temp & 0xFF)>>4) * 625);
 	DBG_PUT(buf);
 
 }

@@ -2,6 +2,7 @@
 #define ARDUCAM_DEFH
 
 #include "arducam.h"
+//#include "ov5642_regs.h"
 #include <stdbool.h>
 #include <stdio.h>
 #define byte uint8_t
@@ -64,7 +65,6 @@ uint8_t read_spi_reg(uint8_t reg, uint8_t sensor);
 
 void write_reg(uint8_t addr, uint8_t data, uint8_t sensor);
 uint8_t read_reg(uint8_t addr, uint8_t sensor);
-uint8_t get_image_num();
 
 
 #endif // ARDUCAM_DEFH

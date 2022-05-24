@@ -1,0 +1,16 @@
+!SESSION 2022-05-05 09:37:57.502 -----------------------------------------------
+eclipse.buildId=Version 1.9.0
+java.version=11.0.11
+java.vendor=AdoptOpenJDK
+BootLoader constants: OS=linux, ARCH=x86_64, WS=gtk, NL=en_CA
+Framework arguments:  /home/liam/Desktop/ex2_Iris_MCU_Software/.cproject
+Command-line arguments:  -data /home/liam/Desktop/ex2_Iris_MCU_Software -os linux -ws gtk -arch x86_64 /home/liam/Desktop/ex2_Iris_MCU_Software/.cproject
+
+!ENTRY com.st.stm32cube.ide.mcu.informationcenter 4 4 2022-05-05 09:38:02.321
+!MESSAGE CubeMX plugin appears to be active, Log4j initialization might be too late.
+
+!ENTRY com.st.stm32cube.ide.mcu.informationcenter 1 1 2022-05-05 09:38:02.379
+!MESSAGE Log4j initialized with config file /home/liam/Desktop/ex2_Iris_MCU_Software/.metadata/.log4j.xml
+
+!ENTRY com.st.stm32cube.ide.mcu.ide 1 1 2022-05-05 09:38:04.783
+!MESSAGE Started RMI Server, listening on port 41338

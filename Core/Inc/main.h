@@ -46,7 +46,8 @@ extern "C" {
 
 /* Exported macro ------------------------------------------------------------*/
 /* USER CODE BEGIN EM */
-
+#define UART_DEBUG
+//#define SPI_DEBUG
 /* USER CODE END EM */
 
 /* Exported functions prototypes ---------------------------------------------*/
@@ -77,19 +78,15 @@ void Error_Handler(void);
 #define CAM_EN_GPIO_Port GPIOA
 #define NAND_CS2_Pin GPIO_PIN_12
 #define NAND_CS2_GPIO_Port GPIOA
-#define SPI1_NSS_Pin GPIO_PIN_15
-#define SPI1_NSS_GPIO_Port GPIOA
-#define CAN_TX_Pin GPIO_PIN_3
-#define CAN_TX_GPIO_Port GPIOB
-#define CAN_RX_Pin GPIO_PIN_4
-#define CAN_RX_GPIO_Port GPIOB
-#define CAN_S_Pin GPIO_PIN_5
-#define CAN_S_GPIO_Port GPIOB
 /* USER CODE BEGIN Private defines */
 #define software_ver 0x11
 #define VIS_SENSOR 0
 #define NIR_SENSOR 1
-
+#define idle 0
+#define receiving 1
+#define transmitting 2
+#define handling_command 3
+#define processin 4
 
 
 

@@ -15,6 +15,6 @@ typedef struct __attribute__((__packed__)) housekeeping_packet_s {
 	uint8_t software_version;
 }housekeeping_packet_t;
 
-housekeeping_packet_t get_housekeeping();
+housekeeping_packet_t _get_housekeeping();
 
 #endif /* INC_HOUSEKEEPING_H_ */

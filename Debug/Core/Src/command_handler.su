@@ -1,0 +1,14 @@
+../Core/Src/command_handler.c:28:6:take_image	8	static
+../Core/Src/command_handler.c:62:6:transfer_image	8	static
+../Core/Src/command_handler.c:79:6:get_image_length	16	static
+../Core/Src/command_handler.c:87:6:count_images	8	static
+../Core/Src/command_handler.c:98:6:sensor_idle	8	static
+../Core/Src/command_handler.c:104:6:sensor_active	8	static
+../Core/Src/command_handler.c:120:6:get_housekeeping	48	static
+../Core/Src/command_handler.c:132:6:update_sensor_I2C_regs	8	static
+../Core/Src/command_handler.c:152:6:update_current_limits	8	static
+../Core/Src/command_handler.c:156:6:_transfer_images_to_flash	8	static
+../Core/Src/command_handler.c:167:6:iterate_image_num	8	static
+../Core/Src/command_handler.c:171:9:get_image_num	8	static
+../Core/Src/command_handler.c:175:6:_initalize_sensor	32	static
+../Core/Src/command_handler.c:200:6:_program_sensor	32	static

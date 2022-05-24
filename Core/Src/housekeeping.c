@@ -11,7 +11,7 @@
 
 
 
-housekeeping_packet_t get_housekeeping(){
+housekeeping_packet_t _get_housekeeping(){
 	housekeeping_packet_t hk;
 	hk.vis_temp = get_temp(VIS_TEMP_SENSOR);
 	hk.nir_temp = get_temp(NIR_TEMP_SENSOR);
