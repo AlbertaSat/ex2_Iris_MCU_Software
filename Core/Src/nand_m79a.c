@@ -190,7 +190,6 @@ NAND_ReturnType NAND_File_Write_Close(FileHandle_t *fh) {
     sblock->next_inode = ix;
     sblock->inodes[ix].sblock = fh->next_block;
     sblock->inodes[ix].length = 0;
-
     /* Save the new super block contents. */
     PhysicalAddrs paddr = { .rowAddr = SUPER_BLOCK, .colAddr = 0 };
     return NAND_Page_Program(&paddr, sizeof(Super_Block), Super_Block);    
@@ -326,7 +325,8 @@ NAND_ReturnType NAND_File_Write(FileHandle_t *fh, uint16_t length, uint8_t *buff
  * @param[in] relative_offset Use the inode of the file this far back from the head
  *                            of the inode list. For example, 0 is the current head,
  *                            which is the most recent file, 1 is the one before that etc.
- * @return uint32_t           The length of the file specified or 0 if there was an error
+
+ * @return uint32_t           The length of the file specified or 0 if there was an error          
  */
 uint32_t NAND_File_Length(uint32_t relative_offset) {
     struct super_block *sblock = (struct super_block *) Super_Block;
@@ -347,6 +347,7 @@ uint32_t NAND_File_Length(uint32_t relative_offset) {
     }
 
     return sblock->inodes[ix].length;
+
 }
 
 /**
@@ -378,15 +379,17 @@ int NAND_File_List_First(uint32_t relative_offset, struct inode *inode) {
         ix += sblock->inode_cnt;
     }
 
-    if (inode) {
+
+    if (inode) {       
         *inode = sblock->inodes[ix];
     }
     if (sblock->inodes[ix].length == 0) {
         return -1;
     }
     return ix;
-}
 
+}    
+    
 /**
  * @brief Given a cookie containing the inode index from a prior call to this
  * function or NAND_File_List_First(), return the "next" file listing (inode).
