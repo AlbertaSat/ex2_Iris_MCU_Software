@@ -45,7 +45,6 @@ void rdSensorReg16_8(uint16_t regID, uint8_t *regDat, uint8_t sensor) {
 
 // I2C2 Functions
 void i2c2_read16_8(uint8_t addr, uint16_t register_pointer, uint8_t *reg_data){
-	// todo generalize
 	hi2c_read16_8(hi2c2, addr, register_pointer, reg_data);
 	return;
 }
