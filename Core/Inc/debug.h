@@ -4,6 +4,7 @@
 #include "stm32l0xx_hal.h"
 #include <stdio.h>
 #include <string.h>
+#include "main.h"
 
 extern UART_HandleTypeDef huart1;
 
