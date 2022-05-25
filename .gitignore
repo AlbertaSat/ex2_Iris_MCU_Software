@@ -63,3 +63,6 @@ Debug/Core/Src/IEB_TESTS.su
 Debug/Core/Src/I2C.o
 Debug/Core/Src/IEB_TESTS.d
 Debug/Core/Src/IEB_TESTS.o
+host/img.jpg(1)
+*.jpg
+*.jpg***
