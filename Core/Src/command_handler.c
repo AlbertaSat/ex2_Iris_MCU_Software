@@ -380,10 +380,7 @@ void uart_handle_command(char *cmd) {
     	uart_handle_width_cmd(cmd);
         break;
     case 't':
-    	for (int i=0; i<20; i++){
-		testTempSensor();
-    	HAL_Delay(1000);
-    	}
+    	CHECK_LED_I2C_SPI_TS();
     	break;
     case 's':
     	switch(*(cmd+1)){
