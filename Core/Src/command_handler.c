@@ -274,56 +274,55 @@ void _program_sensor(uint8_t m_fmt, uint8_t sensor){
 void init_nand_flash(){
 	FileHandle_t* file;
 	NAND_ReturnType res = NAND_Init();
-#ifdef UART_DEBUG
-		if (res != Ret_Success){
-			DBG_PUT("NAND Initialization failed\r\n");
-		}
-#endif
-#ifdef SPI_DEBUG
-		if(res != Ret_Success){
-			// SPI_NACK
-		}
-#endif
-		res = Ret_Failed;
-		// format super block
-		res =  NAND_File_Format(0);
-#ifdef UART_DEBUG
-		if (res != Ret_Success){
-			DBG_PUT("NAND super block format failed\r\n");
-		}
-#endif
-#ifdef SPI_DEBUG
-		if(res != Ret_Success){
-			// SPI_NACK
-		}
-#endif
+	if (res == Ret_Success){
+		DBG_PUT("NAND Flash Initialized Successfully\r\n");
+	}
+	else if(res == Ret_ResetFailed){
+		DBG_PUT("NAND Reset Failed\r\n");
+	}
+	else if(res == Ret_WrongID){
+		DBG_PUT("NAND ID is wrong\r\n");
+	}
+	else{
+		DBG_PUT("Something else is wrong wit the NAND Flash\r\n");
+	}
 
-		res = Ret_Failed;
-		file = NAND_File_Create(0xAAAAAA);
-		if (!file){
-#ifdef UART_DEBUG
-		DBG_PUT("NAND file creation failed\r\n");
+	res = Ret_Failed;
+	// format super block
+	res =  NAND_File_Format(0);
+	if (res == Ret_Success){
+		DBG_PUT("NAND Flash File Format Success\r\n");
+	}
+	else if(res == Ret_WriteFailed){
+		DBG_PUT("NAND Write Failed\r\n");
+	}
+	else if(res == Ret_Failed){
+		DBG_PUT("Reset failed\r\n");
+	}
+	else{
+		DBG_PUT("Something else went wrong\r\n");
+	}
 
-#endif
-#ifdef SPI_DEBUG
-		// SPI_NACK
+	res = Ret_Failed;
+	file = NAND_File_Create(0xAAAAAA);
+	if (!file){
+		DBG_PUT("FS is not formatted!\r\n");
+	}
 
-#endif
-		}
-
-		res = NAND_File_Write_Close(file);
-#ifdef UART_DEBUG
-		if (res != Ret_Success){
-			DBG_PUT("NAND file write close failed\r\n");
-		}
-#endif
-#ifdef SPI_DEBUG
-		if(res != Ret_Success){
-			// SPI_NACK
-		}
-#endif
-//		DBG_PUT("NAND Flash worked!... \r\n");
-
+	res = Ret_Failed;
+	res = NAND_File_Write_Close(file);
+	if (res == Ret_Success){
+		DBG_PUT("NAND Flash Write_Close Successful\r\n");
+	}
+	else if(res == Ret_WriteFailed){
+		DBG_PUT("NAND Write Failed\r\n");
+	}
+	else if(res == Ret_Failed){
+		DBG_PUT("Reset failed after writing\r\n");
+	}
+	else{
+		DBG_PUT("Something else went wrong during write_close\r\n");
+	}
 }
 
 void spi_handle_command(uint8_t cmd) {
