@@ -306,6 +306,18 @@ void uart_reset_sensors(void){
 			sprintf(buf, "VIS Camera Mode: JPEG\r\n\n");
 			DBG_PUT(buf);
 	    }
+
+
+
+
+
+
+
+
+
+
+
+
 	    // Test NIR Sensor
 		  arducam_wait_for_ready(NIR_SENSOR);
 
