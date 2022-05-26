@@ -9,6 +9,7 @@
 #include "debug.h"
 #include "uart_command_handler.h"
 #include "nand_m79a.h"
+#include "arducam.h"
 
 extern SPI_HandleTypeDef hspi1;
 extern const struct sensor_reg OV5642_JPEG_Capture_QSXGA[];
@@ -69,17 +70,21 @@ void take_image(){
 
 	// todo: determine if cap_done_mask stays high for subsequent reads of arducam_trig register. Otherwise this loop
 	//		 will never break
-	while(!get_bit(ARDUCHIP_TRIG , CAP_DONE_MASK, VIS_SENSOR) && !get_bit(ARDUCHIP_TRIG, CAP_DONE_MASK, NIR_SENSOR)){}
+	DBG_PUT("listening for cap done mask\r\n");
+	while(!get_bit(ARDUCHIP_TRIG , CAP_DONE_MASK, VIS_SENSOR)){}
+	DBG_PUT("vis sensor complete\r\n");
+	while(!get_bit(ARDUCHIP_TRIG, CAP_DONE_MASK, NIR_SENSOR)){}
+	DBG_PUT("Loop broke!\r\n");;
 
 	// ack over SPI
 	SPI1_IT_Transmit(&ack);
 
 	// keep track of how many images we have captured. This could come after transferring
 	// to flash
-	_iterate_image_number();
+//	_iterate_image_number();
 
 	// kick over images to our NAND flash
-	_transfer_images_to_flash();
+//	_transfer_images_to_flash();
 
 	return;
 }
@@ -131,18 +136,14 @@ void sensor_idle(){
 void sensor_active(){
 	// pull mosfet driver pin high, powering sensors
 	HAL_GPIO_WritePin(CAM_EN_GPIO_Port, CAM_EN_Pin, GPIO_PIN_SET);
-
+	DBG_PUT("Initializing Sensors\r\n");
 //	// initialize sensors
-//	_initalize_sensor(VIS_SENSOR);
-//	_initalize_sensor(NIR_SENSOR);
-//
-//	// program sensors
-//	_program_sensor(JPEG, VIS_SENSOR);
-//	_program_sensor(JPEG, NIR_SENSOR);
+	print_progress(1, 5);
+	_initalize_sensor(VIS_SENSOR);
+	print_progress(3, 5);
+	_initalize_sensor(NIR_SENSOR);
+	print_progress(5, 5);
 
-#ifdef UART_DEBUG
-	DBG_PUT("Sensors active!\r\n");
-#endif
 
 #ifdef SPI_DEBUG
 //	SPI1_IT_Transmit(&ack);
@@ -205,6 +206,8 @@ void get_image_num(){
 }
 
 void _initalize_sensor(uint8_t sensor){
+	char buf[64];
+	uint8_t DETECTED = 0;
 	  arducam_wait_for_ready(sensor);
 	  write_reg(AC_REG_RESET, 1, sensor);
 	  write_reg(AC_REG_RESET, 1, sensor);
@@ -212,63 +215,34 @@ void _initalize_sensor(uint8_t sensor){
 	  write_reg(AC_REG_RESET, 0, sensor);
 	  HAL_Delay(100);
 
-	  // todo: add error handling for spi if it fucks up
-
-	  // if (!arducam_wait_for_ready(sensor))
-
-	  write_reg(ARDUCHIP_MODE, 0x0, sensor);
-	  wrSensorReg16_8(0xff, 0x01, sensor);
-
-	  uint8_t vid = 0, pid = 0;
-	  rdSensorReg16_8(OV5642_CHIPID_HIGH, &vid, sensor);
-	  rdSensorReg16_8(OV5642_CHIPID_LOW, &pid, sensor);
-
-	  if (vid != 0x56 || pid != 0x42) {
-		  // todo: error handler!
+	  if (!arducam_wait_for_ready(sensor)) {
+	      DBG_PUT("Sensor: SPI Unavailable\r\n");
 	  }
-	  _program_sensor(JPEG, sensor);
+
+	  // Change MCU mode
+	    write_reg(ARDUCHIP_MODE, 0x0, sensor);
+	    wrSensorReg16_8(0xff, 0x01, sensor);
+
+	    uint8_t vid = 0, pid = 0;
+	    rdSensorReg16_8(OV5642_CHIPID_HIGH, &vid, sensor);
+	    rdSensorReg16_8(OV5642_CHIPID_LOW, &pid, sensor);
+
+	    if (vid != 0x56 || pid != 0x42) {
+	        sprintf(buf, "Sensor not available\r\n\n");
+	        DBG_PUT(buf);
+
+	    }
+	    else{
+	    	DETECTED = 1;
+	    }
+	    if (DETECTED==1){
+			format = JPEG;
+			Arduino_init(format, sensor);
+			DBG_PUT(buf);
+	    }
+
 }
 
-void _program_sensor(uint8_t m_fmt, uint8_t sensor){
-	if (m_fmt == RAW){
-	        arducam_raw_init(1280, 960, sensor);
-	    }
-	else {
-		wrSensorReg16_8(REG_SYS_CTL0, 0x82, sensor); // software reset
-		wrSensorRegs16_8(OV5642_QVGA_Preview, sensor);
-		HAL_Delay(100);
-
-		if (m_fmt == JPEG) {
-			HAL_Delay(100);
-
-			wrSensorRegs16_8(OV5642_JPEG_Capture_QSXGA, sensor);
-			wrSensorRegs16_8(OV5642_1600x1200, sensor); // changed from 320x240
-			HAL_Delay(100);
-			wrSensorReg16_8(0x3818, 0xa8, sensor);
-			wrSensorReg16_8(0x3621, 0x10, sensor);
-			wrSensorReg16_8(0x3801, 0xb0, sensor);
-#if (defined(OV5642_MINI_5MP_PLUS) || (defined ARDUCAM_SHIELD_V2))
-			wrSensorReg16_8(0x4407, 0x08, sensor);
-#else
-			wrSensorReg16_8(0x4407, 0x0C, sensor);
-#endif
-			wrSensorReg16_8(0x5888, 0x00, sensor);
-			wrSensorReg16_8(0x5000, 0xFF, sensor);
-	        }
-		else  {
-			byte reg_val;
-			wrSensorReg16_8(0x4740, 0x21, sensor);
-			wrSensorReg16_8(0x501e, 0x2a, sensor); // RGB Dither Ctl = RGB565/555
-			wrSensorReg16_8(0x5002, 0xf8, sensor); // ISP Ctl 2 = Dither enable
-			wrSensorReg16_8(0x501f, 0x01, sensor); // Format MUX Ctl = ISP RGB
-			wrSensorReg16_8(0x4300, 0x61, sensor); // Format Ctl = RGB565
-			rdSensorReg16_8(0x3818, &reg_val, sensor); // Timing Ctl = Mirror/Vertical flip
-			wrSensorReg16_8(0x3818, (reg_val | 0x60) & 0xff, sensor);
-			rdSensorReg16_8(0x3621, &reg_val, sensor); // Array Ctl 01 = Horizontal bin
-			wrSensorReg16_8(0x3621, reg_val & 0xdf, sensor);
-	        }
-	    }
-}
 
 
 void init_nand_flash(){
@@ -349,6 +323,17 @@ void spi_handle_command(uint8_t cmd) {
 	}
 }
 
+void print_progress(uint8_t count, uint8_t max)
+{
+	uint8_t length = 25;
+	uint8_t scaled = count*100 / max * length / 100;
+	char buf[128];
+    sprintf(buf, "Progress: [%.*s%.*s]\r", scaled, "==================================================", length - scaled, "                                        ");
+	DBG_PUT(buf);
+	if (count == max){
+		DBG_PUT("\r\n");
+	}
+}
 
 
 static inline const char* next_token(const char *ptr) {
@@ -365,7 +350,8 @@ void uart_handle_command(char *cmd) {
 	uint8_t in[sizeof(housekeeping_packet_t)];
     switch(*cmd) {
     case 'c':
-    	uart_handle_capture_cmd(cmd);
+//    	uart_handle_capture_cmd(cmd);
+    	take_image();
     	break;
     case 'f':
     	uart_handle_format_cmd(cmd);
