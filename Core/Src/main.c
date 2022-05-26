@@ -120,8 +120,9 @@ int main(void)
   MX_SPI2_Init();
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
-  // init nand flash
-//  NAND_SPI_Init(&hspi2);
+//   init nand flash
+  NAND_SPI_Init(&hspi2);
+  sensor_active();
   char cmd[64];
   char buf[64];
   char *ptr = cmd;
