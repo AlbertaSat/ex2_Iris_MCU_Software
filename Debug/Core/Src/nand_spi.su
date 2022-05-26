@@ -1,8 +1,0 @@
-../Core/Src/nand_spi.c:94:6:NAND_SPI_Init	16	static
-../Core/Src/nand_spi.c:103:6:NAND_Wait	16	static
-../Core/Src/nand_spi.c:118:21:NAND_SPI_Send	32	static
-../Core/Src/nand_spi.c:140:21:NAND_SPI_SendReceive	32	static
-../Core/Src/nand_spi.c:161:21:NAND_SPI_Receive	32	static
-../Core/Src/nand_spi.c:186:21:NAND_SPI_Send_Command_Data	32	static
-../Core/Src/nand_spi.c:209:6:__nand_spi_cs_low	8	static
-../Core/Src/nand_spi.c:217:6:__nand_spi_cs_high	8	static
