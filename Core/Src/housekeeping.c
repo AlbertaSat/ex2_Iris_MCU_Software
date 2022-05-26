@@ -26,13 +26,13 @@ housekeeping_packet_t _get_housekeeping(){
 
 void decode_hk_packet (housekeeping_packet_t hk){
 	char buf[64];
-	sprintf(buf, "hk.vis_temp:0x%x\r\n", hk.vis_temp);
+	sprintf(buf, "hk.vis_temp:0x%x, %d.%04d C\r\n", hk.vis_temp, (hk.vis_temp >> 8) - 64, ((hk.vis_temp & 0xFF)>>4) * 625);
 	DBG_PUT(buf);
-	sprintf(buf, "hk.nir_temp: 0x%x\r\n", hk.nir_temp);
+	sprintf(buf, "hk.nir_temp:0x%x, %d.%04d C\r\n", hk.nir_temp, (hk.nir_temp >> 8) - 64, ((hk.nir_temp & 0xFF)>>4) * 625);
 	DBG_PUT(buf);
-	sprintf(buf, "hk.flash_temp: 0x%x\r\n", hk.flash_temp);
+	sprintf(buf, "hk.flash_temp:0x%x, %d.%04d C\r\n", hk.flash_temp, (hk.flash_temp >> 8) - 64, ((hk.flash_temp & 0xFF)>>4) * 625);
 	DBG_PUT(buf);
-	sprintf(buf, "hk.gate_temp: 0x%x\r\n", hk.gate_temp);
+	sprintf(buf, "hk.gate_temp:0x%x, %d.%04d C\r\n", hk.gate_temp, (hk.gate_temp >> 8) - 64, ((hk.gate_temp & 0xFF)>>4) * 625);
 	DBG_PUT(buf);
 	sprintf(buf, "hk.imgnum: 0x%x\r\n", hk.imagenum);
 	DBG_PUT(buf);

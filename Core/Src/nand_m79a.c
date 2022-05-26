@@ -26,6 +26,7 @@
 
 #include <string.h>
 #include "nand_m79a.h"
+#include "debug.h"
 
 /******************************************************************************
  *                              Initialization
@@ -106,14 +107,14 @@ static inline int check_magic(const struct super_block *sb) {
  * @brief Initialize the File System by configuring the Super Block.
  * @note  This function must be called before the File System is used for the first time.
  *
- * @param[in] reformat     force reformatting by setting this parameter to non-zero 
+ * @param[in] reformat     force reformatting by setting this parameter to non-zero
  * @return NAND_ReturnType Ret_Success if the Super Block was written successfully
  */
 NAND_ReturnType NAND_File_Format(int reformat) {
     NAND_ReturnType rc = Ret_Success;
     PhysicalAddrs paddr = { 0 };
     struct super_block *sblock = (struct super_block *) Super_Block;
-    
+
     paddr.rowAddr = SUPER_BLOCK;
     if ((rc = NAND_Page_Read(&paddr, PAGE_DATA_SIZE, Super_Block)) != Ret_Success) {
         return rc;
@@ -124,6 +125,7 @@ NAND_ReturnType NAND_File_Format(int reformat) {
      */
     if (reformat == 0) {
         if (check_magic(sblock) == 0) {
+        	DBG_PUT("Check_Magic returned 0\r\n");
             return Ret_Success;
         }
     }
@@ -140,7 +142,7 @@ NAND_ReturnType NAND_File_Format(int reformat) {
     sblock->inodes[ix].sblock = SUPER_BLOCK + 1;
 
     /* Format the file system by writing the super block. */
-    return NAND_Page_Program(&paddr, sizeof(Super_Block), Super_Block);    
+    return NAND_Page_Program(&paddr, sizeof(Super_Block), Super_Block);
 }
 
 /* Using a static FP makes the API look a bit like fopen(), but does restrict us to one open
@@ -190,9 +192,10 @@ NAND_ReturnType NAND_File_Write_Close(FileHandle_t *fh) {
     sblock->next_inode = ix;
     sblock->inodes[ix].sblock = fh->next_block;
     sblock->inodes[ix].length = 0;
+
     /* Save the new super block contents. */
     PhysicalAddrs paddr = { .rowAddr = SUPER_BLOCK, .colAddr = 0 };
-    return NAND_Page_Program(&paddr, sizeof(Super_Block), Super_Block);    
+    return NAND_Page_Program(&paddr, sizeof(Super_Block), Super_Block);
 }
 
 /**
@@ -253,7 +256,7 @@ NAND_ReturnType NAND_File_Read_Close(FileHandle_t *fh) {
 /**
  * @brief Read the next block in the file
  * @note All reads should be length PAGE_DATA_SIZE except the last (partial) page
- * 
+ *
  * @param[in,out] fh        pointer to file handle returned by NAND_Open
  * @param[in,out] length    number of bytes to read - see note
  * @param[out]    buffer    pointer to the start of the data read from NAND
@@ -289,7 +292,7 @@ NAND_ReturnType NAND_File_Read(FileHandle_t *fh, uint16_t *length, uint8_t *buff
  /**
  * @brief Write the next block in the file
  * @note All writess should be length PAGE_DATA_SIZE except the last (partial) page
- * 
+ *
  * @param[in,out] fh       pointer to file handle returned by NAND_Open
  * @param[in] length       number of bytes to write - see note
  * @param[in] buffer       pointer to the start of the data to write to NAND
@@ -325,8 +328,7 @@ NAND_ReturnType NAND_File_Write(FileHandle_t *fh, uint16_t length, uint8_t *buff
  * @param[in] relative_offset Use the inode of the file this far back from the head
  *                            of the inode list. For example, 0 is the current head,
  *                            which is the most recent file, 1 is the one before that etc.
-
- * @return uint32_t           The length of the file specified or 0 if there was an error          
+ * @return uint32_t           The length of the file specified or 0 if there was an error
  */
 uint32_t NAND_File_Length(uint32_t relative_offset) {
     struct super_block *sblock = (struct super_block *) Super_Block;
@@ -347,7 +349,6 @@ uint32_t NAND_File_Length(uint32_t relative_offset) {
     }
 
     return sblock->inodes[ix].length;
-
 }
 
 /**
@@ -379,17 +380,15 @@ int NAND_File_List_First(uint32_t relative_offset, struct inode *inode) {
         ix += sblock->inode_cnt;
     }
 
-
-    if (inode) {       
+    if (inode) {
         *inode = sblock->inodes[ix];
     }
     if (sblock->inodes[ix].length == 0) {
         return -1;
     }
     return ix;
+}
 
-}    
-    
 /**
  * @brief Given a cookie containing the inode index from a prior call to this
  * function or NAND_File_List_First(), return the "next" file listing (inode).

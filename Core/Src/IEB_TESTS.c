@@ -5,9 +5,10 @@
  *      Author: Liam
  */
 #include "IEB_TESTS.h"
-//#include "cli.h"
 #include "main.h"
 #include "tmp421.h"
+#include "nand_m79a.h"
+#include "command_handler.h"
 extern I2C_HandleTypeDef hi2c2;
 
 void CHECK_LED_I2C_SPI_TS(void){
@@ -30,6 +31,8 @@ void CHECK_LED_I2C_SPI_TS(void){
 
 	// Test SPI
 	DBG_PUT("--------------------\r\n");
+	DBG_PUT("Ensuring sensors are powered\r\n");
+	sensor_active();
 	DBG_PUT("Testing VIS SPI\r\n");
 
 	_testArducamSensor(VIS_SENSOR);
@@ -40,8 +43,22 @@ void CHECK_LED_I2C_SPI_TS(void){
 
 	// Temperature Sensor stuff
 	DBG_PUT("--------------------\r\n");
-	DBG_PUT("Testing Temperature Sensors (NC)\r\n");
+	DBG_PUT("Testing Temperature Sensors\r\n");
+	testTempSensor();
 	DBG_PUT("--------------------\r\n");
+
+	// NAND Flash
+	DBG_PUT("--------------------\r\n");
+	DBG_PUT("Testing NAND Flash\r\n");
+
+	NAND_ReturnType res = NAND_Init();
+	if (res == Ret_Success){
+		DBG_PUT("TEST PASSED: NAND Flash Initialized\r\n");
+	}
+	else{
+		DBG_PUT("TEST FAILED: NAND Flash Error\r\n");
+	}
+	DBG_PUT("--------------------\r\n\n");
 
 	HAL_Delay(1000);
 }
@@ -94,25 +111,33 @@ void _testScanI2C(){
 	  	}
 	 DBG_PUT("Scan Complete.\r\n");
 	 if (deviceFound == 1){
-		 DBG_PUT("I2C TEST PASSED\r\n");
+		 DBG_PUT("TEST PASSED: I2C Operational\r\n");
 	 }
 	 else{
-		 DBG_PUT("I2C TEST FAILED\r\n");
+		 DBG_PUT("TEST FAILED: I2C Unoperational\r\n");
 	 }
 }
 
 
 void testTempSensor(void){
 	DBG_PUT("\n");
-	uint16_t vis_temp = get_temp(0x4C);
-	uint16_t nir_temp = get_temp(0x4D);
-	uint16_t nand_temp = get_temp(0x4E);
-	uint16_t gate_temp = get_temp(0x4F);
-	printTemp(vis_temp, 0x4C);
-	printTemp(nir_temp, 0x4D);
-	printTemp(nand_temp, 0x4E);
-	printTemp(gate_temp, 0x4F);
-	DBG_PUT("\n");
+	uint16_t vis_temp, nir_temp, nand_temp, gate_temp;
+	vis_temp = nir_temp = nand_temp = gate_temp = 0;
+	vis_temp = get_temp(0x4C);
+	nir_temp = get_temp(0x4D);
+	nand_temp = get_temp(0x4E);
+	gate_temp = get_temp(0x4F);
+
+	if(vis_temp && nir_temp && nand_temp && gate_temp ){
+		DBG_PUT("TEST PASSED: Temp sensors operational\r\n");
+		printTemp(vis_temp, 0x4C);
+		printTemp(nir_temp, 0x4D);
+		printTemp(nand_temp, 0x4E);
+		printTemp(gate_temp, 0x4F);
+	}
+	else{
+		DBG_PUT("TEST FAILED: Temp sensors unoperational\r\n");
+	}
 	return;
 
 }

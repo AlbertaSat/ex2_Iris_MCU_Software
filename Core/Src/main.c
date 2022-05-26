@@ -127,11 +127,14 @@ int main(void)
   char *ptr = cmd;
 #ifdef UART_DEBUG
   DBG_PUT("-----------------------------------\r\n");
-  DBG_PUT("Iris Electronics Test Software\r\nUART Edition\r\n");
+  DBG_PUT("Iris Electronics Test Software\r\n"
+		  "         UART Edition         \r\n");
   DBG_PUT("-----------------------------------\r\n");
 #endif
 
   init_temp_sensors();
+  NAND_SPI_Init(&hspi2);
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -166,9 +169,9 @@ int main(void)
 	   while (1)
 	   {
 	       HAL_StatusTypeDef rc = HAL_UART_Receive(&huart1, (uint8_t *) ptr, 1, 20000);
-	    /* USER CODE END WHILE */
+    /* USER CODE END WHILE */
 
-	    /* USER CODE BEGIN 3 */
+    /* USER CODE BEGIN 3 */
 	       /* Build up the command one byte at a time */
 	       if (rc != HAL_OK) {
 	           if (rc != HAL_TIMEOUT) {
@@ -222,21 +225,19 @@ void SystemClock_Config(void)
   /** Initializes the RCC Oscillators according to the specified parameters
   * in the RCC_OscInitTypeDef structure.
   */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_MSI;
-  RCC_OscInitStruct.MSIState = RCC_MSI_ON;
-  RCC_OscInitStruct.MSICalibrationValue = 0;
-  RCC_OscInitStruct.MSIClockRange = RCC_MSIRANGE_5;
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
+  RCC_OscInitStruct.HSEState = RCC_HSE_BYPASS;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_NONE;
   if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
   {
     Error_Handler();
-
+  }
 
   /** Initializes the CPU, AHB and APB buses clocks
   */
   RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
                               |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
-  RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_MSI;
+  RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_HSE;
   RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
   RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1;
   RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
@@ -252,7 +253,6 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
-}
 }
 
 /**
@@ -271,7 +271,7 @@ static void MX_I2C1_Init(void)
 
   /* USER CODE END I2C1_Init 1 */
   hi2c1.Instance = I2C1;
-  hi2c1.Init.Timing = 0x00000708;
+  hi2c1.Init.Timing = 0x00303D5B;
   hi2c1.Init.OwnAddress1 = 0;
   hi2c1.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
   hi2c1.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
@@ -319,7 +319,7 @@ static void MX_I2C2_Init(void)
 
   /* USER CODE END I2C2_Init 1 */
   hi2c2.Instance = I2C2;
-  hi2c2.Init.Timing = 0x00000708;
+  hi2c2.Init.Timing = 0x00303D5B;
   hi2c2.Init.OwnAddress1 = 0;
   hi2c2.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
   hi2c2.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
@@ -411,7 +411,7 @@ static void MX_SPI2_Init(void)
   hspi2.Init.CLKPolarity = SPI_POLARITY_LOW;
   hspi2.Init.CLKPhase = SPI_PHASE_1EDGE;
   hspi2.Init.NSS = SPI_NSS_SOFT;
-  hspi2.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_2;
+  hspi2.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_16;
   hspi2.Init.FirstBit = SPI_FIRSTBIT_MSB;
   hspi2.Init.TIMode = SPI_TIMODE_DISABLE;
   hspi2.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
@@ -482,13 +482,18 @@ static void MX_GPIO_Init(void)
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOB, TEST_OUT1_Pin|NAND_CS1_Pin, GPIO_PIN_RESET);
 
-  /*Configure GPIO pins : USART2_CS1_Pin USART2_CS2_Pin USART2_MOSI_Pin USART2_CLK_Pin
-                           WP__Pin CAM_EN_Pin NAND_CS2_Pin */
-  GPIO_InitStruct.Pin = USART2_CS1_Pin|USART2_CS2_Pin|USART2_MOSI_Pin|USART2_CLK_Pin
-                          |WP__Pin|CAM_EN_Pin|NAND_CS2_Pin;
+  /*Configure GPIO pins : USART2_CS1_Pin USART2_CS2_Pin WP__Pin */
+  GPIO_InitStruct.Pin = USART2_CS1_Pin|USART2_CS2_Pin|WP__Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : USART2_MOSI_Pin USART2_CLK_Pin */
+  GPIO_InitStruct.Pin = USART2_MOSI_Pin|USART2_CLK_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
   /*Configure GPIO pin : USART2_MISO_Pin */
@@ -497,12 +502,33 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(USART2_MISO_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : TEST_OUT1_Pin NAND_CS1_Pin */
-  GPIO_InitStruct.Pin = TEST_OUT1_Pin|NAND_CS1_Pin;
+  /*Configure GPIO pin : TEST_OUT1_Pin */
+  GPIO_InitStruct.Pin = TEST_OUT1_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+  HAL_GPIO_Init(TEST_OUT1_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : NAND_CS1_Pin */
+  GPIO_InitStruct.Pin = NAND_CS1_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(NAND_CS1_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : CAM_EN_Pin */
+  GPIO_InitStruct.Pin = CAM_EN_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(CAM_EN_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : NAND_CS2_Pin */
+  GPIO_InitStruct.Pin = NAND_CS2_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(NAND_CS2_GPIO_Port, &GPIO_InitStruct);
 
 }
 
