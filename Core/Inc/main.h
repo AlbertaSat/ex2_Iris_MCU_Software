@@ -90,6 +90,10 @@ void Error_Handler(void);
 #define handling_command 3
 #define processin 4
 
+#define 5V_CurrentSense 0x40
+#define 3V3_CurrentSense 0x45
+
+
 
 
 /* USER CODE END Private defines */
