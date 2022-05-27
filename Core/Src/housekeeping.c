@@ -8,7 +8,8 @@
 #include "tmp421.h"
 #include "debug.h"
 #include "housekeeping.h"
-
+#include "command_handler.h"
+#include "ina209.h"
 
 
 housekeeping_packet_t _get_housekeeping(){
@@ -17,8 +18,14 @@ housekeeping_packet_t _get_housekeeping(){
 	hk.nir_temp = get_temp(NIR_TEMP_SENSOR);
 	hk.flash_temp = get_temp(TEMP3);
 	hk.gate_temp = get_temp(TEMP4);
-	hk.imagenum = get_image_num();
+	hk.imagenum = get_image_num(1);
 	hk.software_version = software_ver;
+	hk.MAX_5V_voltage = get_shunt_voltage_peak_pos(CURRENTSENSE_5V);
+	hk.MAX_5V_power  = get_power_peak(CURRENTSENSE_5V);
+	hk.MAX_3V_voltage = get_shunt_voltage_peak_pos(CURRENTSENSE_3V3);
+	hk.MAX_3V_power = get_power_peak(CURRENTSENSE_3V3);
+	hk.MIN_5V_voltage = get_shunt_voltage_peak_neg(CURRENTSENSE_5V);
+	hk.MIN_3V_voltage = get_shunt_voltage_peak_neg(CURRENTSENSE_3V3);
 	return hk;
 }
 
