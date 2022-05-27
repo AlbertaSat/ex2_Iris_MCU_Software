@@ -11,7 +11,9 @@
 extern SPI_HandleTypeDef hspi1;
 
 void SPI1_IT_Transmit(uint8_t *TX_Data){
+#ifdef SPI_DEBUG
 	HAL_SPI_Transmit_IT(&hspi1, &TX_Data, sizeof(TX_Data));
+#endif
 	return;
 }
 
