@@ -45,6 +45,18 @@ void decode_hk_packet (housekeeping_packet_t hk){
 	DBG_PUT(buf);
 	sprintf(buf, "hk.software_version: 0x%x\r\n", hk.software_version);
 	DBG_PUT(buf);
+	sprintf(buf, "hk.MAX_5V_voltage: 0x%x\r\n", hk.MAX_5V_voltage);
+	DBG_PUT(buf);
+	sprintf(buf, "hk.MAX_3V_voltage: 0x%x\r\n", hk.MAX_3V_voltage);
+	DBG_PUT(buf);
+	sprintf(buf, "hk.MIN_5V_voltage: 0x%x\r\n", hk.MIN_5V_voltage);
+	DBG_PUT(buf);
+	sprintf(buf, "hk.MIN_3V_voltage: 0x%x\r\n", hk.MIN_3V_voltage);
+	DBG_PUT(buf);
+	sprintf(buf, "hk.MAX_5V_power: 0x%x\r\n", hk.MAX_5V_power);
+	DBG_PUT(buf);
+	sprintf(buf, "hk.MAX_3V_power: 0x%x\r\n", hk.MAX_3V_power);
+	DBG_PUT(buf);
 }
 
 
