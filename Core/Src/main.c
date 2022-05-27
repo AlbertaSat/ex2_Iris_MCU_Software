@@ -167,39 +167,52 @@ int main(void)
 #endif // SPI_DEBUG
 	  // //////////////////////////////////////////////////////////////////////////////////////////
 #ifdef UART_DEBUG
+  	  state = idle;
 	   while (1)
 	   {
-	       HAL_StatusTypeDef rc = HAL_UART_Receive(&huart1, (uint8_t *) ptr, 1, 20000);
-    /* USER CODE END WHILE */
+		   switch (state){
+			   case idle:
+				   DBG_PUT("\r:>> ");
+				   state = receiving;
+				   break;
+			   case receiving:;
+				   HAL_StatusTypeDef rc = HAL_UART_Receive(&huart1, (uint8_t *) ptr, 1, 20000);
+			/* USER CODE END WHILE */
 
-    /* USER CODE BEGIN 3 */
-	       /* Build up the command one byte at a time */
-	       if (rc != HAL_OK) {
-	           if (rc != HAL_TIMEOUT) {
-	               sprintf(buf, "UART read error: %x\r\n", rc);
-	               DBG_PUT(buf);
-	           }
-	           continue;
-	       }
-	       /* Command is complete when we get EOL of some sort */
-	       if (*ptr == '\n' || *ptr == '\r') {
-	           *ptr = 0;
-	           DBG_PUT("\r\n");
-	           uart_handle_command(cmd);
-	           ptr = cmd;
-	       }
-	       else {
-	           *(ptr + 1) = 0;
-	           DBG_PUT(ptr);
+			/* USER CODE BEGIN 3 */
+				   /* Build up the command one byte at a time */
+				   if (rc != HAL_OK) {
+					   if (rc != HAL_TIMEOUT) {
+						   sprintf(buf, "UART read error: %x\r\n", rc);
+						   DBG_PUT(buf);
+					   }
+					   continue;
+				   }
+				   /* Command is complete when we get EOL of some sort */
+				   if (*ptr == '\n' || *ptr == '\r') {
+					   *ptr = 0;
+					   DBG_PUT("\r\n");
+					   uart_handle_command(cmd);
+					   ptr = cmd;
+					   state = idle;
 
-	           if (*ptr == 0x7f) { // handle backspace
-	               if (ptr > cmd)
-	                   --ptr;
-	           }
-	           else
-	               ++ptr;
-	       }
-	   }
+				   }
+				   else {
+					   *(ptr + 1) = 0;
+					   DBG_PUT(ptr);
+
+					   if (*ptr == 0x7f) { // handle backspace
+						   if (ptr > cmd)
+							   --ptr;
+					   }
+					   else
+						   ++ptr;
+				   }
+				   break;
+			   }
+
+		   }
+
 #endif // UART_DEBUG
 
     /* USER CODE END WHILE */
