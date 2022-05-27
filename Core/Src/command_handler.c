@@ -276,27 +276,6 @@ void init_nand_flash(){
 	else{
 		DBG_PUT("Something else went wrong\r\n");
 	}
-
-	res = Ret_Failed;
-	file = NAND_File_Create(0xAAAAAA);
-	if (!file){
-		DBG_PUT("FS is not formatted!\r\n");
-	}
-
-	res = Ret_Failed;
-	res = NAND_File_Write_Close(file);
-	if (res == Ret_Success){
-		DBG_PUT("NAND Flash Write_Close Successful\r\n");
-	}
-	else if(res == Ret_WriteFailed){
-		DBG_PUT("NAND Write Failed\r\n");
-	}
-	else if(res == Ret_Failed){
-		DBG_PUT("Reset failed after writing\r\n");
-	}
-	else{
-		DBG_PUT("Something else went wrong during write_close\r\n");
-	}
 }
 
 void spi_handle_command(uint8_t cmd) {
@@ -358,7 +337,7 @@ void uart_handle_command(char *cmd) {
         break;
 
     case 'r':
-    	read_nand_flash();
+    	read_nand_flash(0);
 //		handle_reg_cmd(cmd);
 		break;
 

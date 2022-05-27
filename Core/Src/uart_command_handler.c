@@ -240,10 +240,12 @@ void uart_handle_capture_cmd(const char *cmd) {
     int target_sensor;
     switch(*wptr){
     case 'v':
+#if 0
     	if (VIS_DETECTED == 0){
     		DBG_PUT("VIS Unavailable.\r\n");
     		return;
     	}
+#endif
     	target_sensor = VIS_SENSOR; // vis = 0
 		break;
 
@@ -497,8 +499,64 @@ void uart_get_hk_packet(){
 	return;
 }
 
-void read_nand_flash(){
-	return;
+static void uart_dump_buf(uint8_t *data, uint16_t len) {
+    uint8_t digit[4];
+    digit[2] = ' ';
+    digit[3] = 0;
+    for (int i=0; i<len; i++) {
+        digit[0] = hex_2_ascii(data[i] >> 4);
+        digit[1] = hex_2_ascii(data[i] & 0x0f);
+        DBG_PUT(digit);
+    }
+}
+
+uint8_t fdata[PAGE_DATA_SIZE];
+
+void read_nand_flash(int which) {
+    char str[64];
+    uint32_t len = NAND_File_Length(which);
+    if (len == 0) {
+        DBG_PUT("no files\r\n");
+        return;
+    }
+
+    sprintf(str, "length %d\n", len);
+    DBG_PUT(str);
+
+    FileHandle_t *fh = NAND_File_Open(which);
+    if (!fh) {
+        DBG_PUT("open failed\r\n");
+        return;
+    }
+
+    size_t i = len;
+    uint16_t cnt;
+    NAND_ReturnType rc;
+    while (i >= PAGE_DATA_SIZE) {
+        uint16_t cnt = PAGE_DATA_SIZE;
+        if ((rc = NAND_File_Read(fh, &cnt, fdata)) != Ret_Success) {
+            sprintf(str, "read failed: %d\r\n", rc);
+            DBG_PUT(str);
+            break;
+        }
+        if (cnt == 0) {
+            DBG_PUT("read returned 0?");
+            break;
+        }
+        uart_dump_buf(fdata, cnt);
+        i -= cnt;
+    }
+
+    if (i > 0) {
+        if ((rc = NAND_File_Read(fh, &cnt, fdata)) != Ret_Success) {
+            sprintf(str, "residue read failed: %d\r\n", rc);
+            DBG_PUT(str);
+        }
+        if (cnt != i) {
+            DBG_PUT("residue read returned 0?");
+        }
+        uart_dump_buf(fdata, cnt);
+    }
 }
 
 

@@ -36,6 +36,8 @@ void get_image_num();
 void iterate_image_num();
 void uart_get_hk_packet(uint8_t *out);
 void print_progress(uint8_t count, uint8_t max);
+void read_nand_flash(int which);
+
 //void _initalize_sensor();
 
 #endif /* INC_COMMAND_HANDLER_H_ */

@@ -3,8 +3,10 @@
 #include "ov5642_regs.h"
 #include "debug.h"
 #include "I2C.h"
+#include "nand_m79a.h"
 
-#define BUFFER_MAX_SIZE 4096
+#define FAKE_CAM 1
+
 uint8_t image_number = 0;
 void arducam_delay_ms(int ms) {
     HAL_Delay(ms);
@@ -183,27 +185,56 @@ uint8_t read_reg(uint8_t addr, uint8_t sensor) {
 }
 
 void write_reg(uint8_t addr, uint8_t data, uint8_t sensor) {
+#ifndef FAKE_CAM
     write_spi_reg(addr, data, sensor);
+#endif
 }
 
-uint8_t read_fifo(uint8_t sensor)
+#ifdef FAKE_CAM
+static uint32_t fake_length;
+static uint32_t fake_data;
+#endif
+
+static uint8_t read_fifo(uint8_t sensor)
 {
     uint8_t data;
+#ifdef FAKE_CAM
+    fake_data++;
+    if (fake_data == 1) {
+        data = 0xff;
+    }
+    else if (fake_data == 2) {
+        data = 0xd8;
+    }
+    else if (fake_data == (fake_length - 1)) {
+        data = 0xff;
+    }
+    else if (fake_data == fake_length) {
+        data = 0xd9;
+    }
+    else {
+        data = fake_data;
+    }
+#else
     data = read_reg(SINGLE_FIFO_READ, sensor);
+#endif
     return data;
 }
 
-void flush_fifo(uint8_t sensor)
+static void flush_fifo(uint8_t sensor)
 {
     write_reg(ARDUCHIP_FIFO, FIFO_CLEAR_MASK, sensor);
 }
 
-void start_capture(uint8_t sensor)
+static void start_capture(uint8_t sensor)
 {
+#ifdef FAKE_CAM
+    fake_data = 0;
+#endif
     write_reg(ARDUCHIP_FIFO, FIFO_START_MASK, sensor);
 }
 
-void clear_fifo_flag(uint8_t sensor)
+static void clear_fifo_flag(uint8_t sensor)
 {
     write_reg(ARDUCHIP_FIFO, FIFO_CLEAR_MASK, sensor);
 }
@@ -214,7 +245,7 @@ void set_test_mode(uint8_t mode, uint8_t sensor)
     HAL_Delay(1000);
 }
 
-uint32_t read_fifo_length(uint8_t sensor)
+static uint32_t read_fifo_length(uint8_t sensor)
 {
     uint32_t len1,len2,len3,len=0;
     len1 = read_reg(FIFO_SIZE1, sensor);
@@ -414,6 +445,113 @@ static void dump_uart_jpg(uint32_t length, uint8_t sensor) {
     }
 }
 
+static void uart_dump_buf(uint8_t *data, uint16_t len) {
+    uint8_t digit[4];
+    digit[2] = ' ';
+    digit[3] = 0;
+    for (int i=0; i<len; i++) {
+        digit[0] = hex_2_ascii(data[i] >> 4);
+        digit[1] = hex_2_ascii(data[i] & 0x0f);
+        DBG_PUT(digit);
+    }
+}
+typedef struct io_funcs {
+    void* (*open)(int name);
+    int (*write)(void *fp, uint8_t *val, uint16_t len);
+    int (*write_len)(void *fp, uint32_t len);
+    int (*close)(void *fp);
+} io_funcs_t;
+
+#define BLK_SZ 2048
+uint8_t buf[BLK_SZ];
+
+static void dump_flash_jpg(uint32_t length, uint8_t sensor) {
+    uint8_t prev = 0, curr = 0;
+    bool found_header = false;
+    uint32_t i, x = 0;
+    NAND_ReturnType rc;
+    
+    FileHandle_t *fp = NAND_File_Create(sensor);
+    if (!fp) {
+        DBG_PUT("Can't open file");
+        return;
+    }
+
+    char str[64];
+    sprintf(str, "writing length %d\r\n", length);
+    DBG_PUT(str);
+    
+    // Note: we're assuming the ARM is BE
+    memcpy(buf, &length, sizeof(length));
+    //HAL_UART_Transmit(&huart1, (uint8_t *) buf, sizeof(length), 100);
+
+    for (i=0; i<length; i++) {
+        prev = curr;
+        curr = read_fifo(sensor);
+        if ((curr == 0xd9) && (prev == 0xff)) {
+            // found the footer - break
+            buf[x++] = curr;
+
+            DBG_PUT("writing footer block\r\n");
+            uart_dump_buf(buf, x);
+            
+            if ((rc = NAND_File_Write(fp, x, buf)) != Ret_Success) {
+                DBG_PUT("Write early footer failed");
+            }
+            x = 0;
+            i++;
+            found_header = false;
+            break;
+        }
+
+        if (found_header) {
+            buf[x] = curr;
+            x++;
+            if (x >= BLK_SZ) {
+                DBG_PUT("writing full block\r\n");
+                uart_dump_buf(buf, x);
+                if ((rc = NAND_File_Write(fp, BLK_SZ, buf)) != Ret_Success) {
+                    DBG_PUT("Write body failed");
+                }
+                x = 0;
+            }
+        }
+        else if ((curr == 0xd8) && (prev = 0xff)) {
+            found_header = true;
+            buf[0] = prev;
+            buf[1] = curr;
+            x = 2;
+        }
+    }
+
+    if (x) {
+        if ((rc = NAND_File_Write(fp, x, buf)) != Ret_Success) {
+            DBG_PUT("Write tail failed");
+        }
+    }
+
+#if 0
+    if (found_header) {
+        // We found the header but not the footer :-(
+        buf[0] = 0xff;
+        buf[1] = 0xd9;
+        HAL_UART_Transmit(&huart1, (uint8_t *) buf, 2, 100);
+    }
+    else {
+        memset(buf, 0, BLK_SZ);
+        while (i < length) {
+            int cnt = min(length - i, BLK_SZ);
+            HAL_UART_Transmit(&huart1, (uint8_t *) buf, cnt, 100);
+            i += cnt;
+        }
+    }
+#endif
+    if ((rc = NAND_File_Write_Close(fp)) != Ret_Success) {
+        DBG_PUT("Close failed");
+    }
+
+    DBG_PUT("File write complete\r\n");
+}
 
 static void dump_uart_raw(uint32_t length, uint8_t sensor) {
     char buf[4];
@@ -430,9 +568,11 @@ static void dump_uart_raw(uint32_t length, uint8_t sensor) {
 
 void SingleCapTransfer(int format, uint8_t sensor) {
     char buf[64];
-    write_reg(ARDUCHIP_TIM, VSYNC_LEVEL_MASK, sensor);   //VSYNC is active HIGH
+    uint32_t length;
+
     sprintf(buf, "Single Capture Transfer type %x\r\n", format);
     DBG_PUT(buf);
+    write_reg(ARDUCHIP_TIM, VSYNC_LEVEL_MASK, sensor);   //VSYNC is active HIGH
     uint8_t val;
     rdSensorReg16_8(REG_FORMAT_CTL, &val, sensor);
     sprintf(buf, "format reg: 0x%02x\r\n", val);
@@ -441,9 +581,15 @@ void SingleCapTransfer(int format, uint8_t sensor) {
     flush_fifo(sensor);
     clear_fifo_flag(sensor);
     start_capture(sensor);
+
+#ifndef FAKE_CAM
     while(!get_bit(ARDUCHIP_TRIG , CAP_DONE_MASK, sensor)){}
 
-    uint32_t length = read_fifo_length(sensor);
+    length = read_fifo_length(sensor);
+#else
+    length = 2*BLK_SZ;
+    fake_length = length;
+#endif
     sprintf(buf, "Capture complete! FIFO len 0x%lx\r\n", length);
     DBG_PUT(buf);
     DBG_PUT("JPG");
@@ -453,7 +599,7 @@ void SingleCapTransfer(int format, uint8_t sensor) {
         dump_uart_bmp(sensor);
         break;
     case JPEG:
-        dump_uart_jpg(length, sensor);
+        dump_flash_jpg(length, sensor);
         break;
     case RAW:
         dump_uart_raw(length*2, sensor);
@@ -462,7 +608,9 @@ void SingleCapTransfer(int format, uint8_t sensor) {
         break;
     }
 
+#ifndef FAKE_CAM
     DBG_PUT("\04");
+#endif
 }
 
 
