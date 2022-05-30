@@ -1,16 +1,15 @@
 #include <stdio.h>
 #include <ctype.h>
-#include <uart_command_handler.h>
+#include <command_handler.h>
 #include "stm32l0xx_hal.h"
 #include "arducam.h"
 #include "debug.h"
 #include "main.h"
 #include "nand_m79a.h"
 #include "IEB_TESTS.h"
-#include "transfer.h"
+#include "flash_cmds.h"
 #include "housekeeping.h"
 
-int format = JPEG;
 extern I2C_HandleTypeDef hi2c2;
 //extern struct housekeeping_packet hk;
 
@@ -26,7 +25,30 @@ static inline const char* next_token(const char *ptr) {
     return (*ptr) ? ptr : NULL;
 }
 
-void uart_handle_format_cmd(const char *cmd) {
+static void help() {
+    // UART DEBUG ONLY
+#ifdef UART_DEBUG
+    DBG_PUT("TO RUN TESTS: test\r\n\n\n");
+    DBG_PUT("Commands:\r\n");
+    DBG_PUT("\tWorking/Tested:\r\n");
+    DBG_PUT("\t\tpower <on/off> | toggles sensor power\r\n");
+    DBG_PUT("\t\tinit sensor | Resets arducam modules to default\r\n");
+    DBG_PUT("\t\tcapture <vis/nir> | capture image from sensor\r\n");
+    DBG_PUT("\t\tformat<vis/nir> [JPEG|BMP|RAW]\r\n");
+    DBG_PUT("\t\t hk | Gets housekeeping\r\n");
+    DBG_PUT("\t\twidth <vis/nir> [<pixels>]\r\n");
+    DBG_PUT("\tscan | Scan I2C bus 2\r\n");
+    DBG_PUT("\tNeeds work\r\n");
+    DBG_PUT("\t\txfer sensor media filename | transfer image over media\r\n");
+    DBG_PUT("\tNot tested/partially implemented:\r\n");
+    DBG_PUT("\t\tlist n | List the n most recent files\r\n");
+    DBG_PUT("\t\tread ro media | Transfer relative file offset number\r\n");
+    DBG_PUT("\t\treg <vis/nir> read <regnum>\r\n\treg write <regnum> <val>\r\n");
+    DBG_PUT("\t\tSaturation [<0..8>]\r\n");
+#endif
+}
+
+static void uart_handle_format_cmd(const char *cmd) {
     // TODO: Needs to handle sensor input
     const char* format_names[3] = { "BMP", "JPEG", "RAW" };
     char buf[64];
@@ -161,7 +183,7 @@ static void handle_reg_cmd(const char *cmd) {
     DBG_PUT(buf);
 }
 
-void uart_handle_width_cmd(const char *cmd) {
+static void uart_handle_width_cmd(const char *cmd) {
     char buf[64];
     const char *wptr = next_token(cmd);
     if (!wptr) {
@@ -236,7 +258,7 @@ void uart_handle_width_cmd(const char *cmd) {
         DBG_PUT(buf);
 }
 
-void uart_handle_capture_cmd(const char *cmd) {
+static void uart_handle_capture_cmd(const char *cmd) {
     const char *wptr = next_token(cmd);
 
     int target_sensor;
@@ -266,7 +288,7 @@ void uart_handle_capture_cmd(const char *cmd) {
     arducam_capture_image(target_sensor);
 }
 
-void uart_handle_xfer_cmd(const char *cmd) {
+static void uart_handle_xfer_cmd(const char *cmd) {
     const char *wptr = next_token(cmd);
 
     int target_sensor;
@@ -326,7 +348,7 @@ void uart_handle_xfer_cmd(const char *cmd) {
     transfer_image(target_sensor, fname, media);
 }
 
-void uart_handle_read_file_cmd(const char *cmd) {
+static void uart_handle_read_file_cmd(const char *cmd) {
     const char *wptr = next_token(cmd);
 
     int which;
@@ -356,7 +378,7 @@ void uart_handle_read_file_cmd(const char *cmd) {
     transfer_file(which, media);
 }
 
-void uart_handle_list_files_cmd(const char *cmd) {
+static void uart_handle_list_files_cmd(const char *cmd) {
     const char *wptr = next_token(cmd);
 
     int how_many;
@@ -494,7 +516,7 @@ void sensor_togglepower(int i){
 }
 
 //todo implement sensor selection
-void uart_handle_saturation_cmd(const char *cmd, uint8_t sensor) {
+static void uart_handle_saturation_cmd(const char *cmd, uint8_t sensor) {
     char buf[64];
     const char *satarg = next_token(cmd);
     int saturation;
@@ -514,7 +536,7 @@ void uart_handle_saturation_cmd(const char *cmd, uint8_t sensor) {
 }
 
 
-void handle_i2c16_8_cmd(const char *cmd){
+static void handle_i2c16_8_cmd(const char *cmd){
     char buf[64];
     const char *rwarg = next_token(cmd);
 
@@ -583,11 +605,118 @@ void handle_i2c16_8_cmd(const char *cmd){
 
 }
 
-void uart_get_hk_packet(uint8_t *out){
+static void uart_get_hk_packet(uint8_t *out){
     // uint8_t *out as arg
     housekeeping_packet_t hk;
     hk = _get_housekeeping();
 //    memcpy(out, (uint8_t *)&hk, sizeof(housekeeping_packet_t));
     decode_hk_packet(hk);
     return;
+}
+
+void print_progress(uint8_t count, uint8_t max)
+{
+    uint8_t length = 25;
+    uint8_t scaled = count*100 / max * length / 100;
+    char buf[128];
+    sprintf(buf, "Progress: [%.*s%.*s]\r", scaled, "==================================================", length - scaled, "                                        ");
+    DBG_PUT(buf);
+    if (count == max){
+        DBG_PUT("\r\n");
+    }
+}
+
+void uart_handle_command(char *cmd) {
+    uint8_t in[sizeof(housekeeping_packet_t)];
+    switch(*cmd) {
+    case 'c':
+        uart_handle_capture_cmd(cmd);
+        //        take_image();
+        break;
+    case 'f':
+        uart_handle_format_cmd(cmd);
+        break;
+
+    case 'r':
+        uart_handle_read_file_cmd(cmd);
+        break;
+
+    case 'x':
+        uart_handle_xfer_cmd(cmd);
+        break;
+
+    case 'l':
+        uart_handle_list_files_cmd(cmd);
+        break;
+
+    case 'w':
+        uart_handle_width_cmd(cmd);
+        break;
+    case 't':
+        CHECK_LED_I2C_SPI_TS();
+        break;
+    case 's':
+        switch(*(cmd+1)){
+            case 'c':
+                uart_scan_i2c();
+                break;
+
+            case 'a':;
+                const char *c = next_token(cmd);
+                switch(*c){
+                    case 'v':
+                        uart_handle_saturation_cmd(c, VIS_SENSOR);
+                        break;
+                    case 'n':
+                        uart_handle_saturation_cmd(c, NIR_SENSOR);
+                        break;
+                    default:
+                        DBG_PUT("Target Error\r\n");
+                        break;
+                }
+        }
+        break;
+
+    case 'p':    ; //janky use of semicolon??
+        const char *p = next_token(cmd);
+        switch(*(p+1)){
+            case 'n':
+                sensor_active();
+                break;
+            case 'f':
+                sensor_idle();
+                break;
+            default:
+                DBG_PUT("Use either on or off\r\n");
+                break;
+        }
+        break;
+    case 'i':;
+        switch(*(cmd+1)){
+            case '2':
+                handle_i2c16_8_cmd(cmd); // needs to handle 16 / 8 bit stuff
+                break;
+            default:;
+                const char *i = next_token(cmd);
+                switch(*i){
+                    case 's':
+                        uart_reset_sensors();
+                        break;
+                }
+        }
+        break;
+
+
+    case 'h':
+        switch(*(cmd+1)){
+        case 'k':
+            uart_get_hk_packet(in);
+            break;
+        default:
+            help();
+            break;
+
+        }
+
+    }
 }
