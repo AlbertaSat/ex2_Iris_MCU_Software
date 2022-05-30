@@ -12,6 +12,7 @@
 #include "SPI_IT.h"
 #include "I2C.h"
 #include "housekeeping.h"
+
 #define REG_SYS_CTL0 0x3008 /* System Control */
 #define GET_IMAGE_NUM	0x15
 #define CAPTURE_IMAGE 	0x10
@@ -24,7 +25,6 @@
 void spi_handle_command(uint8_t cmd);
 void uart_handle_command(char *cmd);
 void take_image();
-void transfer_image();
 void get_image_length();
 void count_images();
 void sensor_idle();

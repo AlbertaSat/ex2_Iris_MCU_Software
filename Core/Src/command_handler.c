@@ -30,6 +30,8 @@ uint8_t ack = 0xAA;
 uint8_t total_image_num = 0; // This will cause issues with total num of images once board resets. todo: fix
 housekeeping_packet_t hk;
 
+static void _initalize_sensor(uint8_t sensor);
+
 static void help() {
 	// UART DEBUG ONLY
 #ifdef UART_DEBUG
@@ -45,13 +47,16 @@ static void help() {
     DBG_PUT("\tscan | Scan I2C bus 2\r\n");
     DBG_PUT("\tNeeds work\r\n");
     DBG_PUT("\t\tinit nand | Initialize NAND Flash\r\n");
+    DBG_PUT("\t\txfer sensor media filename | transfer image over media\r\n");
     DBG_PUT("\tNot tested/partially implemented:\r\n");
+    DBG_PUT("\t\tlist n | List the n most recent files\r\n");
+    DBG_PUT("\t\tread ro media | Transfer relative file offset number\r\n");
     DBG_PUT("\t\treg <vis/nir> read <regnum>\r\n\treg write <regnum> <val>\r\n");
     DBG_PUT("\t\tSaturation [<0..8>]\r\n");
 #endif
 }
 
-void take_image(){
+void take_image() {
 	/*
 	 * Todo: Determine whether or not we want to have individual sensor control, or just cap both at the same time (ish)
 	 * 		 Fix Arducam.h so we stop with these warnings
@@ -89,23 +94,6 @@ void take_image(){
 	return;
 }
 
-void transfer_image(){
-	/*
-	 * Todo: this will be a bruh
-	 * 			- Buffer images into 512 byte chunks
-	 * 			- Transmission inludes 1 start byte + 512 image bytes + 1 end byte
-	 * 				- total 514 bytes
-	 * 			Flow:
-	 * 				- Buffer 512 bytes of image in to memory
-	 * 				- send header byte (not yet confirmed)
-	 * 				- clock out 512 byte chunk
-	 * 				- clock FF until next 512 byte chunk is ready
-	 * 				- send footer byte (not yet confirmed)
-	 * 				rinse and repeat.
-	 *
-	 */
-	return;
-}
 void get_image_length(){
 	// todo:	@RON:   Need a way to get image length from NAND flash
 	//  				- Expecting a 32 bit integer for image size
@@ -205,7 +193,7 @@ void get_image_num(){
 	return;
 }
 
-void _initalize_sensor(uint8_t sensor){
+static void _initalize_sensor(uint8_t sensor) {
 	char buf[64];
 	uint8_t DETECTED = 0;
 	  arducam_wait_for_ready(sensor);
@@ -314,7 +302,6 @@ void print_progress(uint8_t count, uint8_t max)
 	}
 }
 
-
 static inline const char* next_token(const char *ptr) {
     /* move to the next space */
     while(*ptr && *ptr != ' ') ptr++;
@@ -324,21 +311,27 @@ static inline const char* next_token(const char *ptr) {
     return (*ptr) ? ptr : NULL;
 }
 
-
 void uart_handle_command(char *cmd) {
 	uint8_t in[sizeof(housekeeping_packet_t)];
     switch(*cmd) {
     case 'c':
-//    	uart_handle_capture_cmd(cmd);
-    	take_image();
+    	uart_handle_capture_cmd(cmd);
+        //    	take_image();
     	break;
     case 'f':
     	uart_handle_format_cmd(cmd);
         break;
 
     case 'r':
-    	read_nand_flash(0);
-//		handle_reg_cmd(cmd);
+    	uart_handle_read_file_cmd(cmd);
+		break;
+
+    case 'x':
+    	uart_handle_xfer_cmd(cmd);
+		break;
+
+    case 'l':
+    	uart_handle_list_files_cmd(cmd);
 		break;
 
     case 'w':
@@ -405,7 +398,7 @@ void uart_handle_command(char *cmd) {
     case 'h':
     	switch(*(cmd+1)){
     	case 'k':
-        	uart_get_hk_packet(&in);
+        	uart_get_hk_packet(in);
         	break;
         default:
             help();
