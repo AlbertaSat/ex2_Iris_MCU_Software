@@ -7,7 +7,6 @@
 #include "command_handler.h"
 #include "string.h"
 #include "debug.h"
-#include "uart_command_handler.h"
 #include "nand_m79a.h"
 #include "arducam.h"
 
@@ -30,31 +29,10 @@ uint8_t ack = 0xAA;
 uint8_t total_image_num = 0; // This will cause issues with total num of images once board resets. todo: fix
 housekeeping_packet_t hk;
 
+int format = JPEG;
+
 static void _initalize_sensor(uint8_t sensor);
 
-static void help() {
-	// UART DEBUG ONLY
-#ifdef UART_DEBUG
-    DBG_PUT("TO RUN TESTS: test\r\n\n\n");
-    DBG_PUT("Commands:\r\n");
-    DBG_PUT("\tWorking/Tested:\r\n");
-    DBG_PUT("\t\tpower <on/off> | toggles sensor power\r\n");
-    DBG_PUT("\t\tinit sensor | Resets arducam modules to default\r\n");
-    DBG_PUT("\t\tcapture <vis/nir> | capture image from sensor\r\n");
-    DBG_PUT("\t\tformat<vis/nir> [JPEG|BMP|RAW]\r\n");
-    DBG_PUT("\t\t hk | Gets housekeeping\r\n");
-    DBG_PUT("\t\twidth <vis/nir> [<pixels>]\r\n");
-    DBG_PUT("\tscan | Scan I2C bus 2\r\n");
-    DBG_PUT("\tNeeds work\r\n");
-    DBG_PUT("\t\tinit nand | Initialize NAND Flash\r\n");
-    DBG_PUT("\t\txfer sensor media filename | transfer image over media\r\n");
-    DBG_PUT("\tNot tested/partially implemented:\r\n");
-    DBG_PUT("\t\tlist n | List the n most recent files\r\n");
-    DBG_PUT("\t\tread ro media | Transfer relative file offset number\r\n");
-    DBG_PUT("\t\treg <vis/nir> read <regnum>\r\n\treg write <regnum> <val>\r\n");
-    DBG_PUT("\t\tSaturation [<0..8>]\r\n");
-#endif
-}
 
 void take_image() {
 	/*
@@ -233,179 +211,4 @@ static void _initalize_sensor(uint8_t sensor) {
 
 
 
-void init_nand_flash(){
-	FileHandle_t* file;
-	NAND_ReturnType res = NAND_Init();
-	if (res == Ret_Success){
-		DBG_PUT("NAND Flash Initialized Successfully\r\n");
-	}
-	else if(res == Ret_ResetFailed){
-		DBG_PUT("NAND Reset Failed\r\n");
-	}
-	else if(res == Ret_WrongID){
-		DBG_PUT("NAND ID is wrong\r\n");
-	}
-	else{
-		DBG_PUT("Something else is wrong wit the NAND Flash\r\n");
-	}
-
-	res = Ret_Failed;
-	// format super block
-	res =  NAND_File_Format(0);
-	if (res == Ret_Success){
-		DBG_PUT("NAND Flash File Format Success\r\n");
-	}
-	else if(res == Ret_WriteFailed){
-		DBG_PUT("NAND Write Failed\r\n");
-	}
-	else if(res == Ret_Failed){
-		DBG_PUT("Reset failed\r\n");
-	}
-	else{
-		DBG_PUT("Something else went wrong\r\n");
-	}
-}
-
-void spi_handle_command(uint8_t cmd) {
-    switch(cmd) {
-    case GET_HK:
-//    	get_housekeeping();
-    	break;
-    case CAPTURE_IMAGE:
-//    	handle_capture_cmd(cmd);
-    	iterate_image_num();
-    	break;
-    case GET_IMAGE_NUM:
-//    	get_image_num();
-    	break;
-    case COUNT_IMAGES:
-//    	count_images();
-    	break;
-	case SENSOR_ACTIVE:
-		sensor_active();
-		break;
-	case SENSOR_IDLE:
-		sensor_idle();
-		break;
-	}
-}
-
-void print_progress(uint8_t count, uint8_t max)
-{
-	uint8_t length = 25;
-	uint8_t scaled = count*100 / max * length / 100;
-	char buf[128];
-    sprintf(buf, "Progress: [%.*s%.*s]\r", scaled, "==================================================", length - scaled, "                                        ");
-	DBG_PUT(buf);
-	if (count == max){
-		DBG_PUT("\r\n");
-	}
-}
-
-static inline const char* next_token(const char *ptr) {
-    /* move to the next space */
-    while(*ptr && *ptr != ' ') ptr++;
-    /* move past any whitespace */
-    while(*ptr && isspace(*ptr)) ptr++;
-
-    return (*ptr) ? ptr : NULL;
-}
-
-void uart_handle_command(char *cmd) {
-	uint8_t in[sizeof(housekeeping_packet_t)];
-    switch(*cmd) {
-    case 'c':
-    	uart_handle_capture_cmd(cmd);
-        //    	take_image();
-    	break;
-    case 'f':
-    	uart_handle_format_cmd(cmd);
-        break;
-
-    case 'r':
-    	uart_handle_read_file_cmd(cmd);
-		break;
-
-    case 'x':
-    	uart_handle_xfer_cmd(cmd);
-		break;
-
-    case 'l':
-    	uart_handle_list_files_cmd(cmd);
-		break;
-
-    case 'w':
-    	uart_handle_width_cmd(cmd);
-        break;
-    case 't':
-    	CHECK_LED_I2C_SPI_TS();
-    	break;
-    case 's':
-    	switch(*(cmd+1)){
-			case 'c':
-				uart_scan_i2c();
-				break;
-
-			case 'a':;
-				const char *c = next_token(cmd);
-				switch(*c){
-					case 'v':
-						uart_handle_saturation_cmd(c, VIS_SENSOR);
-						break;
-					case 'n':
-						uart_handle_saturation_cmd(c, NIR_SENSOR);
-						break;
-					default:
-						DBG_PUT("Target Error\r\n");
-						break;
-				}
-    	}
-    	break;
-
-    case 'p':	; //janky use of semicolon??
-    	const char *p = next_token(cmd);
-    	switch(*(p+1)){
-    		case 'n':
-    			sensor_active();
-    			break;
-    		case 'f':
-    			sensor_idle();
-    			break;
-    		default:
-    			DBG_PUT("Use either on or off\r\n");
-    			break;
-    	}
-    	break;
-	case 'i':;
-		switch(*(cmd+1)){
-			case '2':
-				handle_i2c16_8_cmd(cmd); // needs to handle 16 / 8 bit stuff
-				break;
-			default:;
-				const char *i = next_token(cmd);
-				switch(*i){
-					case 'n':
-						init_nand_flash();
-						break;
-					case 's':
-						uart_reset_sensors();
-						break;
-				}
-		}
-		break;
-
-
-    case 'h':
-    	switch(*(cmd+1)){
-    	case 'k':
-        	uart_get_hk_packet(in);
-        	break;
-        default:
-            help();
-            break;
-
-    	}
-
-    }
-}
 

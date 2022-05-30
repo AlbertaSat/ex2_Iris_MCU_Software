@@ -22,8 +22,11 @@
 #define GET_HK			0x50
 #define I2C_COMPLEX_SHIT 0x69
 
+extern int format;
+
 void spi_handle_command(uint8_t cmd);
 void uart_handle_command(char *cmd);
+
 void take_image();
 void get_image_length();
 void count_images();
@@ -34,7 +37,6 @@ void update_sensor_I2C_regs();
 void update_current_limits();
 void get_image_num();
 void iterate_image_num();
-void uart_get_hk_packet(uint8_t *out);
 void print_progress(uint8_t count, uint8_t max);
 void read_nand_flash(int which);
 
