@@ -293,9 +293,6 @@ int arducam_get_saturation(uint8_t sensor) {
     rdSensorReg16_8(0x5583, &reg_val, sensor);
     return reg_val >> 4;
 }
-char hex_2_ascii(uint8_t hex) {
-    return (hex < 10) ? '0' + hex : 'a' + (hex - 10);
-}
 
 static inline uint32_t min(uint32_t a, uint32_t b) {
     return (a <= b) ? a : b;
