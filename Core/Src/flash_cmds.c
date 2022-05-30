@@ -1,5 +1,5 @@
 #include "arducam.h"
-#include "transfer.h"
+#include "flash_cmds.h"
 #include "nand_m79a.h"
 #include "debug.h"
 
@@ -17,6 +17,38 @@ static void uart_dump_buf(uint8_t *data, uint16_t len) {
     }
 }
 #endif
+
+void init_nand_flash(void) {
+	NAND_ReturnType res = NAND_Init();
+	if (res == Ret_Success){
+		DBG_PUT("NAND Flash Initialized Successfully\r\n");
+	}
+	else if(res == Ret_ResetFailed){
+		DBG_PUT("NAND Reset Failed\r\n");
+	}
+	else if(res == Ret_WrongID){
+		DBG_PUT("NAND ID is wrong\r\n");
+	}
+	else{
+		DBG_PUT("Something else is wrong wit the NAND Flash\r\n");
+	}
+
+	res = Ret_Failed;
+	// format super block
+	res =  NAND_File_Format(0);
+	if (res == Ret_Success){
+		DBG_PUT("NAND Flash File Format Success\r\n");
+	}
+	else if(res == Ret_WriteFailed){
+		DBG_PUT("NAND Write Failed\r\n");
+	}
+	else if(res == Ret_Failed){
+		DBG_PUT("Reset failed\r\n");
+	}
+	else{
+		DBG_PUT("Something else went wrong\r\n");
+	}
+}
 
 static int uart_open(io_funcs_t *iofuncs, uint32_t name) {
     iofuncs->handle = &huart1;
