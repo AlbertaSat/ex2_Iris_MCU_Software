@@ -18,6 +18,8 @@ typedef struct io_funcs {
     int (*close)(struct io_funcs *iof);
 } io_funcs_t;
 
+void init_nand_flash(void);
+
 int transfer_image(uint8_t sensor, int32_t name, int media);
 
 int transfer_file(int which, int media);
