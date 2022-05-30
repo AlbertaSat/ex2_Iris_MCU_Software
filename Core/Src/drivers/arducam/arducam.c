@@ -1,7 +1,7 @@
 #include "stm32l0xx_hal.h"
 #include "arducam.h"
 #include "ov5642_regs.h"
-#include "transfer.h"
+#include "flash_cmds.h"
 #include "I2C.h"
 #include "debug.h"
 

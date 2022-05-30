@@ -42,6 +42,7 @@
 #include "tmp421.h"
 #include "housekeeping.h"
 #include "command_handler.h"
+#include "flash_cmds.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -136,7 +137,7 @@ int main(void)
 
   //init_temp_sensors();
   NAND_SPI_Init(&hspi2);
-
+  init_nand_flash();
   /* USER CODE END 2 */
 
   /* Infinite loop */
