@@ -1,11 +1,9 @@
 #include "stm32l0xx_hal.h"
 #include "arducam.h"
 #include "ov5642_regs.h"
-#include "debug.h"
+#include "transfer.h"
 #include "I2C.h"
-#include "nand_m79a.h"
-
-#define FAKE_CAM 1
+#include "debug.h"
 
 uint8_t image_number = 0;
 void arducam_delay_ms(int ms) {
@@ -221,21 +219,18 @@ static uint8_t read_fifo(uint8_t sensor)
     return data;
 }
 
-static void flush_fifo(uint8_t sensor)
-{
+void flush_fifo(uint8_t sensor) {
     write_reg(ARDUCHIP_FIFO, FIFO_CLEAR_MASK, sensor);
 }
 
-static void start_capture(uint8_t sensor)
-{
+void start_capture(uint8_t sensor) {
 #ifdef FAKE_CAM
     fake_data = 0;
 #endif
     write_reg(ARDUCHIP_FIFO, FIFO_START_MASK, sensor);
 }
 
-static void clear_fifo_flag(uint8_t sensor)
-{
+void clear_fifo_flag(uint8_t sensor) {
     write_reg(ARDUCHIP_FIFO, FIFO_CLEAR_MASK, sensor);
 }
 
@@ -245,8 +240,7 @@ void set_test_mode(uint8_t mode, uint8_t sensor)
     HAL_Delay(1000);
 }
 
-static uint32_t read_fifo_length(uint8_t sensor)
-{
+uint32_t read_fifo_length(uint8_t sensor) {
     uint32_t len1,len2,len3,len=0;
     len1 = read_reg(FIFO_SIZE1, sensor);
     len2 = read_reg(FIFO_SIZE2, sensor);
@@ -380,6 +374,7 @@ static void dump_uart_bmp(uint8_t sensor) {
     }
 }
 
+#if 0
 #define BUF_LEN 64
 
 static void dump_uart_jpg(uint32_t length, uint8_t sensor) {
@@ -441,9 +436,10 @@ static void dump_uart_jpg(uint32_t length, uint8_t sensor) {
         }
     }
 }
+#endif
 
 static void uart_dump_buf(uint8_t *data, uint16_t len) {
-    uint8_t digit[4];
+    char digit[4];
     digit[2] = ' ';
     digit[3] = 0;
     for (int i=0; i<len; i++) {
@@ -452,35 +448,32 @@ static void uart_dump_buf(uint8_t *data, uint16_t len) {
         DBG_PUT(digit);
     }
 }
-typedef struct io_funcs {
-    void* (*open)(int name);
-    int (*write)(void *fp, uint8_t *val, uint16_t len);
-    int (*write_len)(void *fp, uint32_t len);
-    int (*close)(void *fp);
-} io_funcs_t;
 
-#define BLK_SZ 2048
-uint8_t buf[BLK_SZ];
+#define MAX_BLK_SZ 2048
+static uint8_t buf[MAX_BLK_SZ];
 
-static void dump_flash_jpg(uint32_t length, uint8_t sensor) {
+int arducam_dump_image(uint8_t sensor, io_funcs_t *io_driver) {
+    int rc;
     uint8_t prev = 0, curr = 0;
     bool found_header = false;
     uint32_t i, x = 0;
-    NAND_ReturnType rc;
-    
-    FileHandle_t *fp = NAND_File_Create(sensor);
-    if (!fp) {
-        DBG_PUT("Can't open file");
-        return;
-    }
+    uint32_t length;
+    char msg[64];
 
-    char str[64];
-    sprintf(str, "writing length %d\r\n", length);
-    DBG_PUT(str);
-    
-    // Note: we're assuming the ARM is BE
-    memcpy(buf, &length, sizeof(length));
-    //HAL_UART_Transmit(&huart1, (uint8_t *) buf, sizeof(length), 100);
+#ifndef FAKE_CAM
+    length = arducam_read_fifo_length(sensor);
+#else
+    length = 2*MAX_BLK_SZ;
+    fake_length = length;
+#endif
+
+    if (io_driver->write_len) {
+        if ((rc = io_driver->write_len(io_driver, length))) {
+            sprintf(msg, "xfer length failed, rc: %d\r\n", rc);
+            DBG_PUT(msg);
+            return rc;
+        }
+    }
 
     for (i=0; i<length; i++) {
         prev = curr;
@@ -492,7 +485,7 @@ static void dump_flash_jpg(uint32_t length, uint8_t sensor) {
             DBG_PUT("writing footer block\r\n");
             uart_dump_buf(buf, x);
             
-            if ((rc = NAND_File_Write(fp, x, buf)) != Ret_Success) {
+            if (io_driver->write(io_driver, buf, x)) {
                 DBG_PUT("Write early footer failed");
             }
             x = 0;
@@ -504,10 +497,10 @@ static void dump_flash_jpg(uint32_t length, uint8_t sensor) {
         if (found_header) {
             buf[x] = curr;
             x++;
-            if (x >= BLK_SZ) {
+            if (x >= io_driver->blksz) {
                 DBG_PUT("writing full block\r\n");
                 uart_dump_buf(buf, x);
-                if ((rc = NAND_File_Write(fp, BLK_SZ, buf)) != Ret_Success) {
+                if (io_driver->write(io_driver, buf, x)) {
                     DBG_PUT("Write body failed");
                 }
                 x = 0;
@@ -522,7 +515,7 @@ static void dump_flash_jpg(uint32_t length, uint8_t sensor) {
     }
 
     if (x) {
-        if ((rc = NAND_File_Write(fp, x, buf)) != Ret_Success) {
+        if (io_driver->write(io_driver, buf, x)) {
             DBG_PUT("Write tail failed");
         }
     }
@@ -543,11 +536,7 @@ static void dump_flash_jpg(uint32_t length, uint8_t sensor) {
         }
     }
 #endif
-    if ((rc = NAND_File_Write_Close(fp)) != Ret_Success) {
-        DBG_PUT("Close failed");
-    }
-
-    DBG_PUT("File write complete\r\n");
+    return 0;
 }
 
 static void dump_uart_raw(uint32_t length, uint8_t sensor) {
@@ -561,6 +550,24 @@ static void dump_uart_raw(uint32_t length, uint8_t sensor) {
         buf[1] = hex_2_ascii(rgb & 0x0f);
         DBG_PUT(buf);
     }
+}
+
+
+void arducam_capture_image(uint8_t sensor) {
+    char msg[64];
+    sprintf(msg, "Single Capture on sensor %d\r\n", sensor);
+    DBG_PUT(msg);
+
+    write_reg(ARDUCHIP_TIM, VSYNC_LEVEL_MASK, sensor);   //VSYNC is active HIGH
+
+    flush_fifo(sensor);
+    clear_fifo_flag(sensor);
+    start_capture(sensor);
+
+#ifndef FAKE_CAM
+    while(!get_bit(ARDUCHIP_TRIG , CAP_DONE_MASK, sensor)) {}
+#endif
+    DBG_PUT("Capture complete\r\n");
 }
 
 void SingleCapTransfer(int format, uint8_t sensor) {
@@ -584,7 +591,7 @@ void SingleCapTransfer(int format, uint8_t sensor) {
 
     length = read_fifo_length(sensor);
 #else
-    length = 2*BLK_SZ;
+    length = 2*2048;
     fake_length = length;
 #endif
     sprintf(buf, "Capture complete! FIFO len 0x%lx\r\n", length);
@@ -594,9 +601,6 @@ void SingleCapTransfer(int format, uint8_t sensor) {
     switch(format) {
     case BMP:
         dump_uart_bmp(sensor);
-        break;
-    case JPEG:
-        dump_flash_jpg(length, sensor);
         break;
     case RAW:
         dump_uart_raw(length*2, sensor);

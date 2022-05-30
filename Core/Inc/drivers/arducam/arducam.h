@@ -1,10 +1,10 @@
 #ifndef ARDUCAM_DEFH
 #define ARDUCAM_DEFH
 
-#include "arducam.h"
 //#include "ov5642_regs.h"
 #include <stdbool.h>
-#include <stdio.h>
+#include <stdint.h>
+
 #define byte uint8_t
 #define AC_REG_TEST 0
 #define AC_REG_CAPTURE_CTL 1
@@ -52,6 +52,8 @@ struct sensor_reg {
 	uint16_t val;
 };
 
+#define FAKE_CAM 1
+
 void Arduino_init(int m_fmt, int sensor);
 bool arducam_wait_for_ready(uint8_t sensor);
 void arducam_raw_init(int width, int depth, uint8_t sensor);
@@ -66,5 +68,13 @@ uint8_t read_spi_reg(uint8_t reg, uint8_t sensor);
 void write_reg(uint8_t addr, uint8_t data, uint8_t sensor);
 uint8_t read_reg(uint8_t addr, uint8_t sensor);
 
+void clear_fifo_flag(uint8_t sensor);
+void flush_fifo(uint8_t sensor);
+void start_capture(uint8_t sensor);
+
+struct io_funcs;
+
+void arducam_capture_image(uint8_t sensor);
+int arducam_dump_image(uint8_t sensor, struct io_funcs *io_funcs);
 
 #endif // ARDUCAM_DEFH
