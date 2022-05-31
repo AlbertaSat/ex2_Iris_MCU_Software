@@ -24,12 +24,17 @@
 
 extern int format;
 
+extern int VIS_DETECTED;
+extern int NIR_DETECTED;
+
 void spi_handle_command(uint8_t cmd);
 void uart_handle_command(char *cmd);
 
 void take_image();
 void get_image_length();
 void count_images();
+
+void sensor_reset(uint8_t sensor);
 void sensor_idle();
 void sensor_active();
 void get_housekeeping();
@@ -37,8 +42,10 @@ void update_sensor_I2C_regs();
 void update_current_limits();
 void get_image_num();
 void iterate_image_num();
+
+int scan_i2c(void);
+
 void print_progress(uint8_t count, uint8_t max);
-void read_nand_flash(int which);
 
 //void _initalize_sensor();
 

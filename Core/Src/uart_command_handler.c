@@ -10,11 +10,8 @@
 #include "flash_cmds.h"
 #include "housekeeping.h"
 
-extern I2C_HandleTypeDef hi2c2;
 //extern struct housekeeping_packet hk;
 
-int VIS_DETECTED = 0;
-int NIR_DETECTED = 0;
 FileHandle_t* file;
 static inline const char* next_token(const char *ptr) {
     /* move to the next space */
@@ -390,110 +387,6 @@ static void uart_handle_list_files_cmd(const char *cmd) {
     list_files(how_many);
 }
 
-void uart_reset_sensors(void){
-    char buf[64];
-      // Reset the CPLD
-
-      arducam_wait_for_ready(VIS_SENSOR);
-      write_reg(AC_REG_RESET, 1, VIS_SENSOR);
-      write_reg(AC_REG_RESET, 1, VIS_SENSOR);
-      HAL_Delay(100);
-      write_reg(AC_REG_RESET, 0, VIS_SENSOR);
-      HAL_Delay(100);
-
-      if (!arducam_wait_for_ready(VIS_SENSOR)) {
-          DBG_PUT("VIS Camera: SPI Unavailable\r\n");
-      }
-      else{
-          DBG_PUT("VIS Camera: SPI Initialized\r\n");
-
-      }
-
-      // Change MCU mode
-        write_reg(ARDUCHIP_MODE, 0x0, VIS_SENSOR);
-        wrSensorReg16_8(0xff, 0x01, VIS_SENSOR);
-
-        uint8_t vid = 0, pid = 0;
-        rdSensorReg16_8(OV5642_CHIPID_HIGH, &vid, VIS_SENSOR);
-        rdSensorReg16_8(OV5642_CHIPID_LOW, &pid, VIS_SENSOR);
-
-        if (vid != 0x56 || pid != 0x42) {
-            sprintf(buf, "VIS Camera I2C Address: Unknown\r\nVIS not available\r\n\n");
-            DBG_PUT(buf);
-            VIS_DETECTED = 0;
-
-        }
-        else{
-            DBG_PUT("VIS Camera I2C Address: 0x3C\r\n");
-            VIS_DETECTED = 1;
-        }
-        if (VIS_DETECTED==1){
-            format = JPEG;
-            Arduino_init(format, VIS_SENSOR);
-            sprintf(buf, "VIS Camera Mode: JPEG\r\n\n");
-            DBG_PUT(buf);
-        }
-
-
-        // Test NIR Sensor
-          arducam_wait_for_ready(NIR_SENSOR);
-
-          // Reset the CPLD
-          write_reg(AC_REG_RESET, 1, NIR_SENSOR);
-          HAL_Delay(100);
-          write_reg(AC_REG_RESET, 0, NIR_SENSOR);
-          HAL_Delay(100);
-
-          if (!arducam_wait_for_ready(NIR_SENSOR)) {
-              DBG_PUT("NIR Camera: SPI Unavailable\r\n");
-          }
-          else{
-              DBG_PUT("NIR Camera: SPI Initialized\r\n");
-          }
-
-          // Change MCU mode
-            write_reg(ARDUCHIP_MODE, 0x0, NIR_SENSOR);
-            wrSensorReg16_8(0xff, 0x01, NIR_SENSOR);
-
-            vid = 0;
-            pid = 0;
-            rdSensorReg16_8(OV5642_CHIPID_HIGH, &vid, NIR_SENSOR);
-            rdSensorReg16_8(OV5642_CHIPID_LOW, &pid, NIR_SENSOR);
-
-            if (vid != 0x56 || pid != 0x42) {
-                sprintf(buf, "NIR Camera I2C Address: Unknown\r\nCamera not available\r\n\n");
-                DBG_PUT(buf);
-                NIR_DETECTED = 0;
-
-            }
-            else{
-                DBG_PUT("NIR Camera I2C Address: 0x3E\r\n");
-                NIR_DETECTED = 1;
-            }
-            if (NIR_DETECTED == 1){
-                format = JPEG;
-                Arduino_init(format, NIR_SENSOR);
-                sprintf(buf, "NIR Camera Mode: JPEG\r\n\n");
-                DBG_PUT(buf);
-            }
-            HAL_Delay(1000);
-}
-
-void uart_scan_i2c(){
-     HAL_StatusTypeDef result;
-     uint8_t i;
-     char buf[64];
-     DBG_PUT("Scanning I2C bus 2...\r\n");
-     for (i=1; i<128; i++){
-         result = HAL_I2C_IsDeviceReady(&hi2c2, (uint16_t)(i<<1), 2, 2);
-         if (result == HAL_OK){
-             sprintf(buf,"I2C address found: 0x%X\r\n", (uint16_t)(i));
-             DBG_PUT(buf);
-              }
-          }
-     DBG_PUT("Scan Complete.\r\n");
-}
-
 void sensor_togglepower(int i){
     if (i == 1){
         write_reg(0x06, 0x03, NIR_SENSOR);
@@ -658,7 +551,7 @@ void uart_handle_command(char *cmd) {
     case 's':
         switch(*(cmd+1)){
             case 'c':
-                uart_scan_i2c();
+                scan_i2c();
                 break;
 
             case 'a':;
@@ -700,7 +593,8 @@ void uart_handle_command(char *cmd) {
                 const char *i = next_token(cmd);
                 switch(*i){
                     case 's':
-                        uart_reset_sensors();
+                        sensor_reset(VIS_SENSOR);
+                        sensor_reset(NIR_SENSOR);
                         break;
                 }
         }
