@@ -122,50 +122,25 @@ int main(void)
   /* USER CODE BEGIN 2 */
 //   init nand flash
   NAND_SPI_Init(&hspi2);
-  sensor_active();
+
   char cmd[64];
   char buf[64];
   char *ptr = cmd;
 #ifdef UART_DEBUG
   DBG_PUT("-----------------------------------\r\n");
-  DBG_PUT("Iris Electronics Test Software\r\n"
-		  "         UART Edition         \r\n");
+  DBG_PUT("Iris Electronics Unit Test Software\r\n"
+		  "           UART Edition            \r\n");
   DBG_PUT("-----------------------------------\r\n");
+  help();
+
 #endif
 
   init_temp_sensors();
-  NAND_SPI_Init(&hspi2);
 
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-#ifdef SPI_DEBUG
-  while (1)
-  {
-	  switch (state){
-			case idle:
-				break;
-			case receiving:
-				state = idle;
-				HAL_SPI_Receive_IT(&hspi1, &RX_Data, sizeof(RX_Data));
-				break;
-			case transmitting:
-				state = idle;
-				// interrupt this shit hey
-				HAL_SPI_Transmit(&hspi1, &RX_Data, sizeof(RX_Data), 1000);
-//				HAL_SPI_Transmit_IT(&hspi1, &RX_Data, sizeof(RX_Data));
-				RX_Data = 0xFF;
-				break;
-			case handling_command:
-				state = transmitting;
-				spi_handle_command(RX_Data);
-				break;
-
-		  }
-  }
-#endif // SPI_DEBUG
-	  // //////////////////////////////////////////////////////////////////////////////////////////
 #ifdef UART_DEBUG
   	  state = idle;
 	   while (1)

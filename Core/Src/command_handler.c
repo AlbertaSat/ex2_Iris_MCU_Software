@@ -10,6 +10,7 @@
 #include "uart_command_handler.h"
 #include "nand_m79a.h"
 #include "arducam.h"
+#include "IEB_TESTS.h"
 
 extern SPI_HandleTypeDef hspi1;
 extern const struct sensor_reg OV5642_JPEG_Capture_QSXGA[];
@@ -31,24 +32,13 @@ uint8_t total_image_num = 0; // This will cause issues with total num of images 
 housekeeping_packet_t hk;
 char buf[128];
 
-static void help() {
+void help() {
 	// UART DEBUG ONLY
 #ifdef UART_DEBUG
-    DBG_PUT("TO RUN TESTS: test\r\n\n\n");
-    DBG_PUT("Commands:\r\n");
-    DBG_PUT("\tWorking/Tested:\r\n");
-    DBG_PUT("\t\tpower <on/off> | toggles sensor power\r\n");
-    DBG_PUT("\t\tinit sensor | Resets arducam modules to default\r\n");
-    DBG_PUT("\t\tcapture <vis/nir> | capture image from sensor\r\n");
-    DBG_PUT("\t\tformat<vis/nir> [JPEG|BMP|RAW]\r\n");
-    DBG_PUT("\t\t hk | Gets housekeeping\r\n");
-    DBG_PUT("\t\twidth <vis/nir> [<pixels>]\r\n");
-    DBG_PUT("\tscan | Scan I2C bus 2\r\n");
-    DBG_PUT("\tNeeds work\r\n");
-    DBG_PUT("\t\tinit nand | Initialize NAND Flash\r\n");
-    DBG_PUT("\tNot tested/partially implemented:\r\n");
-    DBG_PUT("\t\treg <vis/nir> read <regnum>\r\n\treg write <regnum> <val>\r\n");
-    DBG_PUT("\t\tSaturation [<0..8>]\r\n");
+	DBG_PUT("Test\t|\tCommand\r\n");
+	DBG_PUT("3.2.2\t>\tteset\r\n");
+	DBG_PUT("3.2.5\t>\ttemp\r\n");
+	DBG_PUT("3.2.6\t>\tnand test\r\n");
 #endif
 }
 
@@ -372,7 +362,14 @@ void uart_handle_command(char *cmd) {
     	uart_handle_width_cmd(cmd);
         break;
     case 't':
-    	CHECK_LED_I2C_SPI_TS();
+    	switch(*(cmd+2)){
+    	case 's':
+        	CHECK_LED_I2C_SPI_TS_NAND();
+        	break;
+    	case 'm':
+    		testTempSensor();
+    		break;
+    	}
     	break;
     case 's':
     	switch(*(cmd+1)){
@@ -428,7 +425,9 @@ void uart_handle_command(char *cmd) {
 		}
 		break;
 
-
+	case 'n':
+		test_nand_flash();
+		break;
     case 'h':
     	switch(*(cmd+1)){
     	case 'k':
@@ -439,7 +438,7 @@ void uart_handle_command(char *cmd) {
             break;
 
     	}
-
+    	break;
     }
 }
 

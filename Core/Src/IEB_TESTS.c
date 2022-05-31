@@ -11,7 +11,7 @@
 #include "command_handler.h"
 extern I2C_HandleTypeDef hi2c2;
 
-void CHECK_LED_I2C_SPI_TS(void){
+void CHECK_LED_I2C_SPI_TS_NAND(void){
 
 	// Blink IO LED
 	DBG_PUT("--------------------\r\n");
@@ -118,6 +118,10 @@ void _testScanI2C(){
 	 }
 }
 
+void test_nand_flash(void){
+	// todo: write
+	return;
+}
 
 void testTempSensor(void){
 	DBG_PUT("\n");
