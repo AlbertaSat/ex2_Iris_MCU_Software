@@ -125,7 +125,7 @@ NAND_ReturnType NAND_File_Format(int reformat) {
      */
     if (reformat == 0) {
         if (check_magic(sblock) == 0) {
-        	DBG_PUT("Check_Magic returned 0\r\n");
+        	DBG_PUT("File System is already formatted\r\n");
             return Ret_Success;
         }
     }

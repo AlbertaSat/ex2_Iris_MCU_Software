@@ -42,6 +42,7 @@
 #include "tmp421.h"
 #include "housekeeping.h"
 #include "command_handler.h"
+#include "flash_cmds.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -120,9 +121,10 @@ int main(void)
   MX_SPI2_Init();
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
-//   init nand flash
+
   NAND_SPI_Init(&hspi2);
   sensor_active();
+
   char cmd[64];
   char buf[64];
   char *ptr = cmd;
@@ -133,9 +135,9 @@ int main(void)
   DBG_PUT("-----------------------------------\r\n");
 #endif
 
-  init_temp_sensors();
+  //init_temp_sensors();
   NAND_SPI_Init(&hspi2);
-
+  init_nand_flash();
   /* USER CODE END 2 */
 
   /* Infinite loop */

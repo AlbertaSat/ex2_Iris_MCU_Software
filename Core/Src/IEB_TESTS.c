@@ -9,7 +9,10 @@
 #include "tmp421.h"
 #include "nand_m79a.h"
 #include "command_handler.h"
+
 extern I2C_HandleTypeDef hi2c2;
+
+static void testTempSensor(void);
 
 void CHECK_LED_I2C_SPI_TS(void){
 
@@ -119,7 +122,7 @@ void _testScanI2C(){
 }
 
 
-void testTempSensor(void){
+static void testTempSensor(void) {
 	DBG_PUT("\n");
 	uint16_t vis_temp, nir_temp, nand_temp, gate_temp;
 	vis_temp = nir_temp = nand_temp = gate_temp = 0;
