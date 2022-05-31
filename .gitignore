@@ -66,3 +66,5 @@ Debug/Core/Src/IEB_TESTS.o
 host/img.jpg(1)
 *.jpg
 *.jpg***
+
+.settings/language.settings.xml
