@@ -28,6 +28,7 @@ extern const struct sensor_reg OV5642_QVGA_Preview[];
 uint8_t ack = 0xAA;
 uint8_t total_image_num = 0; // This will cause issues with total num of images once board resets. todo: fix
 housekeeping_packet_t hk;
+char buf[128];
 
 int format = JPEG;
 
@@ -86,7 +87,6 @@ void count_images(){
 	return;
 }
 
-
 /*
  * Todo: Look into SPI register 0x06 for idle power mode on the sensors. This shouldn't
  * 		 cut power to it and require reprogramming.
@@ -105,9 +105,9 @@ void sensor_active(){
 	DBG_PUT("Initializing Sensors\r\n");
 //	// initialize sensors
 	print_progress(1, 5);
-	_initalize_sensor(VIS_SENSOR);
+	_initialize_sensor(VIS_SENSOR);
 	print_progress(3, 5);
-	_initalize_sensor(NIR_SENSOR);
+	_initialize_sensor(NIR_SENSOR);
 	print_progress(5, 5);
 
 
@@ -125,7 +125,6 @@ void get_housekeeping(){
 	SPI1_IT_Transmit((uint8_t *) buffer); // not sure this is how it's supposed to work
 	return;
 }
-
 
 void update_sensor_I2C_regs(){
 	/*
@@ -146,7 +145,6 @@ void update_sensor_I2C_regs(){
 	return;
 }
 
-
 void update_current_limits(){
 	return;
 }
@@ -166,12 +164,18 @@ void iterate_image_num(){
 	total_image_num += 2;
 }
 
-void get_image_num(){
+uint8_t get_image_num(uint8_t hk){
+	// param hk: 1 for integer return,
+	// 			 0 for spi transmit.
+	if (hk){
+		return total_image_num;
+	}
 	SPI1_IT_Transmit(&total_image_num);
-	return;
+	return 1;
 }
 
 static void _initalize_sensor(uint8_t sensor) {
+
 	char buf[64];
 	uint8_t DETECTED = 0;
 	  arducam_wait_for_ready(sensor);
@@ -208,7 +212,3 @@ static void _initalize_sensor(uint8_t sensor) {
 	    }
 
 }
-
-
-
-

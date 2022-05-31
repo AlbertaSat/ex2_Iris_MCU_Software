@@ -8,7 +8,8 @@
 #include "tmp421.h"
 #include "debug.h"
 #include "housekeeping.h"
-
+#include "command_handler.h"
+#include "ina209.h"
 
 
 housekeeping_packet_t _get_housekeeping(){
@@ -17,8 +18,14 @@ housekeeping_packet_t _get_housekeeping(){
 	hk.nir_temp = get_temp(NIR_TEMP_SENSOR);
 	hk.flash_temp = get_temp(TEMP3);
 	hk.gate_temp = get_temp(TEMP4);
-	hk.imagenum = get_image_num();
+	hk.imagenum = get_image_num(1);
 	hk.software_version = software_ver;
+	hk.MAX_5V_voltage = get_shunt_voltage_peak_pos(CURRENTSENSE_5V);
+	hk.MAX_5V_power  = get_power_peak(CURRENTSENSE_5V);
+	hk.MAX_3V_voltage = get_shunt_voltage_peak_pos(CURRENTSENSE_3V3);
+	hk.MAX_3V_power = get_power_peak(CURRENTSENSE_3V3);
+	hk.MIN_5V_voltage = get_shunt_voltage_peak_neg(CURRENTSENSE_5V);
+	hk.MIN_3V_voltage = get_shunt_voltage_peak_neg(CURRENTSENSE_3V3);
 	return hk;
 }
 
@@ -37,6 +44,18 @@ void decode_hk_packet (housekeeping_packet_t hk){
 	sprintf(buf, "hk.imgnum: 0x%x\r\n", hk.imagenum);
 	DBG_PUT(buf);
 	sprintf(buf, "hk.software_version: 0x%x\r\n", hk.software_version);
+	DBG_PUT(buf);
+	sprintf(buf, "hk.MAX_5V_voltage: 0x%x\r\n", hk.MAX_5V_voltage);
+	DBG_PUT(buf);
+	sprintf(buf, "hk.MAX_3V_voltage: 0x%x\r\n", hk.MAX_3V_voltage);
+	DBG_PUT(buf);
+	sprintf(buf, "hk.MIN_5V_voltage: 0x%x\r\n", hk.MIN_5V_voltage);
+	DBG_PUT(buf);
+	sprintf(buf, "hk.MIN_3V_voltage: 0x%x\r\n", hk.MIN_3V_voltage);
+	DBG_PUT(buf);
+	sprintf(buf, "hk.MAX_5V_power: 0x%x\r\n", hk.MAX_5V_power);
+	DBG_PUT(buf);
+	sprintf(buf, "hk.MAX_3V_power: 0x%x\r\n", hk.MAX_3V_power);
 	DBG_PUT(buf);
 }
 

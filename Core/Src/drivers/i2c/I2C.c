@@ -22,8 +22,8 @@ void wrSensorReg16_8(uint16_t regID, uint8_t regDat, uint8_t sensor) {
     HAL_Delay(1);
 }
 
-void wrSensorRegs16_8(const struct sensor_reg reglist[], uint8_t sensor) {
-    const struct sensor_reg *curr = reglist;
+void wrSensorRegs16_8(struct sensor_reg reglist[], uint8_t sensor) {
+    struct sensor_reg *curr = reglist;
     for (curr=reglist; curr->reg != 0xffff; curr++) {
         wrSensorReg16_8(curr->reg, curr->val, sensor);
     }

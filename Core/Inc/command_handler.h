@@ -40,7 +40,8 @@ void sensor_active();
 void get_housekeeping();
 void update_sensor_I2C_regs();
 void update_current_limits();
-void get_image_num();
+void _initialize_sensor(uint8_t sensor);
+uint8_t get_image_num(uint8_t hk);
 void iterate_image_num();
 
 int scan_i2c(void);
