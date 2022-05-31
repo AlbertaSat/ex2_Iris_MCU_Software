@@ -67,6 +67,11 @@ SPI_HandleTypeDef hspi2;
 UART_HandleTypeDef huart1;
 
 /* USER CODE BEGIN PV */
+enum ss_states {
+	LISTENING,
+	SEND_DATA,
+	FINISH,
+} ss_state;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -126,94 +131,144 @@ int main(void)
   char cmd[64];
   char buf[64];
   char *ptr = cmd;
-#ifdef UART_DEBUG
-  DBG_PUT("-----------------------------------\r\n");
-  DBG_PUT("Iris Electronics Test Software\r\n"
-		  "         UART Edition         \r\n");
-  DBG_PUT("-----------------------------------\r\n");
-#endif
+//#ifdef UART_DEBUG
+//  DBG_PUT("-----------------------------------\r\n");
+//  DBG_PUT("Iris Electronics Test Software\r\n"
+//		  "         UART Edition         \r\n");
+//  DBG_PUT("-----------------------------------\r\n");
+//#endif
 
   init_temp_sensors();
   NAND_SPI_Init(&hspi2);
 
+
+
+  uint8_t tx_data = 0xBC;
+  uint8_t rx_data;
+  uint8_t rx_data_1;
+  uint8_t tx_ack = 0xAA;
+  uint8_t tx_buffer[20];
+//  uint8_t tx_buffer[128];
+  uint8_t count = 0;
+
+  int i;
+  for (i = 0; i < 20; i++) {
+	  tx_buffer[i] = i * 3;
+  }
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-#ifdef SPI_DEBUG
+
   while (1)
   {
-	  switch (state){
-			case idle:
-				break;
-			case receiving:
-				state = idle;
-				HAL_SPI_Receive_IT(&hspi1, &RX_Data, sizeof(RX_Data));
-				break;
-			case transmitting:
-				state = idle;
-				// interrupt this shit hey
-				HAL_SPI_Transmit(&hspi1, &RX_Data, sizeof(RX_Data), 1000);
-//				HAL_SPI_Transmit_IT(&hspi1, &RX_Data, sizeof(RX_Data));
-				RX_Data = 0xFF;
-				break;
-			case handling_command:
-				state = transmitting;
-				spi_handle_command(RX_Data);
-				break;
+    /* USER CODE END WHILE */
 
+    /* USER CODE BEGIN 3 */
+	  switch (ss_state) {
+	  case LISTENING:
+		  HAL_SPI_Receive(&hspi1, &rx_data, 1, HAL_MAX_DELAY);
+		  if (rx_data == 0x20) {
+			  HAL_SPI_Transmit(&hspi1, &tx_ack, 1, 100);
+			  ss_state = SEND_DATA;
 		  }
+		  break;
+	  case SEND_DATA:
+		  HAL_SPI_Receive(&hspi1, &rx_data, 1, HAL_MAX_DELAY);
+		  if (rx_data == 0xf0) {
+			  HAL_SPI_Transmit(&hspi1, &tx_ack, 1, 100);
+		  } else if (rx_data == 0xdd) {
+			  HAL_SPI_Transmit(&hspi1, tx_buffer, 16, 100); // By transmitting multiple bytes this reduces the number of master clock cycles needed
+			  count++;
+		  } else if (rx_data == 0x0f) {
+			  count = 0;
+			  HAL_SPI_Transmit(&hspi1, &tx_ack, 1, 100);
+			  ss_state = FINISH;
+		  }
+		  ss_state = SEND_DATA;
+
+		  break;
+	  case FINISH:
+		  ss_state = LISTENING;
+		  break;
+	  }
   }
-#endif // SPI_DEBUG
-	  // //////////////////////////////////////////////////////////////////////////////////////////
-#ifdef UART_DEBUG
-  	  state = idle;
-	   while (1)
-	   {
-		   switch (state){
-			   case idle:
-				   DBG_PUT("\r:>> ");
-				   state = receiving;
-				   break;
-			   case receiving:;
-				   HAL_StatusTypeDef rc = HAL_UART_Receive(&huart1, (uint8_t *) ptr, 1, 20000);
-			/* USER CODE END WHILE */
 
-			/* USER CODE BEGIN 3 */
-				   /* Build up the command one byte at a time */
-				   if (rc != HAL_OK) {
-					   if (rc != HAL_TIMEOUT) {
-						   sprintf(buf, "UART read error: %x\r\n", rc);
-						   DBG_PUT(buf);
-					   }
-					   continue;
-				   }
-				   /* Command is complete when we get EOL of some sort */
-				   if (*ptr == '\n' || *ptr == '\r') {
-					   *ptr = 0;
-					   DBG_PUT("\r\n");
-					   uart_handle_command(cmd);
-					   ptr = cmd;
-					   state = idle;
 
-				   }
-				   else {
-					   *(ptr + 1) = 0;
-					   DBG_PUT(ptr);
-
-					   if (*ptr == 0x7f) { // handle backspace
-						   if (ptr > cmd)
-							   --ptr;
-					   }
-					   else
-						   ++ptr;
-				   }
-				   break;
-			   }
-
-		   }
-
-#endif // UART_DEBUG
+//#ifdef SPI_DEBUG
+//  while (1)
+//  {
+//	  switch (state){
+//			case idle:
+//				break;
+//			case receiving:
+//				state = idle;
+//				HAL_SPI_Receive_IT(&hspi1, &RX_Data, sizeof(RX_Data));
+//				break;
+//			case transmitting:
+//				state = idle;
+//				// interrupt this shit hey
+//				HAL_SPI_Transmit(&hspi1, &RX_Data, sizeof(RX_Data), 1000);
+////				HAL_SPI_Transmit_IT(&hspi1, &RX_Data, sizeof(RX_Data));
+//				RX_Data = 0xFF;
+//				break;
+//			case handling_command:
+//				state = transmitting;
+//				spi_handle_command(RX_Data);
+//				break;
+//
+//		  }
+//  }
+//#endif // SPI_DEBUG
+//	  // //////////////////////////////////////////////////////////////////////////////////////////
+//#ifdef UART_DEBUG
+//  	  state = idle;
+//	   while (1)
+//	   {
+//		   switch (state){
+//			   case idle:
+//				   DBG_PUT("\r:>> ");
+//				   state = receiving;
+//				   break;
+//			   case receiving:;
+//				   HAL_StatusTypeDef rc = HAL_UART_Receive(&huart1, (uint8_t *) ptr, 1, 20000);
+//			/* USER CODE END WHILE */
+//
+//			/* USER CODE BEGIN 3 */
+//				   /* Build up the command one byte at a time */
+//				   if (rc != HAL_OK) {
+//					   if (rc != HAL_TIMEOUT) {
+//						   sprintf(buf, "UART read error: %x\r\n", rc);
+//						   DBG_PUT(buf);
+//					   }
+//					   continue;
+//				   }
+//				   /* Command is complete when we get EOL of some sort */
+//				   if (*ptr == '\n' || *ptr == '\r') {
+//					   *ptr = 0;
+//					   DBG_PUT("\r\n");
+//					   uart_handle_command(cmd);
+//					   ptr = cmd;
+//					   state = idle;
+//
+//				   }
+//				   else {
+//					   *(ptr + 1) = 0;
+//					   DBG_PUT(ptr);
+//
+//					   if (*ptr == 0x7f) { // handle backspace
+//						   if (ptr > cmd)
+//							   --ptr;
+//					   }
+//					   else
+//						   ++ptr;
+//				   }
+//				   break;
+//			   }
+//
+//		   }
+//
+//#endif // UART_DEBUG
 
     /* USER CODE END WHILE */
 
@@ -386,7 +441,7 @@ static void MX_SPI1_Init(void)
   hspi1.Init.Direction = SPI_DIRECTION_2LINES;
   hspi1.Init.DataSize = SPI_DATASIZE_8BIT;
   hspi1.Init.CLKPolarity = SPI_POLARITY_LOW;
-  hspi1.Init.CLKPhase = SPI_PHASE_1EDGE;
+  hspi1.Init.CLKPhase = SPI_PHASE_2EDGE;
   hspi1.Init.NSS = SPI_NSS_HARD_INPUT;
   hspi1.Init.FirstBit = SPI_FIRSTBIT_MSB;
   hspi1.Init.TIMode = SPI_TIMODE_DISABLE;
