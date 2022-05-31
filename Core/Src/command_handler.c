@@ -29,6 +29,7 @@ extern const struct sensor_reg OV5642_QVGA_Preview[];
 uint8_t ack = 0xAA;
 uint8_t total_image_num = 0; // This will cause issues with total num of images once board resets. todo: fix
 housekeeping_packet_t hk;
+char buf[128];
 
 static void help() {
 	// UART DEBUG ONLY
@@ -106,6 +107,7 @@ void transfer_image(){
 	 */
 	return;
 }
+
 void get_image_length(){
 	// todo:	@RON:   Need a way to get image length from NAND flash
 	//  				- Expecting a 32 bit integer for image size
@@ -119,7 +121,6 @@ void count_images(){
 	SPI1_IT_Transmit(&total_image_num);
 	return;
 }
-
 
 /*
  * Todo: Look into SPI register 0x06 for idle power mode on the sensors. This shouldn't
@@ -139,9 +140,9 @@ void sensor_active(){
 	DBG_PUT("Initializing Sensors\r\n");
 //	// initialize sensors
 	print_progress(1, 5);
-	_initalize_sensor(VIS_SENSOR);
+	_initialize_sensor(VIS_SENSOR);
 	print_progress(3, 5);
-	_initalize_sensor(NIR_SENSOR);
+	_initialize_sensor(NIR_SENSOR);
 	print_progress(5, 5);
 
 
@@ -159,7 +160,6 @@ void get_housekeeping(){
 	SPI1_IT_Transmit((uint8_t *) buffer); // not sure this is how it's supposed to work
 	return;
 }
-
 
 void update_sensor_I2C_regs(){
 	/*
@@ -180,7 +180,6 @@ void update_sensor_I2C_regs(){
 	return;
 }
 
-
 void update_current_limits(){
 	return;
 }
@@ -200,12 +199,17 @@ void iterate_image_num(){
 	total_image_num += 2;
 }
 
-void get_image_num(){
+uint8_t get_image_num(uint8_t hk){
+	// param hk: 1 for integer return,
+	// 			 0 for spi transmit.
+	if (hk){
+		return total_image_num;
+	}
 	SPI1_IT_Transmit(&total_image_num);
-	return;
+	return 1;
 }
 
-void _initalize_sensor(uint8_t sensor){
+void _initialize_sensor(uint8_t sensor){
 	char buf[64];
 	uint8_t DETECTED = 0;
 	  arducam_wait_for_ready(sensor);
@@ -243,8 +247,10 @@ void _initalize_sensor(uint8_t sensor){
 
 }
 
-
-
+void program_sensor(uint8_t sensor, struct sensor_reg newprogram[]){
+	wrSensorRegs16_8(newprogram, sensor);
+	return;
+}
 void init_nand_flash(){
 	FileHandle_t* file;
 	NAND_ReturnType res = NAND_Init();
@@ -327,7 +333,7 @@ void print_progress(uint8_t count, uint8_t max)
 {
 	uint8_t length = 25;
 	uint8_t scaled = count*100 / max * length / 100;
-	char buf[128];
+
     sprintf(buf, "Progress: [%.*s%.*s]\r", scaled, "==================================================", length - scaled, "                                        ");
 	DBG_PUT(buf);
 	if (count == max){

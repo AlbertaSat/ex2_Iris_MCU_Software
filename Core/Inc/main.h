@@ -90,8 +90,8 @@ void Error_Handler(void);
 #define handling_command 3
 #define processin 4
 
-#define 5V_CurrentSense 0x40
-#define 3V3_CurrentSense 0x45
+#define CURRENTSENSE_5V 0x40
+#define CURRENTSENSE_3V3 0x45
 
 
 

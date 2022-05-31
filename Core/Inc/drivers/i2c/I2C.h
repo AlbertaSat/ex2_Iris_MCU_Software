@@ -11,7 +11,7 @@
 #include "arducam.h"
 void wrSensorReg16_8(uint16_t regID, uint8_t regDat, uint8_t sensor);
 
-void wrSensorRegs16_8(const struct sensor_reg reglist[], uint8_t sensor);
+void wrSensorRegs16_8(struct sensor_reg reglist[], uint8_t sensor);
 
 void rdSensorReg16_8(uint16_t regID, uint8_t *regDat, uint8_t sensor);
 
