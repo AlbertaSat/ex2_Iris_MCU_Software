@@ -90,6 +90,10 @@ static void MX_USART1_UART_Init(void);
 /* USER CODE BEGIN 0 */
 uint8_t state = receiving;
 uint8_t RX_Data = 0xFF;
+
+void spiSlaveReStart(SPI_HandleTypeDef *hspi);
+void rcc_spi_force_reset(SPI_HandleTypeDef *hspi);
+void rcc_spi_release_reset(SPI_HandleTypeDef *hspi);
 /* USER CODE END 0 */
 
 /**
@@ -127,7 +131,7 @@ int main(void)
   /* USER CODE BEGIN 2 */
 //   init nand flash
   NAND_SPI_Init(&hspi2);
-  sensor_active();
+  //sensor_active();
   char cmd[64];
   char buf[64];
   char *ptr = cmd;
@@ -141,18 +145,12 @@ int main(void)
   init_temp_sensors();
   NAND_SPI_Init(&hspi2);
 
-
-
-  uint8_t tx_data = 0xBC;
   uint8_t rx_data;
-  uint8_t rx_data_1;
   uint8_t tx_ack = 0xAA;
-  uint8_t tx_buffer[20];
-//  uint8_t tx_buffer[128];
-  uint8_t count = 0;
+  uint8_t tx_buffer[16];
 
   int i;
-  for (i = 0; i < 20; i++) {
+  for (i = 0; i < 16; i++) {
 	  tx_buffer[i] = i * 3;
   }
   /* USER CODE END 2 */
@@ -169,29 +167,23 @@ int main(void)
 	  case LISTENING:
 		  HAL_SPI_Receive(&hspi1, &rx_data, 1, HAL_MAX_DELAY);
 		  if (rx_data == 0x20) {
-			  HAL_SPI_Transmit(&hspi1, &tx_ack, 1, 100);
+			  HAL_SPI_Transmit(&hspi1, &tx_ack, 1, HAL_MAX_DELAY);
 			  ss_state = SEND_DATA;
 		  }
 		  break;
 	  case SEND_DATA:
 		  HAL_SPI_Receive(&hspi1, &rx_data, 1, HAL_MAX_DELAY);
-		  if (rx_data == 0xf0) {
-			  HAL_SPI_Transmit(&hspi1, &tx_ack, 1, 100);
-		  } else if (rx_data == 0xdd) {
-			  HAL_SPI_Transmit(&hspi1, tx_buffer, 16, 100); // By transmitting multiple bytes this reduces the number of master clock cycles needed
-			  count++;
-		  } else if (rx_data == 0x0f) {
-			  count = 0;
-			  HAL_SPI_Transmit(&hspi1, &tx_ack, 1, 100);
+		  if (rx_data == 0xDD) {
+			  HAL_SPI_Transmit(&hspi1, tx_buffer, 16, HAL_MAX_DELAY);
 			  ss_state = FINISH;
 		  }
-		  ss_state = SEND_DATA;
-
 		  break;
 	  case FINISH:
+		  spiSlaveReStart(&hspi1);
 		  ss_state = LISTENING;
 		  break;
 	  }
+	  	  //HAL_I2C_Slave_Receive(&hi2c1, buf_data, 24, HAL_MAX_DELAY);
   }
 
 
@@ -341,7 +333,7 @@ static void MX_I2C1_Init(void)
   /* USER CODE END I2C1_Init 1 */
   hi2c1.Instance = I2C1;
   hi2c1.Init.Timing = 0x00303D5B;
-  hi2c1.Init.OwnAddress1 = 0;
+  hi2c1.Init.OwnAddress1 = 64;
   hi2c1.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
   hi2c1.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
   hi2c1.Init.OwnAddress2 = 0;
@@ -602,6 +594,34 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+void rcc_spi_force_reset(SPI_HandleTypeDef *hspi)
+{
+  if(hspi->Instance==SPI1)
+  {
+    __HAL_RCC_SPI1_FORCE_RESET();
+  }
+}
+
+void rcc_spi_release_reset(SPI_HandleTypeDef *hspi)
+{
+  if(hspi->Instance==SPI1)
+  {
+    __HAL_RCC_SPI1_RELEASE_RESET();
+  }
+}
+
+void spiSlaveReStart(SPI_HandleTypeDef *hspi) {
+  HAL_SPI_DeInit(hspi);
+  asm("nop");
+  asm("nop");
+  rcc_spi_force_reset(hspi);
+  asm("nop");
+  asm("nop");
+  rcc_spi_release_reset(hspi);
+  HAL_SPI_Init(hspi);
+}
+
+
 void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef * hspi)
 {
 	state = receiving;
