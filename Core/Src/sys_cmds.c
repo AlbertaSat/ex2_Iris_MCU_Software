@@ -21,8 +21,7 @@ void sensor_reset(uint8_t sensor) {
 
     if (!arducam_wait_for_ready(sensor)) {
         DBG_PUT("VIS Camera: SPI Unavailable\r\n");
-    }
-    else{
+    } else {
         DBG_PUT("VIS Camera: SPI Initialized\r\n");
     }
 
@@ -37,8 +36,7 @@ void sensor_reset(uint8_t sensor) {
     int *detected = &VIS_DETECTED;
     if (sensor == NIR_SENSOR) {
         detected = &NIR_DETECTED;
-    }
-    else if (sensor != VIS_SENSOR) {
+    } else if (sensor != VIS_SENSOR) {
         sprintf(buf, "illegal sensor %d\r\n", sensor);
         DBG_PUT(buf);
     }
@@ -47,8 +45,7 @@ void sensor_reset(uint8_t sensor) {
         sprintf(buf, "Camera I2C Address: Unknown\r\nVIS not available\r\n\n");
         DBG_PUT(buf);
         *detected = 0;
-    }
-    else{
+    } else {
         *detected = 1;
         format = JPEG;
         Arduino_init(format, sensor);
@@ -60,18 +57,17 @@ void sensor_reset(uint8_t sensor) {
 }
 
 int scan_i2c(void) {
-     HAL_StatusTypeDef result;
-     uint8_t i;
-     char buf[64];
-     DBG_PUT("Scanning I2C bus 2...\r\n");
-     for (i=1; i<128; i++){
-         result = HAL_I2C_IsDeviceReady(&hi2c2, (uint16_t)(i<<1), 2, 2);
-         if (result == HAL_OK){
-             sprintf(buf,"I2C address found: 0x%X\r\n", (uint16_t)(i));
-             DBG_PUT(buf);
-         }
-     }
-     DBG_PUT("Scan Complete.\r\n");
-     return 0;
+    HAL_StatusTypeDef result;
+    uint8_t i;
+    char buf[64];
+    DBG_PUT("Scanning I2C bus 2...\r\n");
+    for (i = 1; i < 128; i++) {
+        result = HAL_I2C_IsDeviceReady(&hi2c2, (uint16_t)(i << 1), 2, 2);
+        if (result == HAL_OK) {
+            sprintf(buf, "I2C address found: 0x%X\r\n", (uint16_t)(i));
+            DBG_PUT(buf);
+        }
+    }
+    DBG_PUT("Scan Complete.\r\n");
+    return 0;
 }
-

@@ -23,10 +23,8 @@
  *
  */
 
-
 #include <stdbool.h>
 #include "spi_bitbang.h"
-
 
 // Pin config
 //  /*Configure GPIO pins : SPI_B_MOSI_Pin SPI_B_CLK_Pin */
@@ -55,160 +53,128 @@
 //  /*Configure GPIO pin Output Level */
 //  HAL_GPIO_WritePin(GPIOB, SPI_B_MOSI_Pin|SPI_B_NSS_Pin|SPI_B_CLK_Pin, GPIO_PIN_RESET);
 
-//todo burst mode!
-uint8_t read_spi_reg(uint8_t addr, uint8_t sensor){
-	uint8_t rec;
-	// CS Low
-	if (sensor == 0){
-		_CS1_LOW(); // VIS sensor is CS1
-	}
-	else{
-		_CS2_LOW(); // NIR sensor is CS2
-	}
-	// Send Phase
-	for (int i=0; i<8; i++){
-		HAL_GPIO_WritePin(MOSI_Port, MOSI_Pin, bit_read(addr, i));
-		_CLK_HIGH();
-		HAL_GPIO_ReadPin(MISO_Port, MISO_Pin);
-		_CLK_LOW();
-	}
+// todo burst mode!
+uint8_t read_spi_reg(uint8_t addr, uint8_t sensor) {
+    uint8_t rec;
+    // CS Low
+    if (sensor == 0) {
+        _CS1_LOW(); // VIS sensor is CS1
+    } else {
+        _CS2_LOW(); // NIR sensor is CS2
+    }
+    // Send Phase
+    for (int i = 0; i < 8; i++) {
+        HAL_GPIO_WritePin(MOSI_Port, MOSI_Pin, bit_read(addr, i));
+        _CLK_HIGH();
+        HAL_GPIO_ReadPin(MISO_Port, MISO_Pin);
+        _CLK_LOW();
+    }
 
-	// Recieve phase
-	for (int i=0; i<8; i++){
-		HAL_GPIO_WritePin(MOSI_Port, MOSI_Pin, bit_read(0x00, i));
-		_CLK_HIGH();
-		if (HAL_GPIO_ReadPin(MISO_Port, MISO_Pin) == GPIO_PIN_SET){
-			rec = rec << 1 | 0b1;
-		}
-		else{
-			rec = rec << 1 | 0b0;
-		}
-		_CLK_LOW();
-	}
+    // Recieve phase
+    for (int i = 0; i < 8; i++) {
+        HAL_GPIO_WritePin(MOSI_Port, MOSI_Pin, bit_read(0x00, i));
+        _CLK_HIGH();
+        if (HAL_GPIO_ReadPin(MISO_Port, MISO_Pin) == GPIO_PIN_SET) {
+            rec = rec << 1 | 0b1;
+        } else {
+            rec = rec << 1 | 0b0;
+        }
+        _CLK_LOW();
+    }
 
-	if (sensor == 0){
-		_CS1_HIGH();
-	}
-	else{
-		_CS2_HIGH();
-	}
-	HAL_GPIO_WritePin(MOSI_Port, MOSI_Pin, GPIO_PIN_RESET);
-	return rec;
+    if (sensor == 0) {
+        _CS1_HIGH();
+    } else {
+        _CS2_HIGH();
+    }
+    HAL_GPIO_WritePin(MOSI_Port, MOSI_Pin, GPIO_PIN_RESET);
+    return rec;
 }
 
-bool write_spi_reg(uint8_t addr, uint8_t packet, uint8_t sensor){
-	// CS Low
-	if (sensor == 0){
-		_CS1_LOW(); // VIS sensor is CS1
-	}
-	else{
-		_CS2_LOW(); // NIR sensor is CS2
-	}
-	// Send Phase
-	for (int i=0; i<8; i++){
-		HAL_GPIO_WritePin(MOSI_Port, MOSI_Pin, bit_read((addr | 0x80), i));
-		_CLK_HIGH();
-		HAL_GPIO_ReadPin(MISO_Port, MISO_Pin);
-		_CLK_LOW();
-	}
+bool write_spi_reg(uint8_t addr, uint8_t packet, uint8_t sensor) {
+    // CS Low
+    if (sensor == 0) {
+        _CS1_LOW(); // VIS sensor is CS1
+    } else {
+        _CS2_LOW(); // NIR sensor is CS2
+    }
+    // Send Phase
+    for (int i = 0; i < 8; i++) {
+        HAL_GPIO_WritePin(MOSI_Port, MOSI_Pin, bit_read((addr | 0x80), i));
+        _CLK_HIGH();
+        HAL_GPIO_ReadPin(MISO_Port, MISO_Pin);
+        _CLK_LOW();
+    }
 
-	// Write phase
-	for (int i=0; i<8; i++){
-		HAL_GPIO_WritePin(MOSI_Port, MOSI_Pin, bit_read(packet, i));
-		_CLK_HIGH();
-		HAL_GPIO_ReadPin(MISO_Port, MISO_Pin);
-		_CLK_LOW();
-	}
+    // Write phase
+    for (int i = 0; i < 8; i++) {
+        HAL_GPIO_WritePin(MOSI_Port, MOSI_Pin, bit_read(packet, i));
+        _CLK_HIGH();
+        HAL_GPIO_ReadPin(MISO_Port, MISO_Pin);
+        _CLK_LOW();
+    }
 
-	if (sensor == 0){
-		_CS1_HIGH();
-	}
-	else{
-		_CS2_HIGH();
-	}
-	HAL_GPIO_WritePin(MOSI_Port, MOSI_Pin, GPIO_PIN_RESET);
+    if (sensor == 0) {
+        _CS1_HIGH();
+    } else {
+        _CS2_HIGH();
+    }
+    HAL_GPIO_WritePin(MOSI_Port, MOSI_Pin, GPIO_PIN_RESET);
 
-	return true;
+    return true;
 }
 
-void spi_read_multiple_bytes(uint8_t addr, uint32_t length, uint8_t sensor){
-	uint8_t rec;
-	// CS Low
-	if (sensor == 0){
-		_CS1_LOW(); // VIS sensor is CS1
-	}
-	else{
-		_CS2_LOW(); // NIR sensor is CS2
-	}
-	// Send Phase
-	for (int i=0; i<8; i++){
-		HAL_GPIO_WritePin(MOSI_Port, MOSI_Pin, bit_read(addr, i));
-		_CLK_HIGH();
-		HAL_GPIO_ReadPin(MISO_Port, MISO_Pin);
-		_CLK_LOW();
-	}
+void spi_read_multiple_bytes(uint8_t addr, uint32_t length, uint8_t sensor) {
+    uint8_t rec;
+    // CS Low
+    if (sensor == 0) {
+        _CS1_LOW(); // VIS sensor is CS1
+    } else {
+        _CS2_LOW(); // NIR sensor is CS2
+    }
+    // Send Phase
+    for (int i = 0; i < 8; i++) {
+        HAL_GPIO_WritePin(MOSI_Port, MOSI_Pin, bit_read(addr, i));
+        _CLK_HIGH();
+        HAL_GPIO_ReadPin(MISO_Port, MISO_Pin);
+        _CLK_LOW();
+    }
 
-	for (int j=0; j<length; j++){
-		// Recieve phase
-		for (int i=0; i<8; i++){
-			HAL_GPIO_WritePin(MOSI_Port, MOSI_Pin, bit_read(0x00, i));
-			_CLK_HIGH();
-			if (HAL_GPIO_ReadPin(MISO_Port, MISO_Pin) == GPIO_PIN_SET){
-				rec = rec << 1 | 0b1;
-			}
-			else{
-				rec = rec << 1 | 0b0;
-			}
-			_CLK_LOW();
-			rec = 0; //remove me and figure out how to dump data
-		}
-	}
-	if (sensor == 0){
-		_CS1_HIGH();
-	}
-	else{
-		_CS2_HIGH();
-	}
-	HAL_GPIO_WritePin(MOSI_Port, MOSI_Pin, GPIO_PIN_RESET);
-
+    for (int j = 0; j < length; j++) {
+        // Recieve phase
+        for (int i = 0; i < 8; i++) {
+            HAL_GPIO_WritePin(MOSI_Port, MOSI_Pin, bit_read(0x00, i));
+            _CLK_HIGH();
+            if (HAL_GPIO_ReadPin(MISO_Port, MISO_Pin) == GPIO_PIN_SET) {
+                rec = rec << 1 | 0b1;
+            } else {
+                rec = rec << 1 | 0b0;
+            }
+            _CLK_LOW();
+            rec = 0; // remove me and figure out how to dump data
+        }
+    }
+    if (sensor == 0) {
+        _CS1_HIGH();
+    } else {
+        _CS2_HIGH();
+    }
+    HAL_GPIO_WritePin(MOSI_Port, MOSI_Pin, GPIO_PIN_RESET);
 }
 
-GPIO_PinState bit_read(uint8_t byte, int j){
-	byte = byte << j;
-	if (byte & 0x80){
-		return GPIO_PIN_SET;
-	}
-	return GPIO_PIN_RESET;
+GPIO_PinState bit_read(uint8_t byte, int j) {
+    byte = byte << j;
+    if (byte & 0x80) {
+        return GPIO_PIN_SET;
+    }
+    return GPIO_PIN_RESET;
 }
 
-void _CS1_LOW(){
-	HAL_GPIO_WritePin(NSS1_Port, NSS1_Pin, GPIO_PIN_RESET);
-}
-void _CS1_HIGH(){
-	HAL_GPIO_WritePin(NSS1_Port, NSS1_Pin, GPIO_PIN_SET);
-}
+void _CS1_LOW() { HAL_GPIO_WritePin(NSS1_Port, NSS1_Pin, GPIO_PIN_RESET); }
+void _CS1_HIGH() { HAL_GPIO_WritePin(NSS1_Port, NSS1_Pin, GPIO_PIN_SET); }
 
-void _CS2_LOW(){
-	HAL_GPIO_WritePin(NSS2_Port, NSS2_Pin, GPIO_PIN_RESET);
-}
-void _CS2_HIGH(){
-	HAL_GPIO_WritePin(NSS2_Port, NSS2_Pin, GPIO_PIN_SET);
-}
+void _CS2_LOW() { HAL_GPIO_WritePin(NSS2_Port, NSS2_Pin, GPIO_PIN_RESET); }
+void _CS2_HIGH() { HAL_GPIO_WritePin(NSS2_Port, NSS2_Pin, GPIO_PIN_SET); }
 
-void _CLK_LOW(){
-	HAL_GPIO_WritePin(CLK_Port, CLK_Pin, GPIO_PIN_RESET);
-}
-void _CLK_HIGH(){
-	HAL_GPIO_WritePin(CLK_Port, CLK_Pin, GPIO_PIN_SET);
-}
-
-
-
-
-
-
-
-
-
-
-
+void _CLK_LOW() { HAL_GPIO_WritePin(CLK_Port, CLK_Pin, GPIO_PIN_RESET); }
+void _CLK_HIGH() { HAL_GPIO_WritePin(CLK_Port, CLK_Pin, GPIO_PIN_SET); }

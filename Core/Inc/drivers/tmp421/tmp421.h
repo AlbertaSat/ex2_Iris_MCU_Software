@@ -13,7 +13,6 @@
 #define TEMP3 0x4E
 #define TEMP4 0x4F
 
-
 uint16_t get_temp(uint8_t sensor_addr);
 void init_temp_sensors(void);
 

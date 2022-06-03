@@ -16,12 +16,12 @@
  * @file nand_spi.c
  * @author Tharun Suresh
  * @date 2021-12-29
- * 
- * @brief SPI Wrapper Functions 
- * 
+ *
+ * @brief SPI Wrapper Functions
+ *
  * Implements SPI wrapper functions for use by low-level drivers.
  * Uses HAL library for STM32L0 series.
-*/
+ */
 
 #include "nand_spi.h"
 
@@ -88,32 +88,27 @@ static SPI_HandleTypeDef *hspi_nand;
 
 /**
  * @brief Stores the HAL SPI Handle for use in all subsequent transactions
- * 
- * @param[in] hspi 
+ *
+ * @param[in] hspi
  */
-void NAND_SPI_Init(SPI_HandleTypeDef *hspi) {
-    hspi_nand = hspi;
-};
+void NAND_SPI_Init(SPI_HandleTypeDef *hspi) { hspi_nand = hspi; };
 
 /**
  * @brief Calls HAL_Delay() for stated number of milliseconds
- * 
+ *
  * @param[in] milliseconds Number of milliseconds to delay
  */
-void NAND_Wait(uint8_t milliseconds){
-    HAL_Delay(milliseconds);
-};
-
+void NAND_Wait(uint8_t milliseconds) { HAL_Delay(milliseconds); };
 
 /******************************************************************************
- *                     Send & Receive Complete Transactions 
+ *                     Send & Receive Complete Transactions
  *****************************************************************************/
 
 /**
  * @brief Write data to NAND.
- * 
+ *
  * @param data_send[in]    Pointer to struct with data and length
- * @return NAND_SPI_ReturnType 
+ * @return NAND_SPI_ReturnType
  */
 NAND_SPI_ReturnType NAND_SPI_Send(SPI_Params *data_send) {
     HAL_StatusTypeDef send_status;
@@ -123,19 +118,18 @@ NAND_SPI_ReturnType NAND_SPI_Send(SPI_Params *data_send) {
     __nand_spi_cs_high();
 
     if (send_status != HAL_OK) {
-        return SPI_Fail; 
+        return SPI_Fail;
     } else {
         return SPI_OK;
     }
-
 };
 
 /**
  * @brief Send and receive data from NAND in one transaction.
- * 
+ *
  * @param data_send[in]    Pointer to struct with sending data buffer and length of buffer
  * @param data_recv[out]    Pointer to struct with receive data buffer and length of buffer
- * @return NAND_SPI_ReturnType 
+ * @return NAND_SPI_ReturnType
  */
 NAND_SPI_ReturnType NAND_SPI_SendReceive(SPI_Params *data_send, SPI_Params *data_recv) {
     HAL_StatusTypeDef recv_status;
@@ -146,7 +140,7 @@ NAND_SPI_ReturnType NAND_SPI_SendReceive(SPI_Params *data_send, SPI_Params *data
     __nand_spi_cs_high();
 
     if (recv_status != HAL_OK) {
-        return SPI_Fail; 
+        return SPI_Fail;
     } else {
         return SPI_OK;
     }
@@ -154,9 +148,9 @@ NAND_SPI_ReturnType NAND_SPI_SendReceive(SPI_Params *data_send, SPI_Params *data
 
 /**
  * @brief Read data from NAND.
- * 
+ *
  * @param data_recv[in]    Pointer to struct with read data buffer and length of receive data
- * @return NAND_SPI_ReturnType 
+ * @return NAND_SPI_ReturnType
  */
 NAND_SPI_ReturnType NAND_SPI_Receive(SPI_Params *data_recv) {
     HAL_StatusTypeDef receive_status;
@@ -173,15 +167,15 @@ NAND_SPI_ReturnType NAND_SPI_Receive(SPI_Params *data_recv) {
 };
 
 /******************************************************************************
- *                  Send command and data in one transaction  
+ *                  Send command and data in one transaction
  *****************************************************************************/
 
 /**
  * @brief Send a command and associated data to NAND in one transaction
- * 
+ *
  * @param cmd_send[in]     Pointer to struct with command and length of command
  * @param data_send[in]    Pointer to struct with data and length of data
- * @return NAND_SPI_ReturnType 
+ * @return NAND_SPI_ReturnType
  */
 NAND_SPI_ReturnType NAND_SPI_Send_Command_Data(SPI_Params *cmd_send, SPI_Params *data_send) {
     HAL_StatusTypeDef send_status;
@@ -192,7 +186,7 @@ NAND_SPI_ReturnType NAND_SPI_Send_Command_Data(SPI_Params *cmd_send, SPI_Params 
     __nand_spi_cs_high();
 
     if (send_status != HAL_OK) {
-        return SPI_Fail; 
+        return SPI_Fail;
     } else {
         return SPI_OK;
     }
@@ -206,14 +200,10 @@ NAND_SPI_ReturnType NAND_SPI_Send_Command_Data(SPI_Params *cmd_send, SPI_Params 
  * @brief Enable SPI communication to NAND by pulling chip select pin low.
  * @note Must be called prior to every SPI transmission
  */
-void __nand_spi_cs_low(void) {
-    HAL_GPIO_WritePin(NAND_NCS_PORT, NAND_NCS_PIN, GPIO_PIN_RESET);
-};
+void __nand_spi_cs_low(void) { HAL_GPIO_WritePin(NAND_NCS_PORT, NAND_NCS_PIN, GPIO_PIN_RESET); };
 
 /**
  * @brief Close SPI communication to NAND by pulling chip select pin high.
  * @note Must be called after every SPI transmission
  */
-void __nand_spi_cs_high(void) {
-    HAL_GPIO_WritePin(NAND_NCS_PORT, NAND_NCS_PIN, GPIO_PIN_SET);
-};
+void __nand_spi_cs_high(void) { HAL_GPIO_WritePin(NAND_NCS_PORT, NAND_NCS_PIN, GPIO_PIN_SET); };

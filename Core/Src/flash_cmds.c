@@ -10,7 +10,7 @@ static void uart_dump_buf(uint8_t *data, uint16_t len) {
     char digit[4];
     digit[2] = ' ';
     digit[3] = 0;
-    for (int i=0; i<len; i++) {
+    for (int i = 0; i < len; i++) {
         digit[0] = hex_2_ascii(data[i] >> 4);
         digit[1] = hex_2_ascii(data[i] & 0x0f);
         DBG_PUT(digit);
@@ -19,35 +19,29 @@ static void uart_dump_buf(uint8_t *data, uint16_t len) {
 #endif
 
 void init_nand_flash(void) {
-	NAND_ReturnType res = NAND_Init();
-	if (res == Ret_Success){
-		DBG_PUT("NAND Flash Initialized Successfully\r\n");
-	}
-	else if(res == Ret_ResetFailed){
-		DBG_PUT("NAND Reset Failed\r\n");
-	}
-	else if(res == Ret_WrongID){
-		DBG_PUT("NAND ID is wrong\r\n");
-	}
-	else{
-		DBG_PUT("Something else is wrong wit the NAND Flash\r\n");
-	}
+    NAND_ReturnType res = NAND_Init();
+    if (res == Ret_Success) {
+        DBG_PUT("NAND Flash Initialized Successfully\r\n");
+    } else if (res == Ret_ResetFailed) {
+        DBG_PUT("NAND Reset Failed\r\n");
+    } else if (res == Ret_WrongID) {
+        DBG_PUT("NAND ID is wrong\r\n");
+    } else {
+        DBG_PUT("Something else is wrong wit the NAND Flash\r\n");
+    }
 
-	res = Ret_Failed;
-	// format super block
-	res =  NAND_File_Format(0);
-	if (res == Ret_Success){
-		DBG_PUT("NAND Flash File Format Success\r\n");
-	}
-	else if(res == Ret_WriteFailed){
-		DBG_PUT("NAND Write Failed\r\n");
-	}
-	else if(res == Ret_Failed){
-		DBG_PUT("Reset failed\r\n");
-	}
-	else{
-		DBG_PUT("Something else went wrong\r\n");
-	}
+    res = Ret_Failed;
+    // format super block
+    res = NAND_File_Format(0);
+    if (res == Ret_Success) {
+        DBG_PUT("NAND Flash File Format Success\r\n");
+    } else if (res == Ret_WriteFailed) {
+        DBG_PUT("NAND Write Failed\r\n");
+    } else if (res == Ret_Failed) {
+        DBG_PUT("Reset failed\r\n");
+    } else {
+        DBG_PUT("Something else went wrong\r\n");
+    }
 }
 
 static int uart_open(io_funcs_t *iofuncs, uint32_t name) {
@@ -59,15 +53,14 @@ static int uart_open(io_funcs_t *iofuncs, uint32_t name) {
 static int uart_write(io_funcs_t *iofuncs, uint8_t *data, uint16_t len) {
     // Note: we're assuming the ARM is BE
 #ifndef DUMP_ASCII
-    return HAL_UART_Transmit((UART_HandleTypeDef *) iofuncs->handle, data, len, 100);
+    return HAL_UART_Transmit((UART_HandleTypeDef *)iofuncs->handle, data, len, 100);
 #else
     uart_dump_buf(data, len);
 #endif
-
 }
 
 static int uart_write_len(io_funcs_t *iofuncs, uint32_t len) {
-    return HAL_UART_Transmit((UART_HandleTypeDef *) iofuncs->handle, (uint8_t *) &len, 4, 100);
+    return HAL_UART_Transmit((UART_HandleTypeDef *)iofuncs->handle, (uint8_t *)&len, 4, 100);
     return 0;
 }
 
@@ -76,8 +69,12 @@ static int uart_close(io_funcs_t *iofuncs) {
     return 0;
 }
 
-static io_funcs_t uart_driver = { .handle = &huart1, .blksz = PAGE_DATA_SIZE,
-    .open = uart_open, .write = uart_write, .write_len = uart_write_len, .close = uart_close };
+static io_funcs_t uart_driver = {.handle = &huart1,
+                                 .blksz = PAGE_DATA_SIZE,
+                                 .open = uart_open,
+                                 .write = uart_write,
+                                 .write_len = uart_write_len,
+                                 .close = uart_close};
 
 static int flash_open(struct io_funcs *iofuncs, uint32_t name) {
     FileHandle_t *fp = NAND_File_Create(name);
@@ -94,7 +91,7 @@ static int flash_write(io_funcs_t *iofuncs, uint8_t *data, uint16_t len) {
 }
 
 static int flash_close(io_funcs_t *iofuncs) {
-    NAND_ReturnType rc =  NAND_File_Write_Close(iofuncs->handle);
+    NAND_ReturnType rc = NAND_File_Write_Close(iofuncs->handle);
 
     if (rc != Ret_Success) {
         DBG_PUT("NAND Flash file close failed");
@@ -103,8 +100,8 @@ static int flash_close(io_funcs_t *iofuncs) {
     return rc;
 }
 
-static io_funcs_t flash_driver = { .blksz = PAGE_DATA_SIZE,
-    .open = flash_open, .write = flash_write, .close = flash_close };
+static io_funcs_t flash_driver = {
+    .blksz = PAGE_DATA_SIZE, .open = flash_open, .write = flash_write, .close = flash_close};
 
 int transfer_image(uint8_t sensor, int32_t name, int media) {
     io_funcs_t *io_funcs;
@@ -163,7 +160,7 @@ static int nand_dump_file(int which, io_funcs_t *io_driver) {
             return rc;
         }
     }
-    
+
     size_t i = len;
     uint16_t cnt;
     while (i >= PAGE_DATA_SIZE) {
@@ -235,8 +232,8 @@ int transfer_file(int which, int media) {
 }
 
 static inline void char_name(uint32_t name, char *str) {
-    for (int i=0; i<4; i++) {
-        uint8_t bite = (name >> (24 - i*8)) & 0x0ff;
+    for (int i = 0; i < 4; i++) {
+        uint8_t bite = (name >> (24 - i * 8)) & 0x0ff;
         *str++ = hex_2_ascii(bite >> 4);
         *str++ = hex_2_ascii(bite & 0x0f);
     }
@@ -251,7 +248,7 @@ int list_files(int how_many) {
 
     index = NAND_File_List_First(0, &inode);
     cnt = how_many;
-    while(cnt > 0 && index > 0) {
+    while (cnt > 0 && index > 0) {
         char_name(inode.id, name);
         sprintf(msg, "name %s len %ld\n", name, inode.length);
         DBG_PUT(msg);
@@ -259,6 +256,6 @@ int list_files(int how_many) {
         index = NAND_File_List_Next(index, &inode);
         --cnt;
     }
-    
+
     return 0;
 }

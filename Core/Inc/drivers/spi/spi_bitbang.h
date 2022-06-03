@@ -47,7 +47,6 @@
 #define MISO_Pin GPIO_PIN_3
 #define MISO_Port GPIOA
 
-
 void _CS1_LOW();
 void _CS1_HIGH();
 void _CS2_LOW();
@@ -60,5 +59,5 @@ bool write_spi_reg(uint8_t addr, uint8_t packet, uint8_t sensor);
 void spi_read_multiple_bytes(uint8_t addr, uint32_t length, uint8_t sensor);
 
 GPIO_PinState bit_read(uint8_t byte, int j);
-//void delay_us (uint32_t nus);
+// void delay_us (uint32_t nus);
 #endif /* INC_SPI_BITBANG_H_ */
