@@ -27,5 +27,3 @@ int transfer_file(int which, int media);
 int list_files(int howmany);
 
 #endif // INC_TRANSFER_H_
-
-

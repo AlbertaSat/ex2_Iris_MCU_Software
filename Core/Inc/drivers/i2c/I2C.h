@@ -32,5 +32,4 @@ void i2c2_write8_16(uint8_t addr, uint8_t register_pointer, uint16_t register_va
 uint16_t hi2c_read8_16(I2C_HandleTypeDef hi2c, uint8_t addr, uint8_t register_pointer);
 void hi2c_write8_16(I2C_HandleTypeDef hi2c, uint8_t addr, uint8_t register_pointer, uint16_t register_value);
 
-
 #endif /* INC_I2C_H_ */

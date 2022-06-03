@@ -6,15 +6,12 @@
 #include "debug.h"
 
 uint8_t image_number = 0;
-void arducam_delay_ms(int ms) {
-    HAL_Delay(ms);
-}
+void arducam_delay_ms(int ms) { HAL_Delay(ms); }
 
 void Arduino_init(int m_fmt, int sensor) {
-    if (m_fmt == RAW){
+    if (m_fmt == RAW) {
         arducam_raw_init(1280, 960, sensor);
-    }
-    else {
+    } else {
         wrSensorReg16_8(REG_SYS_CTL0, 0x82, sensor); // software reset
         wrSensorRegs16_8(OV5642_QVGA_Preview, sensor);
         arducam_delay_ms(100);
@@ -36,14 +33,13 @@ void Arduino_init(int m_fmt, int sensor) {
 #endif
             wrSensorReg16_8(0x5888, 0x00, sensor);
             wrSensorReg16_8(0x5000, 0xFF, sensor);
-        }
-        else  {
+        } else {
             byte reg_val;
             wrSensorReg16_8(0x4740, 0x21, sensor);
-            wrSensorReg16_8(0x501e, 0x2a, sensor); // RGB Dither Ctl = RGB565/555
-            wrSensorReg16_8(0x5002, 0xf8, sensor); // ISP Ctl 2 = Dither enable
-            wrSensorReg16_8(0x501f, 0x01, sensor); // Format MUX Ctl = ISP RGB
-            wrSensorReg16_8(0x4300, 0x61, sensor); // Format Ctl = RGB565
+            wrSensorReg16_8(0x501e, 0x2a, sensor);     // RGB Dither Ctl = RGB565/555
+            wrSensorReg16_8(0x5002, 0xf8, sensor);     // ISP Ctl 2 = Dither enable
+            wrSensorReg16_8(0x501f, 0x01, sensor);     // Format MUX Ctl = ISP RGB
+            wrSensorReg16_8(0x4300, 0x61, sensor);     // Format Ctl = RGB565
             rdSensorReg16_8(0x3818, &reg_val, sensor); // Timing Ctl = Mirror/Vertical flip
             wrSensorReg16_8(0x3818, (reg_val | 0x60) & 0xff, sensor);
             rdSensorReg16_8(0x3621, &reg_val, sensor); // Array Ctl 01 = Horizontal bin
@@ -61,10 +57,10 @@ void arducam_raw_init(int width, int depth, uint8_t sensor) {
      */
     wrSensorRegs16_8(OV5642_RAW_Init_start, sensor);
 
-    wrSensorReg16_8(REG_DVPHO_HI, (uint8_t) (width >> 8), sensor);
-    wrSensorReg16_8(REG_DVPHO_LO, (uint8_t) (width & 0x0ff), sensor);
-    wrSensorReg16_8(REG_DVPVO_HI, (uint8_t) (depth >> 8), sensor);
-    wrSensorReg16_8(REG_DVPVO_LO, (uint8_t) (depth & 0x0ff), sensor);
+    wrSensorReg16_8(REG_DVPHO_HI, (uint8_t)(width >> 8), sensor);
+    wrSensorReg16_8(REG_DVPHO_LO, (uint8_t)(width & 0x0ff), sensor);
+    wrSensorReg16_8(REG_DVPVO_HI, (uint8_t)(depth >> 8), sensor);
+    wrSensorReg16_8(REG_DVPVO_LO, (uint8_t)(depth & 0x0ff), sensor);
 
     wrSensorRegs16_8(OV5642_RAW_Init_finish, sensor);
 }
@@ -88,13 +84,12 @@ void arducam_get_resolution(int *width, int *depth, uint8_t sensor) {
 
 int arducam_set_resolution(int format, int width, uint8_t sensor) {
     int rc = width;
-    switch(width) {
+    switch (width) {
     case 320:
         if (format == RAW) {
             DBG_PUT("320x240 not supported for RAW");
             rc = 0;
-        }
-        else
+        } else
             wrSensorRegs16_8(ov5642_320x240, sensor);
         break;
     case 640:
@@ -107,8 +102,7 @@ int arducam_set_resolution(int format, int width, uint8_t sensor) {
         if (format == RAW) {
             DBG_PUT("1024x768 not supported for RAW");
             rc = 0;
-        }
-        else
+        } else
             wrSensorRegs16_8(ov5642_1024x768, sensor);
         break;
     case 1280:
@@ -116,7 +110,7 @@ int arducam_set_resolution(int format, int width, uint8_t sensor) {
             arducam_raw_init(1280, 960, sensor);
         else
             wrSensorRegs16_8(ov5642_1280x960, sensor);
-      break;
+        break;
 #if 0
     case 1600:
       wrSensorRegs16_8(ov5642_1600x1200, sensor);
@@ -146,7 +140,7 @@ int arducam_set_resolution(int format, int width, uint8_t sensor) {
             rc = 0;
 #endif
         }
-      break;
+        break;
     default:
         DBG_PUT("unsupported width\r\n");
         rc = 0;
@@ -162,7 +156,7 @@ bool arducam_wait_for_ready(uint8_t sensor) {
     /* Workaround for the Arducam thinking the first write is a read from 0x40 */
     uint8_t wval;
     uint8_t rval;
-    for (int i=0; i<10; i++) {
+    for (int i = 0; i < 10; i++) {
         wval = READY_MAGIC + i;
         rval = 0;
         write_reg(AC_REG_TEST, wval, sensor);
@@ -193,24 +187,19 @@ static uint32_t fake_length;
 static uint32_t fake_data;
 #endif
 
-static uint8_t read_fifo(uint8_t sensor)
-{
+static uint8_t read_fifo(uint8_t sensor) {
     uint8_t data;
 #ifdef FAKE_CAM
     fake_data++;
     if (fake_data == 1) {
         data = 0xff;
-    }
-    else if (fake_data == 2) {
+    } else if (fake_data == 2) {
         data = 0xd8;
-    }
-    else if (fake_data == (fake_length - 1)) {
+    } else if (fake_data == (fake_length - 1)) {
         data = 0xff;
-    }
-    else if (fake_data == fake_length) {
+    } else if (fake_data == fake_length) {
         data = 0xd9;
-    }
-    else {
+    } else {
         data = fake_data;
     }
 #else
@@ -219,9 +208,7 @@ static uint8_t read_fifo(uint8_t sensor)
     return data;
 }
 
-void flush_fifo(uint8_t sensor) {
-    write_reg(ARDUCHIP_FIFO, FIFO_CLEAR_MASK, sensor);
-}
+void flush_fifo(uint8_t sensor) { write_reg(ARDUCHIP_FIFO, FIFO_CLEAR_MASK, sensor); }
 
 void start_capture(uint8_t sensor) {
 #ifdef FAKE_CAM
@@ -230,18 +217,15 @@ void start_capture(uint8_t sensor) {
     write_reg(ARDUCHIP_FIFO, FIFO_START_MASK, sensor);
 }
 
-void clear_fifo_flag(uint8_t sensor) {
-    write_reg(ARDUCHIP_FIFO, FIFO_CLEAR_MASK, sensor);
-}
+void clear_fifo_flag(uint8_t sensor) { write_reg(ARDUCHIP_FIFO, FIFO_CLEAR_MASK, sensor); }
 
-void set_test_mode(uint8_t mode, uint8_t sensor)
-{
+void set_test_mode(uint8_t mode, uint8_t sensor) {
     write_reg(AC_REG_TEST_MODE, mode, sensor);
     HAL_Delay(1000);
 }
 
 uint32_t read_fifo_length(uint8_t sensor) {
-    uint32_t len1,len2,len3,len=0;
+    uint32_t len1, len2, len3, len = 0;
     len1 = read_reg(FIFO_SIZE1, sensor);
     len2 = read_reg(FIFO_SIZE2, sensor);
     len3 = read_reg(FIFO_SIZE3, sensor) & 0x7f;
@@ -249,25 +233,22 @@ uint32_t read_fifo_length(uint8_t sensor) {
     return len;
 }
 
-//Set corresponding bit
-void set_bit(uint8_t addr, uint8_t bit, uint8_t sensor)
-{
+// Set corresponding bit
+void set_bit(uint8_t addr, uint8_t bit, uint8_t sensor) {
     uint8_t temp;
     temp = read_reg(addr, sensor);
     write_reg(addr, temp | bit, sensor);
 }
 
-//Clear corresponding bit
-void clear_bit(uint8_t addr, uint8_t bit, uint8_t sensor)
-{
+// Clear corresponding bit
+void clear_bit(uint8_t addr, uint8_t bit, uint8_t sensor) {
     uint8_t temp;
     temp = read_reg(addr, sensor);
     write_reg(addr, temp & (~bit), sensor);
 }
 
-//Get corresponding bit status
-uint8_t get_bit(uint8_t addr, uint8_t bit, uint8_t sensor)
-{
+// Get corresponding bit status
+uint8_t get_bit(uint8_t addr, uint8_t bit, uint8_t sensor) {
     uint8_t temp;
     temp = read_reg(addr, sensor);
     temp = temp & bit;
@@ -275,10 +256,10 @@ uint8_t get_bit(uint8_t addr, uint8_t bit, uint8_t sensor)
 }
 
 void arducam_set_saturation(int saturation, uint8_t sensor) {
-    wrSensorReg16_8(0x5001, 0xff, sensor); // enable saturation setting
+    wrSensorReg16_8(0x5001, 0xff, sensor);            // enable saturation setting
     wrSensorReg16_8(0x5583, saturation << 4, sensor); // Set U saturation
     wrSensorReg16_8(0x5584, saturation << 4, sensor); // Set V saturation
-    wrSensorReg16_8(0x5580, 0x02, sensor); // enable Special Effects
+    wrSensorReg16_8(0x5580, 0x02, sensor);            // enable Special Effects
 }
 
 int arducam_get_saturation(uint8_t sensor) {
@@ -288,39 +269,34 @@ int arducam_get_saturation(uint8_t sensor) {
     return reg_val >> 4;
 }
 
-static inline uint32_t min(uint32_t a, uint32_t b) {
-    return (a <= b) ? a : b;
-}
+static inline uint32_t min(uint32_t a, uint32_t b) { return (a <= b) ? a : b; }
 
 #define BMP_HDR_LEN 14
 #define INFO_HDR_LEN 52
 #define BMPIMAGEOFFSET (BMP_HDR_LEN + INFO_HDR_LEN)
 
-#define pgm_read_byte(x)        (*((char *)x))
+#define pgm_read_byte(x) (*((char *)x))
 
-char bmp_header[BMPIMAGEOFFSET] =
-{
-  'B', 'M', 0x36, 0x58, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, BMPIMAGEOFFSET, 0x00, 0x00, 0x00, INFO_HDR_LEN, 0x00,
-  0x00, 0x00, 0x40, 0x01, 0x00, 0x00, 0xF0, 0x00, 0x00, 0x00, 0x01, 0x00, 0x10, 0x00, 0x03, 0x00,
-  0x00, 0x00, 0x00, 0x58, 0x02, 0x00, 0xC4, 0x0E, 0x00, 0x00, 0xC4, 0x0E, 0x00, 0x00, 0x00, 0x00,
-  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xF8, 0x00, 0x00, 0xE0, 0x07, 0x00, 0x00, 0x1F, 0x00,
-  0x00, 0x00
-};
-
+char bmp_header[BMPIMAGEOFFSET] = {
+    'B',          'M',  0x36, 0x58, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, BMPIMAGEOFFSET, 0x00, 0x00, 0x00,
+    INFO_HDR_LEN, 0x00, 0x00, 0x00, 0x40, 0x01, 0x00, 0x00, 0xF0, 0x00, 0x00,           0x00, 0x01, 0x00,
+    0x10,         0x00, 0x03, 0x00, 0x00, 0x00, 0x00, 0x58, 0x02, 0x00, 0xC4,           0x0E, 0x00, 0x00,
+    0xC4,         0x0E, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,           0x00, 0x00, 0xF8,
+    0x00,         0x00, 0xE0, 0x07, 0x00, 0x00, 0x1F, 0x00, 0x00, 0x00};
 
 static void dump_uart_bmp(uint8_t sensor) {
     uint32_t width = 320;
     uint32_t depth = 240;
-    uint32_t length = width*depth;
+    uint32_t length = width * depth;
     char buf[64];
     buf[2] = ' ';
     buf[3] = 0;
 
-    char BMP_hdr[BMP_HDR_LEN] = { 0 };
-    char info_hdr[INFO_HDR_LEN] = { 0 };
+    char BMP_hdr[BMP_HDR_LEN] = {0};
+    char info_hdr[INFO_HDR_LEN] = {0};
     BMP_hdr[0] = 'B';
     BMP_hdr[1] = 'M';
-    uint32_t filesize = length*2 + BMP_HDR_LEN + INFO_HDR_LEN;
+    uint32_t filesize = length * 2 + BMP_HDR_LEN + INFO_HDR_LEN;
     BMP_hdr[2] = filesize;
     BMP_hdr[3] = filesize >> 8;
     BMP_hdr[4] = filesize >> 16;
@@ -329,7 +305,7 @@ static void dump_uart_bmp(uint8_t sensor) {
 
     // write the header
     int i;
-    for (i=0; i<BMP_HDR_LEN; i++) {
+    for (i = 0; i < BMP_HDR_LEN; i++) {
         buf[0] = hex_2_ascii(BMP_hdr[i] >> 4);
         buf[1] = hex_2_ascii(BMP_hdr[i] & 0x0f);
         DBG_PUT(buf);
@@ -344,9 +320,9 @@ static void dump_uart_bmp(uint8_t sensor) {
     info_hdr[9] = depth >> 8;
     info_hdr[10] = depth >> 16;
     info_hdr[11] = depth >> 24;
-    info_hdr[12] = 1; // # of color planes
+    info_hdr[12] = 1;  // # of color planes
     info_hdr[14] = 16; // # of bits per pixel
-    info_hdr[16] = 3; // BI_BITFIELDS
+    info_hdr[16] = 3;  // BI_BITFIELDS
     info_hdr[20] = (length * 2);
     info_hdr[21] = (length * 2) >> 8;
     info_hdr[22] = (length * 2) >> 16;
@@ -360,13 +336,13 @@ static void dump_uart_bmp(uint8_t sensor) {
     info_hdr[48] = 0x1f; // Blue channel bitmask in big-endian
 
     // write the info
-    for (i=0; i<INFO_HDR_LEN; i++) {
+    for (i = 0; i < INFO_HDR_LEN; i++) {
         buf[0] = hex_2_ascii(info_hdr[i] >> 4);
         buf[1] = hex_2_ascii(info_hdr[i] & 0x0f);
         DBG_PUT(buf);
     }
 
-    for (int i=0; i<length; i++) {
+    for (int i = 0; i < length; i++) {
         uint8_t VH = read_fifo(sensor);
         uint8_t VL = read_fifo(sensor);
         sprintf(buf, "%02x %02x ", VH, VL);
@@ -442,7 +418,7 @@ static void uart_dump_buf(uint8_t *data, uint16_t len) {
     char digit[4];
     digit[2] = ' ';
     digit[3] = 0;
-    for (int i=0; i<len; i++) {
+    for (int i = 0; i < len; i++) {
         digit[0] = hex_2_ascii(data[i] >> 4);
         digit[1] = hex_2_ascii(data[i] & 0x0f);
         DBG_PUT(digit);
@@ -463,7 +439,7 @@ int arducam_dump_image(uint8_t sensor, io_funcs_t *io_driver) {
 #ifndef FAKE_CAM
     length = arducam_read_fifo_length(sensor);
 #else
-    length = 2*MAX_BLK_SZ;
+    length = 2 * MAX_BLK_SZ;
     fake_length = length;
 #endif
 
@@ -475,7 +451,7 @@ int arducam_dump_image(uint8_t sensor, io_funcs_t *io_driver) {
         }
     }
 
-    for (i=0; i<length; i++) {
+    for (i = 0; i < length; i++) {
         prev = curr;
         curr = read_fifo(sensor);
         if ((curr == 0xd9) && (prev == 0xff)) {
@@ -484,7 +460,7 @@ int arducam_dump_image(uint8_t sensor, io_funcs_t *io_driver) {
 
             DBG_PUT("writing footer block\r\n");
             uart_dump_buf(buf, x);
-            
+
             if (io_driver->write(io_driver, buf, x)) {
                 DBG_PUT("Write early footer failed");
             }
@@ -505,8 +481,7 @@ int arducam_dump_image(uint8_t sensor, io_funcs_t *io_driver) {
                 }
                 x = 0;
             }
-        }
-        else if ((curr == 0xd8) && (prev = 0xff)) {
+        } else if ((curr == 0xd8) && (prev = 0xff)) {
             found_header = true;
             buf[0] = prev;
             buf[1] = curr;
@@ -544,7 +519,7 @@ static void dump_uart_raw(uint32_t length, uint8_t sensor) {
     buf[2] = ' ';
     buf[3] = '\0';
 
-    for (int i=0; i<length/2; i++) {
+    for (int i = 0; i < length / 2; i++) {
         uint8_t rgb = read_fifo(sensor);
         buf[0] = hex_2_ascii(rgb >> 4);
         buf[1] = hex_2_ascii(rgb & 0x0f);
@@ -552,20 +527,20 @@ static void dump_uart_raw(uint32_t length, uint8_t sensor) {
     }
 }
 
-
 void arducam_capture_image(uint8_t sensor) {
     char msg[64];
     sprintf(msg, "Single Capture on sensor %d\r\n", sensor);
     DBG_PUT(msg);
 
-    write_reg(ARDUCHIP_TIM, VSYNC_LEVEL_MASK, sensor);   //VSYNC is active HIGH
+    write_reg(ARDUCHIP_TIM, VSYNC_LEVEL_MASK, sensor); // VSYNC is active HIGH
 
     flush_fifo(sensor);
     clear_fifo_flag(sensor);
     start_capture(sensor);
 
 #ifndef FAKE_CAM
-    while(!get_bit(ARDUCHIP_TRIG , CAP_DONE_MASK, sensor)) {}
+    while (!get_bit(ARDUCHIP_TRIG, CAP_DONE_MASK, sensor)) {
+    }
 #endif
     DBG_PUT("Capture complete\r\n");
 }
@@ -576,7 +551,7 @@ void SingleCapTransfer(int format, uint8_t sensor) {
 
     sprintf(buf, "Single Capture Transfer type %x\r\n", format);
     DBG_PUT(buf);
-    write_reg(ARDUCHIP_TIM, VSYNC_LEVEL_MASK, sensor);   //VSYNC is active HIGH
+    write_reg(ARDUCHIP_TIM, VSYNC_LEVEL_MASK, sensor); // VSYNC is active HIGH
     uint8_t val;
     rdSensorReg16_8(REG_FORMAT_CTL, &val, sensor);
     sprintf(buf, "format reg: 0x%02x\r\n", val);
@@ -587,23 +562,24 @@ void SingleCapTransfer(int format, uint8_t sensor) {
     start_capture(sensor);
 
 #ifndef FAKE_CAM
-    while(!get_bit(ARDUCHIP_TRIG , CAP_DONE_MASK, sensor)){}
+    while (!get_bit(ARDUCHIP_TRIG, CAP_DONE_MASK, sensor)) {
+    }
 
     length = read_fifo_length(sensor);
 #else
-    length = 2*2048;
+    length = 2 * 2048;
     fake_length = length;
 #endif
     sprintf(buf, "Capture complete! FIFO len 0x%lx\r\n", length);
     DBG_PUT(buf);
     DBG_PUT("JPG");
 
-    switch(format) {
+    switch (format) {
     case BMP:
         dump_uart_bmp(sensor);
         break;
     case RAW:
-        dump_uart_raw(length*2, sensor);
+        dump_uart_raw(length * 2, sensor);
         break;
     default:
         break;
@@ -614,8 +590,4 @@ void SingleCapTransfer(int format, uint8_t sensor) {
 #endif
 }
 
-
-void set_image_num(uint8_t num){
-	image_number = num;
-}
-
+void set_image_num(uint8_t num) { image_number = num; }

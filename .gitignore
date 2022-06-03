@@ -68,3 +68,7 @@ host/img.jpg(1)
 *.jpg***
 
 .settings/language.settings.xml
+.vscode/c_cpp_properties.json
+.vscode/launch.json
+.vscode/settings.json
+.vscode/tasks.json
