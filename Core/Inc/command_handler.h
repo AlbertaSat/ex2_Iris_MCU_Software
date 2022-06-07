@@ -20,12 +20,17 @@
 #define SENSOR_IDLE 0x30
 #define SENSOR_ACTIVE 0x40
 #define GET_HK 0x50
-#define I2C_COMPLEX_SHIT 0x69
 
 extern int format;
 
 extern int VIS_DETECTED;
 extern int NIR_DETECTED;
+
+typedef struct __attribute__((__packed__)) currentsense_packet_s {
+    uint8_t reg;
+    uint16_t value;
+} currentsense_packet_t;
+
 
 void spi_handle_command(uint8_t cmd);
 void uart_handle_command(char *cmd);

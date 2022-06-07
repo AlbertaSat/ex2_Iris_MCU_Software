@@ -9,7 +9,7 @@
 #include "debug.h"
 #include "nand_m79a.h"
 #include "arducam.h"
-
+#include "SPI_IT.h"
 extern SPI_HandleTypeDef hspi1;
 extern const struct sensor_reg OV5642_JPEG_Capture_QSXGA[];
 extern const struct sensor_reg OV5642_QVGA_Preview[];
@@ -59,12 +59,14 @@ void take_image() {
     DBG_PUT("vis sensor complete\r\n");
     while (!get_bit(ARDUCHIP_TRIG, CAP_DONE_MASK, NIR_SENSOR)) {
     }
+    DBG_PUT("nir sensor complete\r\n");
     DBG_PUT("Loop broke!\r\n");
     ;
 
     // ack over SPI
     SPI1_IT_Transmit(&ack);
 
+	//todo:
     // keep track of how many images we have captured. This could come after transferring
     // to flash
     //	_iterate_image_number();
@@ -97,7 +99,7 @@ void count_images() {
 void sensor_idle() {
     // pull mosfet driver pin low, cutting power to sensors
     HAL_GPIO_WritePin(CAM_EN_GPIO_Port, CAM_EN_Pin, GPIO_PIN_RESET);
-    //	SPI1_IT_Transmit(&ack);
+	SPI1_IT_Transmit(&ack);
 
     return;
 }
