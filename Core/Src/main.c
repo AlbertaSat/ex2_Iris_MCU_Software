@@ -70,6 +70,7 @@ UART_HandleTypeDef huart1;
 enum ss_states {
 	LISTENING,
 	SEND_DATA,
+	GET_DATA,
 	FINISH,
 } ss_state;
 /* USER CODE END PV */
@@ -88,12 +89,12 @@ static void MX_USART1_UART_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-uint8_t state = receiving;
-uint8_t RX_Data = 0xFF;
-
-void spiSlaveReStart(SPI_HandleTypeDef *hspi);
-void rcc_spi_force_reset(SPI_HandleTypeDef *hspi);
-void rcc_spi_release_reset(SPI_HandleTypeDef *hspi);
+//uint8_t state = receiving;
+//uint8_t RX_Data = 0xFF;
+//
+//void spiSlaveReStart(SPI_HandleTypeDef *hspi);
+//void rcc_spi_force_reset(SPI_HandleTypeDef *hspi);
+//void rcc_spi_release_reset(SPI_HandleTypeDef *hspi);
 /* USER CODE END 0 */
 
 /**
@@ -130,11 +131,11 @@ int main(void)
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
 //   init nand flash
-  NAND_SPI_Init(&hspi2);
-  //sensor_active();
-  char cmd[64];
-  char buf[64];
-  char *ptr = cmd;
+//  NAND_SPI_Init(&hspi2);
+//  //sensor_active();
+//  char cmd[64];
+//  char buf[64];
+//  char *ptr = cmd;
 //#ifdef UART_DEBUG
 //  DBG_PUT("-----------------------------------\r\n");
 //  DBG_PUT("Iris Electronics Test Software\r\n"
@@ -142,17 +143,31 @@ int main(void)
 //  DBG_PUT("-----------------------------------\r\n");
 //#endif
 
-  init_temp_sensors();
-  NAND_SPI_Init(&hspi2);
-
+//  init_temp_sensors();
+//  NAND_SPI_Init(&hspi2);
+//
   uint8_t rx_data;
   uint8_t tx_ack = 0xAA;
+  uint8_t tx_nack = 0xAA;
   uint8_t tx_buffer[16];
+  uint8_t rx_buffer[5];
 
   int i;
   for (i = 0; i < 16; i++) {
 	  tx_buffer[i] = i * 3;
   }
+
+  const char * filepath = "/home/jenish/Downloads/index.png";
+  uint8_t *buffer = (uint8_t*) calloc(PAGE_SIZE, sizeof(uint8_t));
+
+  FILE *read_fptr;
+  read_fptr = fopen(filepath, "rb");
+
+  if (read_fptr == NULL) {
+	  return NULL;
+  }
+
+  read_bin_file(read_fptr, buffer);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -164,25 +179,45 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
 	  switch (ss_state) {
-	  case LISTENING:
-		  HAL_SPI_Receive(&hspi1, &rx_data, 1, HAL_MAX_DELAY);
-		  if (rx_data == 0x20) {
-			  HAL_SPI_Transmit(&hspi1, &tx_ack, 1, HAL_MAX_DELAY);
-			  ss_state = SEND_DATA;
+		  case LISTENING:
+			  HAL_SPI_Receive(&hspi1, &rx_data, 1, HAL_MAX_DELAY);
+			  if (rx_data == 0x10) {
+				  HAL_SPI_Transmit(&hspi1, &tx_ack, 1, HAL_MAX_DELAY);
+				  ss_state = SEND_DATA;
+			  } else if (rx_data == 0x20) {
+				  HAL_SPI_Transmit(&hspi1, &tx_ack, 1, HAL_MAX_DELAY);
+				  ss_state = SEND_DATA;
+			  } else if (rx_data == 0x60) {
+				  HAL_SPI_Transmit(&hspi1, &tx_ack, 1, HAL_MAX_DELAY);
+				  ss_state = GET_DATA;
+			  } else {
+				  HAL_SPI_Transmit(&hspi1, &tx_nack, 1, HAL_MAX_DELAY);
+				  ss_state = FINISH;
+			  }
+			  break;
+		  case SEND_DATA:
+			  HAL_SPI_Receive(&hspi1, &rx_data, 1, HAL_MAX_DELAY);
+			  if (rx_data == 0xDD) {
+				  HAL_SPI_Transmit(&hspi1, tx_buffer, 16, HAL_MAX_DELAY);
+				  ss_state = FINISH;
+			  }
+			  break;
+		  case GET_DATA:
+			  if (HAL_SPI_Receive(&hspi1, rx_buffer, 5, HAL_MAX_DELAY) == HAL_OK) {
+				  HAL_SPI_Transmit(&hspi1, &tx_ack, 1, HAL_MAX_DELAY);
+				  ss_state = FINISH;
+			  } else {
+				  HAL_SPI_Transmit(&hspi1, &tx_nack, 1, HAL_MAX_DELAY);
+				  ss_state = FINISH;
+			  }
+			  break;
+		  case FINISH:
+			  //spiSlaveReStart();
+			  ss_state = LISTENING;
+			  break;
 		  }
-		  break;
-	  case SEND_DATA:
-		  HAL_SPI_Receive(&hspi1, &rx_data, 1, HAL_MAX_DELAY);
-		  if (rx_data == 0xDD) {
-			  HAL_SPI_Transmit(&hspi1, tx_buffer, 16, HAL_MAX_DELAY);
-			  ss_state = FINISH;
-		  }
-		  break;
-	  case FINISH:
-		  spiSlaveReStart(&hspi1);
-		  ss_state = LISTENING;
-		  break;
-	  }
+//	  DBG_PUT("HULKK is the strongest avenger!\n");
+//	  HAL_Delay(5000);
 	  	  //HAL_I2C_Slave_Receive(&hi2c1, buf_data, 24, HAL_MAX_DELAY);
   }
 
@@ -267,6 +302,10 @@ int main(void)
     /* USER CODE BEGIN 3 */
 
   /* USER CODE END 3 */
+}
+
+uint8_t * read_bin_file(FILE *fptr, uint8_t *buffer) {
+    fread(buffer, PAGE_SIZE*sizeof(uint8_t), 1, fptr);
 }
 
 /**
@@ -620,30 +659,30 @@ void spiSlaveReStart(SPI_HandleTypeDef *hspi) {
   rcc_spi_release_reset(hspi);
   HAL_SPI_Init(hspi);
 }
-
-
-void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef * hspi)
-{
-	state = receiving;
-	RX_Data = 0x00;
-}
-
-void HAL_SPI_RxCpltCallback(SPI_HandleTypeDef * hspi)
-
-{
-	state = handling_command;
-	char buf[64];
-	sprintf(buf, "Received 0x%x\r\n", RX_Data);
-	DBG_PUT(buf);
-
-}
-void HAL_SPI_TxRxCpltCallback(SPI_HandleTypeDef * hspi)
-{
-		state = receiving;
-//		char buf[64];
-//		sprintf(buf, "Received 0x%x\r\n", RX_Data);
-//		DBG_PUT(buf);
-}
+//
+//
+//void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef * hspi)
+//{
+//	state = receiving;
+//	RX_Data = 0x00;
+//}
+//
+//void HAL_SPI_RxCpltCallback(SPI_HandleTypeDef * hspi)
+//
+//{
+//	state = handling_command;
+//	char buf[64];
+//	sprintf(buf, "Received 0x%x\r\n", RX_Data);
+//	DBG_PUT(buf);
+//
+//}
+//void HAL_SPI_TxRxCpltCallback(SPI_HandleTypeDef * hspi)
+//{
+//		state = receiving;
+////		char buf[64];
+////		sprintf(buf, "Received 0x%x\r\n", RX_Data);
+////		DBG_PUT(buf);
+//}
 /* USER CODE END 4 */
 
 /**
