@@ -16,10 +16,10 @@
  * @file nand_m79a_lld.c
  * @author Tharun Suresh
  * @date 2021-12-29
- * 
- * @brief Low level NAND Driver Layer 
- * 
- * This layer contains Low-level driver functions for reading and writing 
+ *
+ * @brief Low level NAND Driver Layer
+ *
+ * This layer contains Low-level driver functions for reading and writing
  * to M79a NAND Flash via SPI.
  */
 
@@ -32,17 +32,17 @@
 /**
  * @brief Sends command to reset the NAND Flash chip.
  * @note Transaction length: 1 byte; Returns success when Flash is ready for further instructions.
- * 
+ *
  * @param[in] None
  * @return NAND_ReturnType
  */
 NAND_ReturnType NAND_Reset(void) {
 
     uint8_t command = SPI_NAND_RESET;
-    SPI_Params transmit = { .buffer = &command, .length = 1 };
+    SPI_Params transmit = {.buffer = &command, .length = 1};
 
     NAND_SPI_ReturnType SPI_Status = NAND_SPI_Send(&transmit);
-    NAND_Wait(T_POR);	// wait for T_POR = 1.25 ms after reset
+    NAND_Wait(T_POR); // wait for T_POR = 1.25 ms after reset
 
     if (SPI_Status != SPI_OK) {
         return Ret_ResetFailed;
@@ -57,13 +57,13 @@ NAND_ReturnType NAND_Reset(void) {
  * @note Waits until OIP bit in the Status Register resets again, indicating
  *  that the NAND Flash is ready for further instructions. If OIP = 1,
  *  operation is ongoing, i.e. device is busy.
- * 
+ *
  *  Assumption: the device keeps outputting the status register contents
  *  until another command is issued. This is shown in pages 17 and 31.
  *  TODO: confirm with an oscilloscope.
- * 
+ *
  * @param[in] None
- * @return NAND_ReturnType 
+ * @return NAND_ReturnType
  */
 
 #define MAX_ATTEMPTS 10
@@ -73,39 +73,38 @@ NAND_ReturnType NAND_Wait_Until_Ready(void) {
 
     /* SPI Transaction set up for NAND_SPI_Receive */
     uint8_t data_rx = 0;
-    SPI_Params rx = { .buffer = &data_rx, .length = 1 };
+    SPI_Params rx = {.buffer = &data_rx, .length = 1};
 
     NAND_Get_Features(SPI_NAND_STATUS_REG_ADDR, &data_rx);
 
     /* if busy, keep polling for until reaching max_attempts. if still busy, return busy */
     while (CHECK_OIP(data_rx)) {
-	if (timeout_counter < MAX_ATTEMPTS) {
-	    NAND_SPI_Receive(&rx);
-	    //NAND_Get_Features(SPI_NAND_STATUS_REG_ADDR, &data_rx);
-	    timeout_counter += 1;
-	} else {
-	    return Ret_NANDBusy;
-	}
+        if (timeout_counter < MAX_ATTEMPTS) {
+            NAND_SPI_Receive(&rx);
+            // NAND_Get_Features(SPI_NAND_STATUS_REG_ADDR, &data_rx);
+            timeout_counter += 1;
+        } else {
+            return Ret_NANDBusy;
+        }
     }
 
     /* Check the Program Failed bit */
     if (data_rx & SPI_NAND_PF) {
-	return Ret_Failed;
+        return Ret_Failed;
     }
 
     return Ret_Success;
 }
 
-
 /**
  * @brief Send a dummy byte to NAND via SPI
- * 
- * @return NAND_ReturnType 
+ *
+ * @return NAND_ReturnType
  */
 NAND_ReturnType NAND_Send_Dummy_Byte(void) {
     uint8_t dummy = DUMMY_BYTE;
-    
-    SPI_Params tx = { .buffer = &dummy, .length = 1 };
+
+    SPI_Params tx = {.buffer = &dummy, .length = 1};
     NAND_SPI_ReturnType status = NAND_SPI_Send(&tx);
 
     if (status != SPI_OK) {
@@ -122,22 +121,22 @@ NAND_ReturnType NAND_Send_Dummy_Byte(void) {
 /**
  * @brief Sends command to read manufacturer and device ID of NAND flash chip
  * @note Transaction length: 4 bytes (2 each way)
- * 
+ *
  * @param nand_ID[out]  Pointer to ID structure
- * @return NAND_ReturnType 
+ * @return NAND_ReturnType
  */
 NAND_ReturnType NAND_Read_ID(NAND_ID *nand_ID) {
 
     uint8_t data_tx[] = {SPI_NAND_READ_ID, 0}; // second byte is dummy byte
-    uint8_t data_rx[2]; // data buffer for received data
+    uint8_t data_rx[2];                        // data buffer for received data
 
-    SPI_Params tx = { .buffer = data_tx, .length = 2 };
-    SPI_Params rx = { .buffer = data_rx, .length = 2 };
+    SPI_Params tx = {.buffer = data_tx, .length = 2};
+    SPI_Params rx = {.buffer = data_rx, .length = 2};
 
     NAND_SPI_SendReceive(&tx, &rx);
 
-    nand_ID -> manufacturer_ID = data_rx[0]; // second last byte from transmission
-    nand_ID -> device_ID       = data_rx[1]; // last byte
+    nand_ID->manufacturer_ID = data_rx[0]; // second last byte from transmission
+    nand_ID->device_ID = data_rx[1];       // last byte
 
     return Ret_Success;
 }
@@ -162,7 +161,7 @@ NAND_ReturnType NAND_Read_Param_Page(NAND_Parameter_Page_t *parameters) {
         return rc;
     }
 
-    rc = NAND_Cache_Read(0, sizeof(*parameters), (uint8_t *) parameters);
+    rc = NAND_Cache_Read(0, sizeof(*parameters), (uint8_t *)parameters);
 
     rc |= NAND_Set_Features(SPI_NAND_CFG_REG_ADDR, cfg_data);
     return rc;
@@ -174,16 +173,16 @@ NAND_ReturnType NAND_Read_Param_Page(NAND_Parameter_Page_t *parameters) {
 
 /**
  * @brief Returns Ret_NANDBusy if there are any operations in progress.
- * @note 
+ * @note
  *      Sends command to read status register bit 1 (OIP).
  *      Transaction length: 3 bytes (2 to transmit, 1 to receive)
- * 
+ *
  * @param[in] None
- * @return NAND_ReturnType 
+ * @return NAND_ReturnType
  */
 NAND_ReturnType NAND_Check_Busy(void) {
     uint8_t status_reg;
-    
+
     NAND_Get_Features(SPI_NAND_STATUS_REG_ADDR, &status_reg);
     if (CHECK_OIP(status_reg)) { // if OIP bit is set
         return Ret_NANDBusy;
@@ -200,17 +199,17 @@ NAND_ReturnType NAND_Check_Busy(void) {
  *          SPI_NAND_CFG_REG_ADDR     = 0xB0,
  *          SPI_NAND_STATUS_REG_ADDR  = 0xC0,
  *          SPI_NAND_DIE_SEL_REG_ADDR = 0xD0
- * 
+ *
  *      Transaction length: 3 bytes (2 to transmit, 1 to receive)
  *
  * @param reg_addr[in]  Address of type RegisterAddr
  * @param reg[out]      Pointer to register contents
- * @return NAND_ReturnType 
+ * @return NAND_ReturnType
  */
 NAND_ReturnType NAND_Get_Features(RegisterAddr reg_addr, uint8_t *reg) {
     uint8_t command[] = {SPI_NAND_GET_FEATURES, reg_addr};
-    SPI_Params tx = { .buffer = command, .length = 2 };
-    SPI_Params rx = { .buffer = reg,     .length = 1 };
+    SPI_Params tx = {.buffer = command, .length = 2};
+    SPI_Params rx = {.buffer = reg, .length = 1};
 
     if (NAND_SPI_SendReceive(&tx, &rx) == SPI_OK) {
         return Ret_Success;
@@ -226,19 +225,19 @@ NAND_ReturnType NAND_Get_Features(RegisterAddr reg_addr, uint8_t *reg) {
  *          SPI_NAND_BLKLOCK_REG_ADDR = 0xA0,
  *          SPI_NAND_CFG_REG_ADDR     = 0xB0,
  *          SPI_NAND_DIE_SEL_REG_ADDR = 0xD0
- * 
+ *
  *      Transaction length: 3 bytes (2 to transmit, 1 to receive)
- * 
+ *
  * @param reg_addr[in]  Address of type RegisterAddr
  * @param reg[out]      Pointer to register contents
- * @return NAND_ReturnType 
+ * @return NAND_ReturnType
  */
 NAND_ReturnType NAND_Set_Features(RegisterAddr reg_addr, uint8_t reg) {
     if (reg_addr == SPI_NAND_STATUS_REG_ADDR) {
         return Ret_RegAddressInvalid;
     }
     uint8_t command[] = {SPI_NAND_SET_FEATURES, reg_addr, reg};
-    SPI_Params tx = { .buffer = command, .length = 3 };
+    SPI_Params tx = {.buffer = command, .length = 3};
 
     if (NAND_SPI_Send(&tx) == SPI_OK) {
         return Ret_Success;
@@ -246,7 +245,6 @@ NAND_ReturnType NAND_Set_Features(RegisterAddr reg_addr, uint8_t reg) {
         return Ret_Failed;
     }
 }
-
 
 /******************************************************************************
  *                              Read Operations
@@ -258,7 +256,8 @@ NAND_ReturnType NAND_Cache_Read(uint16_t col, uint16_t length, uint8_t *buffer) 
 
     SPI_Params tx_cache_read = {.buffer = command_cache_read, .length = 4};
     SPI_Params rx_cache_read = {.buffer = buffer, .length = length};
-    // TODO: Check if we can read just 2048 data bits per page. Datasheet shows 2176 bytes including the spare locations.
+    // TODO: Check if we can read just 2048 data bits per page. Datasheet shows 2176 bytes including the spare
+    // locations.
 
     if (NAND_SPI_SendReceive(&tx_cache_read, &rx_cache_read) != SPI_OK) {
         return Ret_ReadFailed;
@@ -287,11 +286,11 @@ NAND_ReturnType NAND_Page_Load(uint32_t paddr) {
  *          1) Send page read command to read data from page to cache
  *          2) Wait until OIP bit resets in status register
  *          3) Read data from cache
- * 
+ *
  * @param addr[in]      Pointer to PhysicalAddrs struct
  * @param length[in]    Number of bytes to read
  * @param buffer[out]   Pointer to contents read from page
- * @return NAND_ReturnType 
+ * @return NAND_ReturnType
  */
 NAND_ReturnType NAND_Page_Read(PhysicalAddrs *addr, uint16_t length, uint8_t *buffer) {
     NAND_ReturnType status;
@@ -302,12 +301,11 @@ NAND_ReturnType NAND_Page_Read(PhysicalAddrs *addr, uint16_t length, uint8_t *bu
 
     /* Command 1: PAGE READ. See datasheet page 16 for details */
     if ((status = NAND_Page_Load(addr->rowAddr)) != Ret_Success) {
-	return status;
+        return status;
     }
     /* Command 3: READ FROM CACHE. See datasheet page 18 for details */
     return NAND_Cache_Read(addr->colAddr, length, buffer);
 }
-
 
 /******************************************************************************
  *                              Write Operations
@@ -326,11 +324,11 @@ NAND_ReturnType NAND_Page_Read(PhysicalAddrs *addr, uint16_t length, uint8_t *bu
  *          2) PROGRAM LOAD : load data into cache register
  *          3) PROGRAM EXECUTE : transfers data from cache to main array and waits until OIP bit is cleared
  *          4) WRITE DISABLE
- * 
+ *
  * @param addr[in]      Pointer to PhysicalAddrs struct
  * @param length[in]    Number of bytes to write
  * @param buffer[in]    Pointer to contents read from page
- * @return NAND_ReturnType 
+ * @return NAND_ReturnType
  */
 NAND_ReturnType NAND_Page_Program(PhysicalAddrs *addr, uint16_t length, uint8_t *buffer) {
     if (length > PAGE_DATA_SIZE) {
@@ -345,8 +343,9 @@ NAND_ReturnType NAND_Page_Program(PhysicalAddrs *addr, uint16_t length, uint8_t 
     uint8_t command_load[3] = {SPI_NAND_PROGRAM_LOAD_X1, BYTE_1(col), BYTE_0(col)};
 
     SPI_Params tx_cmd = {.buffer = command_load, .length = 3};
-    SPI_Params tx_data = {.buffer = buffer, .length = PAGE_DATA_SIZE}; 
-    // TODO: Check if we can write just 2048 data bits per page. Datasheet shows 2176 bytes including the spare locations.  
+    SPI_Params tx_data = {.buffer = buffer, .length = PAGE_DATA_SIZE};
+    // TODO: Check if we can write just 2048 data bits per page. Datasheet shows 2176 bytes including the spare
+    // locations.
 
     if (NAND_SPI_Send_Command_Data(&tx_cmd, &tx_data) != SPI_OK) {
         return Ret_WriteFailed;
@@ -365,11 +364,9 @@ NAND_ReturnType NAND_Page_Program(PhysicalAddrs *addr, uint16_t length, uint8_t 
     return NAND_Wait_Until_Ready();
 }
 
-
 /******************************************************************************
  *                              Erase Operations
  *****************************************************************************/
-
 
 /* TODO:
  * The first spare area location in each bad block contains the bad-block mark (0x00).
@@ -386,9 +383,9 @@ NAND_ReturnType NAND_Page_Program(PhysicalAddrs *addr, uint16_t length, uint8_t 
  *          2) BLOCK ERASE
  *          3) Wait for OIP bit to clear
  *          4) WRITE DISABLE
- * 
+ *
  * @param addr[in]  Pointer to struct with block number
- * @return NAND_ReturnType 
+ * @return NAND_ReturnType
  */
 NAND_ReturnType NAND_Block_Erase(PhysicalAddrs *addr) {
 
@@ -396,7 +393,8 @@ NAND_ReturnType NAND_Block_Erase(PhysicalAddrs *addr) {
     __write_enable();
 
     /* Command 2: BLOCK ERASE. See datasheet page 35 for details */
-    uint32_t block = addr->block; // TODO: datasheet simply specifies block address. assuming that's the 11-bit block number padded with dummy bits. check.
+    uint32_t block = addr->block; // TODO: datasheet simply specifies block address. assuming that's the 11-bit
+                                  // block number padded with dummy bits. check.
     uint8_t command[4] = {SPI_NAND_BLOCK_ERASE, BYTE_2(block), BYTE_1(block), BYTE_0(block)};
 
     SPI_Params tx_cmd = {.buffer = command, .length = 4};
@@ -415,9 +413,7 @@ NAND_ReturnType NAND_Block_Erase(PhysicalAddrs *addr) {
     // TODO: check erase fail bit in status register and return that
 
     return Ret_Success;
-
 }
-
 
 /******************************************************************************
  *                              Move Operations
@@ -427,20 +423,9 @@ NAND_ReturnType NAND_Block_Erase(PhysicalAddrs *addr) {
 
 // }
 
-
-
-
-
 /******************************************************************************
  *                              Lock Operations
  *****************************************************************************/
-
-
-
-
-
-
-
 
 /******************************************************************************
  *                              Internal Functions
@@ -448,24 +433,24 @@ NAND_ReturnType NAND_Block_Erase(PhysicalAddrs *addr) {
 
 /**
  * @brief Enable writing to NAND.
- * 
+ *
  * @param[in] None
  * @return NAND_SPI_ReturnType
  */
 NAND_SPI_ReturnType __write_enable(void) {
     uint8_t command = SPI_NAND_WRITE_ENABLE;
-    SPI_Params transmit = { .buffer = &command, .length = 1 };
+    SPI_Params transmit = {.buffer = &command, .length = 1};
     return NAND_SPI_Send(&transmit);
 }
 
 /**
  * @brief Disable writing to NAND
- * 
+ *
  * @param[in] None
- * @return NAND_SPI_ReturnType 
+ * @return NAND_SPI_ReturnType
  */
 NAND_SPI_ReturnType __write_disable(void) {
     uint8_t command = SPI_NAND_WRITE_DISABLE;
-    SPI_Params transmit = { .buffer = &command, .length = 1 };
+    SPI_Params transmit = {.buffer = &command, .length = 1};
     return NAND_SPI_Send(&transmit);
 }

@@ -13,13 +13,7 @@
 static struct termios stdin_settings;
 static FILE *img = 0;
 
-enum DataState {
-    STATE_RESET,
-    STATE_HAVE_J,
-    STATE_HAVE_P,
-    STATE_DOWNLOADING,
-    STATE_LOCAL
-};
+enum DataState { STATE_RESET, STATE_HAVE_J, STATE_HAVE_P, STATE_DOWNLOADING, STATE_LOCAL };
 
 static void restore(void) {
     tcsetattr(STDIN_FILENO, TCSANOW, &stdin_settings);
@@ -42,10 +36,10 @@ int main(int argc, char **argv) {
     int imgcnt = 1;
 
     strncpy(imgfile, "img.jpg", MAX_NAME_LEN);
-    for (int i=0; i<argc; i++) {
+    for (int i = 0; i < argc; i++) {
         if (argv[i][0] == '-' && argv[i][1] == 'o') {
             i++;
-            strncpy(imgfile, argv[i], MAX_NAME_LEN); 
+            strncpy(imgfile, argv[i], MAX_NAME_LEN);
         }
     }
     fprintf(stderr, "output file: %s\n", imgfile);
@@ -70,23 +64,23 @@ int main(int argc, char **argv) {
     tcsetattr(STDIN_FILENO, TCSANOW, &options);
 
     atexit(restore); // reset STDIN behavior on exit
-    
+
     enum DataState state = STATE_RESET;
     int val, pos = 0;
     int count = 0;
-    while(1) {
+    while (1) {
         fd_set rfds;
-        struct timeval tv = { 0 };
+        struct timeval tv = {0};
 
         FD_ZERO(&rfds);
         FD_SET(0, &rfds);
         FD_SET(ttyfd, &rfds);
-        int nfds = select(ttyfd+1, &rfds, NULL, NULL, &tv);
+        int nfds = select(ttyfd + 1, &rfds, NULL, NULL, &tv);
         if (nfds == -1) {
             perror("select");
             return 4;
         }
-        if (nfds>0 && FD_ISSET(0, &rfds)) {
+        if (nfds > 0 && FD_ISSET(0, &rfds)) {
             char line[8];
             ssize_t cnt;
             if ((cnt = read(STDIN_FILENO, line, sizeof(line))) == -1) {
@@ -97,7 +91,7 @@ int main(int argc, char **argv) {
                 fprintf(stderr, "stdin closed?\n");
                 break;
             }
-            switch(*line) {
+            switch (*line) {
             case 0x4: // ^D
                 exit(0);
                 break;
@@ -110,11 +104,10 @@ int main(int argc, char **argv) {
                 break;
             default:
                 if (state == STATE_LOCAL) {
-                    if (line[0] == '\n' || (pos + cnt) >= MAX_NAME_LEN-1) {
+                    if (line[0] == '\n' || (pos + cnt) >= MAX_NAME_LEN - 1) {
                         imgfile[pos] = 0;
                         state = STATE_RESET;
-                    }
-                    else {
+                    } else {
                         memcpy(imgfile + pos, line, cnt);
                         pos += cnt;
                     }
@@ -128,7 +121,7 @@ int main(int argc, char **argv) {
             nfds--;
         }
 
-        if (nfds==0 || !FD_ISSET(ttyfd, &rfds)) {
+        if (nfds == 0 || !FD_ISSET(ttyfd, &rfds)) {
             continue;
         }
 
@@ -139,7 +132,7 @@ int main(int argc, char **argv) {
             return 2;
         }
 
-        switch(state) {
+        switch (state) {
         case STATE_RESET:
             if (c == 'J')
                 state = STATE_HAVE_J;
@@ -156,8 +149,7 @@ int main(int argc, char **argv) {
                     state = STATE_RESET;
                 }
                 continue;
-             }
-            else
+            } else
                 state = STATE_RESET;
             break;
         default:
@@ -179,12 +171,11 @@ int main(int argc, char **argv) {
                 count++;
                 if ((count % 1024) == 0) {
                     char dot = '.';
-                    if(write(STDERR_FILENO, &dot, 1) != 1) {
+                    if (write(STDERR_FILENO, &dot, 1) != 1) {
                         fprintf(stderr, "dot failed?\n");
                     }
                 }
-            }
-            else {
+            } else {
                 if (c == '\04') {
                     /* Finished receiving the current image. Close it, set the
                      * state back to "looking for image marker", and prepare a
@@ -210,18 +201,15 @@ int main(int argc, char **argv) {
                 if (pos == 0) {
                     val = digit << 4;
                     pos = 1;
-                }
-                else if (pos == 1) {
+                } else if (pos == 1) {
                     val = val | digit;
                     pos = 2;
-                }
-                else {
+                } else {
                     fprintf(stderr, "bad pos %d\n", pos);
                     break;
                 }
             }
-        }
-        else {
+        } else {
             if (write(1, &c, 1) == -1) {
                 perror("echo");
             }
