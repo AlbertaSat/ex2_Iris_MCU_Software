@@ -143,11 +143,27 @@ int main(void) {
     uint8_t tx_nack = 0xAA;
     uint8_t tx_buffer[16];
     uint8_t rx_buffer[5];
+    uint8_t image_buffer[512];
+    uint8_t incoming_com;
 
     int i;
     for (i = 0; i < 16; i++) {
       tx_buffer[i] = i * 3;
     }
+
+    housekeeping_packet_t hk;
+      hk.vis_temp = 0x10;
+      hk.nir_temp = 0x20;
+      hk.flash_temp = 0x30;
+      hk.gate_temp = 0x40;
+      hk.imagenum = 0x50;
+      hk.software_version = 0x60;
+      uint8_t hk_buffer[sizeof(hk)];
+      memcpy(hk_buffer, &hk, sizeof(hk));
+
+      for (i = 0; i < 512; i++) {
+      	  image_buffer[i] = i;
+        }
 #ifdef UART_DEBUG
     DBG_PUT("-----------------------------------\r\n");
     DBG_PUT("Iris Electronics Test Software\r\n"
@@ -236,17 +252,17 @@ int main(void) {
       /* USER CODE BEGIN 3 */
       switch (ss_state) {
         case LISTENING:
-          HAL_SPI_Receive(&hspi1, &rx_data, 1, HAL_MAX_DELAY);
-          if (rx_data == 0x10) {
+          HAL_SPI_Receive(&hspi1, &incoming_com, 1, HAL_MAX_DELAY);
+          if (incoming_com == 0x10) {
             HAL_SPI_Transmit(&hspi1, &tx_ack, 1, HAL_MAX_DELAY);
             ss_state = SEND_DATA;
-          } else if (rx_data == 0x20) {
+          } else if (incoming_com == 0x20) {
             HAL_SPI_Transmit(&hspi1, &tx_ack, 1, HAL_MAX_DELAY);
             ss_state = SEND_DATA;
-          } else if (rx_data == 0x60) {
+          } else if (incoming_com == 0x60) {
             HAL_SPI_Transmit(&hspi1, &tx_ack, 1, HAL_MAX_DELAY);
             ss_state = GET_DATA;
-          } else if (rx_data == 0x50) { // Get housekeeping
+          } else if (incoming_com == 0x50) { // Get housekeeping
             HAL_SPI_Transmit(&hspi1, &tx_nack, 1, HAL_MAX_DELAY);
             ss_state = FINISH;
           } else {
@@ -255,18 +271,27 @@ int main(void) {
           }
           break;
         case SEND_DATA:
-          HAL_SPI_Receive(&hspi1, &rx_data, 1, HAL_MAX_DELAY);
-          if (rx_data == 0xDD) {
-            HAL_SPI_Transmit(&hspi1, tx_buffer, 16, HAL_MAX_DELAY);
-            ss_state = FINISH;
-          }
+        	HAL_SPI_Receive(&hspi1, &rx_data, 1, HAL_MAX_DELAY);
+			  if (incoming_com == 0x20) {
+				  if (rx_data == 0xDD) {
+					  HAL_SPI_Transmit(&hspi1, tx_buffer, 16, HAL_MAX_DELAY);
+					  ss_state = FINISH;
+				  }
+			  } else if (incoming_com == 0x51) {
+				  if (rx_data == 0xDD) {
+					  HAL_SPI_Transmit(&hspi1, hk_buffer, sizeof(hk_buffer), HAL_MAX_DELAY);
+					  ss_state = FINISH;
+				  }
+			  } else if (incoming_com == 0x31) {
+				  if (rx_data == 0xDD) {
+					  HAL_SPI_Transmit(&hspi1, image_buffer, sizeof(image_buffer), HAL_MAX_DELAY);
+					  ss_state = SEND_DATA;
+				  }
+			  }
           break;
         case GET_DATA:
           if (HAL_SPI_Receive(&hspi1, rx_buffer, 5, HAL_MAX_DELAY) == HAL_OK) {
             HAL_SPI_Transmit(&hspi1, &tx_ack, 1, HAL_MAX_DELAY);
-            ss_state = FINISH;
-          } else {
-            HAL_SPI_Transmit(&hspi1, &tx_nack, 1, HAL_MAX_DELAY);
             ss_state = FINISH;
           }
           break;
