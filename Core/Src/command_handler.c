@@ -149,7 +149,27 @@ void update_sensor_I2C_regs() {
     return;
 }
 
+
 void update_current_limits() { return; }
+
+void flood_cam_spi(){
+	for (uint8_t i=0x60; i<0x6F; i++){
+		read_spi_reg(i, VIS_SENSOR);
+		read_spi_reg(i, NIR_SENSOR);
+	}
+}
+
+void _transfer_images_to_flash(){
+	/*
+	 * todo: 	@RON, this is called at the end of take_image() after acking over spi.
+	 * 			This needs to transfer images from the flash buffer on the Arducam chip
+	 * 			from each of the VIS and NIR sensors to appropriate locations on the NAND
+	 * 			flash.
+	 */
+
+	return;
+}
+
 
 void _transfer_images_to_flash() {
     /*
@@ -174,6 +194,7 @@ uint8_t get_image_num(uint8_t hk) {
     return 1;
 }
 
+<<<<<<< HEAD
 void _initalize_sensor(uint8_t sensor) {
 
     char buf[64];
@@ -208,5 +229,116 @@ void _initalize_sensor(uint8_t sensor) {
         format = JPEG;
         Arduino_init(format, sensor);
         DBG_PUT(buf);
+=======
+void spi_handle_command(uint8_t cmd) {
+    switch(cmd) {
+    case GET_HK:
+//    	get_housekeeping();
+    	break;
+    case CAPTURE_IMAGE:
+//    	handle_capture_cmd(cmd);
+    	iterate_image_num();
+    	break;
+    case GET_IMAGE_NUM:
+//    	get_image_num();
+    	break;
+    case COUNT_IMAGES:
+//    	count_images();
+    	break;
+	case SENSOR_ACTIVE:
+		sensor_active();
+		break;
+	case SENSOR_IDLE:
+		sensor_idle();
+		break;
+	}
+}
+
+
+static inline const char* next_token(const char *ptr) {
+    /* move to the next space */
+    while(*ptr && *ptr != ' ') ptr++;
+    /* move past any whitespace */
+    while(*ptr && isspace(*ptr)) ptr++;
+
+    return (*ptr) ? ptr : NULL;
+}
+
+
+void uart_handle_command(char *cmd) {
+    uint8_t in[sizeof(housekeeping_packet_t)];
+    switch (*cmd) {
+    case 'c':
+        uart_handle_capture_cmd(cmd);
+        //        take_image();
+        break;
+    case 'f':
+        uart_handle_format_cmd(cmd);
+        break;
+    case 'w':
+        uart_handle_width_cmd(cmd);
+        break;
+    case 's':
+        switch (*(cmd + 1)) {
+        case 'c':
+            uart_scan_i2c();
+            break;
+        case 'a':;
+            const char *c = next_token(cmd);
+            switch (*c) {
+            case 'v':
+                uart_handle_saturation_cmd(c, VIS_SENSOR);
+                break;
+            case 'n':
+                uart_handle_saturation_cmd(c, NIR_SENSOR);
+                break;
+            default:
+                DBG_PUT("Target Error\r\n");
+                break;
+            }
+        }
+        break;
+
+    case 'p':; // janky use of semicolon??
+        const char *p = next_token(cmd);
+        switch (*(p + 1)) {
+        case 'n':
+            sensor_active();
+            break;
+        case 'f':
+            sensor_idle();
+            break;
+        default:
+            DBG_PUT("Use either on or off\r\n");
+            break;
+        }
+        break;
+    case 'i':;
+        switch (*(cmd + 1)) {
+        case '2':
+            handle_i2c16_8_cmd(cmd); // needs to handle 16 / 8 bit stuff
+            break;
+        default:;
+            const char *i = next_token(cmd);
+            switch (*i) {
+            case 's':
+            	uart_reset_sensors();
+                break;
+            }
+        }
+        break;
+
+    case 'h':
+        switch (*(cmd + 1)) {
+        case 'k':
+            uart_get_hk_packet(in);
+            break;
+        default:
+            help();
+            break;
+        }
+>>>>>>> 6b7fef5... added functionality to flood sensor spi on boot
     }
 }
+
+

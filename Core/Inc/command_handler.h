@@ -54,5 +54,6 @@ int scan_i2c(void);
 void print_progress(uint8_t count, uint8_t max);
 
 // void _initalize_sensor();
+void flood_cam_spi();
 
 #endif /* INC_COMMAND_HANDLER_H_ */
