@@ -32,16 +32,6 @@ uint8_t total_image_num = 0; // This will cause issues with total num of images 
 housekeeping_packet_t hk;
 char buf[128];
 
-void help() {
-	// UART DEBUG ONLY
-#ifdef UART_DEBUG
-	DBG_PUT("Test\t|\tCommand\r\n");
-	DBG_PUT("3.2.2\t>\tteset\r\n");
-	DBG_PUT("3.2.5\t>\ttemp\r\n");
-	DBG_PUT("3.2.6\t>\tnand test\r\n");
-#endif
-}
-
 void take_image(){
 	/*
 	 * Todo: Determine whether or not we want to have individual sensor control, or just cap both at the same time (ish)
@@ -129,11 +119,8 @@ void sensor_active(){
 	HAL_GPIO_WritePin(CAM_EN_GPIO_Port, CAM_EN_Pin, GPIO_PIN_SET);
 	DBG_PUT("Initializing Sensors\r\n");
 //	// initialize sensors
-	print_progress(1, 5);
 	_initialize_sensor(VIS_SENSOR);
-	print_progress(3, 5);
 	_initialize_sensor(NIR_SENSOR);
-	print_progress(5, 5);
 
 
 #ifdef SPI_DEBUG
@@ -319,18 +306,6 @@ void spi_handle_command(uint8_t cmd) {
 	}
 }
 
-void print_progress(uint8_t count, uint8_t max)
-{
-	uint8_t length = 25;
-	uint8_t scaled = count*100 / max * length / 100;
-
-    sprintf(buf, "Progress: [%.*s%.*s]\r", scaled, "==================================================", length - scaled, "                                        ");
-	DBG_PUT(buf);
-	if (count == max){
-		DBG_PUT("\r\n");
-	}
-}
-
 
 static inline const char* next_token(const char *ptr) {
     /* move to the next space */
@@ -343,102 +318,77 @@ static inline const char* next_token(const char *ptr) {
 
 
 void uart_handle_command(char *cmd) {
-	uint8_t in[sizeof(housekeeping_packet_t)];
-    switch(*cmd) {
+    uint8_t in[sizeof(housekeeping_packet_t)];
+    switch (*cmd) {
     case 'c':
-//    	uart_handle_capture_cmd(cmd);
-    	take_image();
-    	break;
+        uart_handle_capture_cmd(cmd);
+        //        take_image();
+        break;
     case 'f':
-    	uart_handle_format_cmd(cmd);
+        uart_handle_format_cmd(cmd);
         break;
-
-    case 'r':
-    	read_nand_flash();
-//		handle_reg_cmd(cmd);
-		break;
-
     case 'w':
-    	uart_handle_width_cmd(cmd);
+        uart_handle_width_cmd(cmd);
         break;
-    case 't':
-    	switch(*(cmd+2)){
-    	case 's':
-        	CHECK_LED_I2C_SPI_TS_NAND();
-        	break;
-    	case 'm':
-    		testTempSensor();
-    		break;
-    	}
-    	break;
     case 's':
-    	switch(*(cmd+1)){
-			case 'c':
-				uart_scan_i2c();
-				break;
+        switch (*(cmd + 1)) {
+        case 'c':
+            uart_scan_i2c();
+            break;
 
-			case 'a':;
-				const char *c = next_token(cmd);
-				switch(*c){
-					case 'v':
-						uart_handle_saturation_cmd(c, VIS_SENSOR);
-						break;
-					case 'n':
-						uart_handle_saturation_cmd(c, NIR_SENSOR);
-						break;
-					default:
-						DBG_PUT("Target Error\r\n");
-						break;
-				}
-    	}
-    	break;
+        case 'a':;
+            const char *c = next_token(cmd);
+            switch (*c) {
+            case 'v':
+                uart_handle_saturation_cmd(c, VIS_SENSOR);
+                break;
+            case 'n':
+                uart_handle_saturation_cmd(c, NIR_SENSOR);
+                break;
+            default:
+                DBG_PUT("Target Error\r\n");
+                break;
+            }
+        }
+        break;
 
-    case 'p':	; //janky use of semicolon??
-    	const char *p = next_token(cmd);
-    	switch(*(p+1)){
-    		case 'n':
-    			sensor_active();
-    			break;
-    		case 'f':
-    			sensor_idle();
-    			break;
-    		default:
-    			DBG_PUT("Use either on or off\r\n");
-    			break;
-    	}
-    	break;
-	case 'i':;
-		switch(*(cmd+1)){
-			case '2':
-				handle_i2c16_8_cmd(cmd); // needs to handle 16 / 8 bit stuff
-				break;
-			default:;
-				const char *i = next_token(cmd);
-				switch(*i){
-					case 'n':
-						init_nand_flash();
-						break;
-					case 's':
-						uart_reset_sensors();
-						break;
-				}
-		}
-		break;
+    case 'p':; // janky use of semicolon??
+        const char *p = next_token(cmd);
+        switch (*(p + 1)) {
+        case 'n':
+            sensor_active();
+            break;
+        case 'f':
+            sensor_idle();
+            break;
+        default:
+            DBG_PUT("Use either on or off\r\n");
+            break;
+        }
+        break;
+    case 'i':;
+        switch (*(cmd + 1)) {
+        case '2':
+            handle_i2c16_8_cmd(cmd); // needs to handle 16 / 8 bit stuff
+            break;
+        default:;
+            const char *i = next_token(cmd);
+            switch (*i) {
+            case 's':
+            	uart_reset_sensors();
+                break;
+            }
+        }
+        break;
 
-	case 'n':
-		test_nand_flash();
-		break;
     case 'h':
-    	switch(*(cmd+1)){
-    	case 'k':
-        	uart_get_hk_packet(&in);
-        	break;
+        switch (*(cmd + 1)) {
+        case 'k':
+            uart_get_hk_packet(in);
+            break;
         default:
             help();
             break;
-
-    	}
-    	break;
+        }
     }
 }
-
