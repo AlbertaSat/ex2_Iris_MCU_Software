@@ -460,8 +460,8 @@ static void handle_i2c16_8_cmd(const char *cmd) {
 
     switch (*rwarg) {
     case 'r': {
-        uint16_t val;
-        val = i2c2_read16_8(addr, reg); // switch back to 16-8
+        uint8_t val = 0x00;
+        i2c2_read16_8(addr, reg, &val); // switch back to 16-8
         sprintf(buf, "Device 0x%lx register 0x%lx = 0x%x\r\n", addr, reg, val);
     } break;
 
