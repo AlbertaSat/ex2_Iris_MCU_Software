@@ -68,3 +68,4 @@ host/img.jpg(1)
 *.jpg***
 
 .settings/language.settings.xml
+.vscode/settings.json
