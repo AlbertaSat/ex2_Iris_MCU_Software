@@ -16,7 +16,7 @@ void wrSensorRegs16_8(struct sensor_reg reglist[], uint8_t sensor);
 void rdSensorReg16_8(uint16_t regID, uint8_t *regDat, uint8_t sensor);
 
 void i2c2_read16_8(uint8_t addr, uint16_t register_pointer, uint8_t *reg_data);
-void i2c2_write16_8(uint8_t addr, uint16_t register_pointer, uint16_t register_value);
+void i2c2_write16_8(uint8_t addr, uint16_t register_pointer, uint8_t register_value);
 
 uint8_t i2c2_read8_8(uint8_t addr, uint8_t register_pointer);
 void i2c2_write8_8(uint8_t addr, uint8_t register_pointer, uint8_t register_value);
