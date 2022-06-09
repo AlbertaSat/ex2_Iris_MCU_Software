@@ -135,6 +135,7 @@ int main(void)
 
 #endif
 
+  	sensor_active();
 //  init_temp_sensors();
 
   /* USER CODE END 2 */
