@@ -11,21 +11,21 @@
 #include "command_handler.h"
 #include "ina209.h"
 
-housekeeping_packet_t _get_housekeeping() {
-    housekeeping_packet_t hk;
-    hk.vis_temp = get_temp(VIS_TEMP_SENSOR);
-    hk.nir_temp = get_temp(NIR_TEMP_SENSOR);
-    hk.flash_temp = get_temp(TEMP3);
-    hk.gate_temp = get_temp(TEMP4);
-    hk.imagenum = get_image_num(1);
-    hk.software_version = software_ver;
-    hk.MAX_5V_voltage = get_shunt_voltage_peak_pos(CURRENTSENSE_5V);
-    hk.MAX_5V_power = get_power_peak(CURRENTSENSE_5V);
-    hk.MAX_3V_voltage = get_shunt_voltage_peak_pos(CURRENTSENSE_3V3);
-    hk.MAX_3V_power = get_power_peak(CURRENTSENSE_3V3);
-    hk.MIN_5V_voltage = get_shunt_voltage_peak_neg(CURRENTSENSE_5V);
-    hk.MIN_3V_voltage = get_shunt_voltage_peak_neg(CURRENTSENSE_3V3);
-    return hk;
+housekeeping_packet_t _get_housekeeping(){
+	housekeeping_packet_t hk;
+	hk.vis_temp = get_temp(VIS_TEMP_SENSOR);
+	hk.nir_temp = get_temp(NIR_TEMP_SENSOR);
+	hk.flash_temp = get_temp(FLASH_TEMP_SENSOR);
+	hk.gate_temp = get_temp(GATE_TEMP_SENSOR);
+	hk.imagenum = get_image_num(1);
+	hk.software_version = software_ver;
+//	hk.MAX_5V_voltage = get_shunt_voltage_peak_pos(CURRENTSENSE_5V);
+//	hk.MAX_5V_power  = get_power_peak(CURRENTSENSE_5V);
+//	hk.MAX_3V_voltage = get_shunt_voltage_peak_pos(CURRENTSENSE_3V3);
+//	hk.MAX_3V_power = get_power_peak(CURRENTSENSE_3V3);
+//	hk.MIN_5V_voltage = get_shunt_voltage_peak_neg(CURRENTSENSE_5V);
+//	hk.MIN_3V_voltage = get_shunt_voltage_peak_neg(CURRENTSENSE_3V3);
+	return hk;
 }
 
 void decode_hk_packet(housekeeping_packet_t hk) {
