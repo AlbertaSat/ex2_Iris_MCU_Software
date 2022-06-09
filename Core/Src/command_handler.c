@@ -310,17 +310,6 @@ void spi_handle_command(uint8_t cmd) {
 		break;
 	case SENSOR_IDLE:
 		sensor_idle();
-
-
-
-
-
-
-
-
-
-
-
 		break;
 	}
 }
@@ -354,6 +343,7 @@ void uart_handle_command(char *cmd) {
         case 'c':
             uart_scan_i2c();
             break;
+
         case 'a':;
             const char *c = next_token(cmd);
             switch (*c) {
@@ -410,5 +400,3 @@ void uart_handle_command(char *cmd) {
         }
     }
 }
-
-
