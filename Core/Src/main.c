@@ -121,7 +121,7 @@ int main(void)
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
 //   init nand flash
-  NAND_SPI_Init(&hspi2);
+//  NAND_SPI_Init(&hspi2);
 
   char cmd[64];
   char buf[64];
@@ -135,7 +135,7 @@ int main(void)
 
 #endif
 
-  init_temp_sensors();
+//  init_temp_sensors();
 
   /* USER CODE END 2 */
 
