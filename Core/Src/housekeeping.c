@@ -16,8 +16,8 @@ housekeeping_packet_t _get_housekeeping(){
 	housekeeping_packet_t hk;
 	hk.vis_temp = get_temp(VIS_TEMP_SENSOR);
 	hk.nir_temp = get_temp(NIR_TEMP_SENSOR);
-	hk.flash_temp = get_temp(TEMP3);
-	hk.gate_temp = get_temp(TEMP4);
+	hk.flash_temp = get_temp(FLASH_TEMP_SENSOR);
+	hk.gate_temp = get_temp(GATE_TEMP_SENSOR);
 	hk.imagenum = get_image_num(1);
 	hk.software_version = software_ver;
 //	hk.MAX_5V_voltage = get_shunt_voltage_peak_pos(CURRENTSENSE_5V);

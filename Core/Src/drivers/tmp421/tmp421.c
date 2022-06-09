@@ -24,8 +24,8 @@ void init_temp_sensors(void){
 	// and make life easier.
 	i2c2_write8_8(VIS_TEMP_SENSOR, 0x09, 0x04);
 	i2c2_write8_8(NIR_TEMP_SENSOR, 0x09, 0x04);
-	i2c2_write8_8(TEMP3, 0x09, 0x04);
-	i2c2_write8_8(TEMP4, 0x09, 0x04);
+	i2c2_write8_8(FLASH_TEMP_SENSOR, 0x09, 0x04);
+	i2c2_write8_8(GATE_TEMP_SENSOR, 0x09, 0x04);
 }
 
 
