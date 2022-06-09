@@ -55,7 +55,7 @@
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
-/* USER CODE END PM */
+/* USER CODE END /semicolons strike again!PM */
 
 /* Private variables ---------------------------------------------------------*/
  I2C_HandleTypeDef hi2c1;
@@ -126,17 +126,18 @@ int main(void)
   char cmd[64];
   char buf[64];
   char *ptr = cmd;
+  sensor_togglepower(1);
+  uart_reset_sensors();
+  init_temp_sensors();
 #ifdef UART_DEBUG
   DBG_PUT("-----------------------------------\r\n");
   DBG_PUT("Iris Electronics Unit Test Software\r\n"
 		  "           UART Edition            \r\n");
   DBG_PUT("-----------------------------------\r\n");
-  help();
-
+//  help();
 #endif
 
-  	sensor_active();
-//  init_temp_sensors();
+
 
   /* USER CODE END 2 */
 
@@ -225,8 +226,7 @@ void SystemClock_Config(void)
 
   /** Initializes the CPU, AHB and APB buses clocks
   */
-  RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
-                              |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
+  RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK|RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
   RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_HSE;
   RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
   RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1;

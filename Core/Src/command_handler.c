@@ -11,7 +11,8 @@
 #include "nand_m79a.h"
 #include "arducam.h"
 #include "IEB_TESTS.h"
-
+extern uint8_t VIS_DETECTED;
+extern uint8_t NIR_DETECTED;
 extern SPI_HandleTypeDef hspi1;
 extern const struct sensor_reg OV5642_JPEG_Capture_QSXGA[];
 extern const struct sensor_reg OV5642_QVGA_Preview[];
@@ -302,6 +303,17 @@ void spi_handle_command(uint8_t cmd) {
 		break;
 	case SENSOR_IDLE:
 		sensor_idle();
+
+
+
+
+
+
+
+
+
+
+
 		break;
 	}
 }
@@ -335,6 +347,17 @@ void uart_handle_command(char *cmd) {
         case 'c':
             uart_scan_i2c();
             break;
+
+
+
+
+
+
+
+
+
+
+
 
         case 'a':;
             const char *c = next_token(cmd);
