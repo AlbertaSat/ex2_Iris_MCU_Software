@@ -126,6 +126,7 @@ int main(void)
   char cmd[64];
   char buf[64];
   char *ptr = cmd;
+  flood_cam_spi();
   sensor_togglepower(1);
   uart_reset_sensors();
   init_temp_sensors();
@@ -258,7 +259,6 @@ static void MX_I2C1_Init(void)
   /* USER CODE END I2C1_Init 0 */
 
   /* USER CODE BEGIN I2C1_Init 1 */
-
   /* USER CODE END I2C1_Init 1 */
   hi2c1.Instance = I2C1;
   hi2c1.Init.Timing = 0x00303D5B;

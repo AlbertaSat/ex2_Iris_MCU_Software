@@ -162,6 +162,13 @@ void update_current_limits(){
 	return;
 }
 
+void flood_cam_spi(){
+	for (uint8_t i=0x60; i<0x6F; i++){
+		read_spi_reg(i, VIS_SENSOR);
+		read_spi_reg(i, NIR_SENSOR);
+	}
+}
+
 void _transfer_images_to_flash(){
 	/*
 	 * todo: 	@RON, this is called at the end of take_image() after acking over spi.
@@ -303,17 +310,6 @@ void spi_handle_command(uint8_t cmd) {
 		break;
 	case SENSOR_IDLE:
 		sensor_idle();
-
-
-
-
-
-
-
-
-
-
-
 		break;
 	}
 }
@@ -347,18 +343,6 @@ void uart_handle_command(char *cmd) {
         case 'c':
             uart_scan_i2c();
             break;
-
-
-
-
-
-
-
-
-
-
-
-
         case 'a':;
             const char *c = next_token(cmd);
             switch (*c) {
@@ -415,3 +399,5 @@ void uart_handle_command(char *cmd) {
         }
     }
 }
+
+

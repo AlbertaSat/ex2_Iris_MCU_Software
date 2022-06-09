@@ -37,6 +37,6 @@ uint8_t get_image_num(uint8_t hk);
 void iterate_image_num();
 void uart_get_hk_packet(uint8_t *out);
 void print_progress(uint8_t count, uint8_t max);
-//void _initalize_sensor();
+void flood_cam_spi();
 
 #endif /* INC_COMMAND_HANDLER_H_ */
