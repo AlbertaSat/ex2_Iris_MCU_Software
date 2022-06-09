@@ -36,7 +36,9 @@ static void help() {
     DBG_PUT("\t\tformat<vis/nir> [JPEG|BMP|RAW]\r\n");
     DBG_PUT("\t\t hk | Gets housekeeping\r\n");
     DBG_PUT("\t\twidth <vis/nir> [<pixels>]\r\n");
-    DBG_PUT("\tscan | Scan I2C bus 2\r\n");
+    DBG_PUT("\t\tscan | Scan I2C bus 2\r\n");
+    DBG_PUT("\t\ti2c read deviceaddress registeraddress | read from i2c device register. values in hex\r\n");
+    DBG_PUT("\t\ti2c write deviceaddress registeraddress value | write to i2c device register. values in hex\r\n");
     DBG_PUT("\tNeeds work\r\n");
     DBG_PUT("\t\txfer sensor media filename | transfer image over media\r\n");
     DBG_PUT("\tNot tested/partially implemented:\r\n");
@@ -459,7 +461,7 @@ static void handle_i2c16_8_cmd(const char *cmd) {
     switch (*rwarg) {
     case 'r': {
         uint16_t val;
-        val = i2c2_read8_16(addr, reg); // switch back to 16-8
+        val = i2c2_read16_8(addr, reg); // switch back to 16-8
         sprintf(buf, "Device 0x%lx register 0x%lx = 0x%x\r\n", addr, reg, val);
     } break;
 
@@ -474,7 +476,6 @@ static void handle_i2c16_8_cmd(const char *cmd) {
             sprintf(buf, "reg write 0x%lx: bad val '%s'\r\n", reg, valptr);
             break;
         }
-        //            wrSensorReg16_8(reg, val, target_sensor);
         i2c2_write16_8(addr, reg, val);
 
         sprintf(buf, "Device 0x%lx register 0x%lx wrote 0x%02lx\r\n", addr, reg, val);
