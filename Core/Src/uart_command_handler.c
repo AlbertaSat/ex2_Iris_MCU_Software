@@ -9,11 +9,16 @@
 #include "IEB_TESTS.h"
 #include "flash_cmds.h"
 #include "housekeeping.h"
+int format = JPEG;
+extern I2C_HandleTypeDef hi2c2;
+//extern struct housekeeping_packet hk;
 
-// extern struct housekeeping_packet hk;
+int VIS_DETECTED = 0;
+int NIR_DETECTED = 0;
 
-FileHandle_t *file;
-static inline const char *next_token(const char *ptr) {
+
+FileHandle_t* file;
+static inline const char* next_token(const char *ptr) {
     /* move to the next space */
     while (*ptr && *ptr != ' ')
         ptr++;
@@ -285,6 +290,7 @@ static void uart_handle_capture_cmd(const char *cmd) {
     arducam_capture_image(target_sensor);
 }
 
+<<<<<<< HEAD
 static void uart_handle_xfer_cmd(const char *cmd) {
     const char *wptr = next_token(cmd);
 
@@ -335,6 +341,54 @@ static void uart_handle_xfer_cmd(const char *cmd) {
         DBG_PUT("Xfer: missing name\n");
         return;
     }
+=======
+void uart_reset_sensors(void){
+	char buf[64];
+	  // Reset the CPLD
+
+	  arducam_wait_for_ready(VIS_SENSOR);
+	  write_reg(AC_REG_RESET, 1, VIS_SENSOR);
+	  write_reg(AC_REG_RESET, 1, VIS_SENSOR);
+	  HAL_Delay(100);
+	  write_reg(AC_REG_RESET, 0, VIS_SENSOR);
+	  HAL_Delay(100);
+
+	  if (!arducam_wait_for_ready(VIS_SENSOR)) {
+	      DBG_PUT("VIS Camera: SPI Unavailable\r\n");
+	  }
+	  else{
+		  DBG_PUT("VIS Camera: SPI Initialized\r\n");
+
+	  }
+
+	  // Change MCU mode
+	    write_reg(ARDUCHIP_MODE, 0x0, VIS_SENSOR);
+	    wrSensorReg16_8(0xff, 0x01, VIS_SENSOR);
+
+	    uint8_t vid = 0, pid = 0;
+	    rdSensorReg16_8(OV5642_CHIPID_HIGH, &vid, VIS_SENSOR);
+	    rdSensorReg16_8(OV5642_CHIPID_LOW, &pid, VIS_SENSOR);
+
+	    if (vid != 0x56 || pid != 0x42) {
+	        sprintf(buf, "VIS Camera I2C Address: Unknown\r\nVIS not available\r\n\n");
+	        DBG_PUT(buf);
+	    	VIS_DETECTED = 0;
+
+	    }
+	    else{
+	    	DBG_PUT("VIS Camera I2C Address: 0x3C\r\n");
+	    	VIS_DETECTED = 1;
+	    }
+	    if (VIS_DETECTED==1){
+			format = JPEG;
+			Arduino_init(format, VIS_SENSOR);
+			sprintf(buf, "VIS Camera Mode: JPEG\r\n\n");
+			DBG_PUT(buf);
+	    }
+
+	    // Test NIR Sensor
+		  arducam_wait_for_ready(NIR_SENSOR);
+>>>>>>> 4f1e6e7... changed boot behavior
 
     uint32_t fname;
     if (sscanf(wptr, "%lx", &fname) != 1) {
@@ -435,10 +489,68 @@ static void handle_i2c16_8_cmd(const char *cmd) {
     }
     const char *rwaddr = next_token(rwarg);
 
+<<<<<<< HEAD
     if (!rwaddr) {
         DBG_PUT("rwaddr broke\r\n");
         return;
     }
+=======
+	if (!rwaddr) {
+		DBG_PUT("rwaddr broke\r\n");
+		return;
+	}
+
+
+	const char *regptr = next_token(rwaddr);
+	if (!regptr) {
+		DBG_PUT("regptr broke\r\n");
+		return;
+	}
+
+	uint32_t reg;
+	if (sscanf(regptr, "%lx", &reg) != 1) {
+		DBG_PUT("reg broke\r\n");
+		return;
+	}
+
+	uint32_t addr;
+	if (sscanf(rwaddr, "%lx", &addr) != 1) {
+		DBG_PUT("addr broke\r\n");
+		return;
+	}
+
+	switch(*rwarg) {
+	case 'r':
+		{
+			uint8_t val;
+			i2c2_read8_8(addr, reg, &val);
+			sprintf(buf, "Device 0x%lx register 0x%lx = 0x%x\r\n", addr, reg, val);
+		}
+		break;
+
+	case 'w':
+		{
+			const char *valptr = next_token(regptr);
+			if (!valptr) {
+				sprintf(buf, "reg write 0x%lx: missing reg value\r\n", reg);
+				break;
+			}
+			uint32_t val;
+			if (sscanf(valptr, "%lx", &val) != 1) {
+				sprintf(buf, "reg write 0x%lx: bad val '%s'\r\n", reg, valptr);
+				break;
+			}
+			i2c2_write8_8(addr, reg, val);
+
+			sprintf(buf, "Device 0x%lx register 0x%lx wrote 0x%02lx\r\n", addr, reg, val);
+		}
+		break;
+	default:
+		sprintf(buf, "reg op must be read or write, '%s' not supported\r\n", rwarg);
+		break;
+	}
+	DBG_PUT(buf);
+>>>>>>> 4f1e6e7... changed boot behavior
 
     const char *regptr = next_token(rwaddr);
     if (!regptr) {

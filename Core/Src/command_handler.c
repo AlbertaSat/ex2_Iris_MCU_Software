@@ -10,6 +10,9 @@
 #include "nand_m79a.h"
 #include "arducam.h"
 #include "SPI_IT.h"
+#include "IEB_TESTS.h"
+extern uint8_t VIS_DETECTED;
+extern uint8_t NIR_DETECTED;
 extern SPI_HandleTypeDef hspi1;
 extern const struct sensor_reg OV5642_JPEG_Capture_QSXGA[];
 extern const struct sensor_reg OV5642_QVGA_Preview[];
@@ -193,43 +196,7 @@ uint8_t get_image_num(uint8_t hk) {
     SPI1_IT_Transmit(&total_image_num);
     return 1;
 }
-
-<<<<<<< HEAD
-void _initalize_sensor(uint8_t sensor) {
-
-    char buf[64];
-    uint8_t DETECTED = 0;
-    arducam_wait_for_ready(sensor);
-    write_reg(AC_REG_RESET, 1, sensor);
-    write_reg(AC_REG_RESET, 1, sensor);
-    HAL_Delay(100);
-    write_reg(AC_REG_RESET, 0, sensor);
-    HAL_Delay(100);
-
-    if (!arducam_wait_for_ready(sensor)) {
-        DBG_PUT("Sensor: SPI Unavailable\r\n");
-    }
-
-    // Change MCU mode
-    write_reg(ARDUCHIP_MODE, 0x0, sensor);
-    wrSensorReg16_8(0xff, 0x01, sensor);
-
-    uint8_t vid = 0, pid = 0;
-    rdSensorReg16_8(OV5642_CHIPID_HIGH, &vid, sensor);
-    rdSensorReg16_8(OV5642_CHIPID_LOW, &pid, sensor);
-
-    if (vid != 0x56 || pid != 0x42) {
-        sprintf(buf, "Sensor not available\r\n\n");
-        DBG_PUT(buf);
-
-    } else {
-        DETECTED = 1;
-    }
-    if (DETECTED == 1) {
-        format = JPEG;
-        Arduino_init(format, sensor);
-        DBG_PUT(buf);
-=======
+     
 void spi_handle_command(uint8_t cmd) {
     switch(cmd) {
     case GET_HK:
@@ -283,6 +250,21 @@ void uart_handle_command(char *cmd) {
         case 'c':
             uart_scan_i2c();
             break;
+<<<<<<< HEAD
+=======
+
+
+
+
+
+
+
+
+
+
+
+
+>>>>>>> 4f1e6e7... changed boot behavior
         case 'a':;
             const char *c = next_token(cmd);
             switch (*c) {
