@@ -48,7 +48,7 @@ void i2c2_read16_8(uint8_t addr, uint16_t register_pointer, uint8_t *reg_data){
 	hi2c_read16_8(hi2c2, addr, register_pointer, reg_data);
 	return;
 }
-void i2c2_write16_8(uint8_t addr, uint16_t register_pointer, uint16_t register_value){
+void i2c2_write16_8(uint8_t addr, uint16_t register_pointer, uint8_t register_value){
 	hi2c_write16_8(hi2c2, addr, register_pointer, register_value);
 	return;
 }
