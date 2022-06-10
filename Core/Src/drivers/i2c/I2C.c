@@ -5,7 +5,7 @@
 #include "debug.h"
 #include "main.h"
 extern I2C_HandleTypeDef hi2c2;
-`
+
 #define SCCB_READ 1
 
 static uint16_t VIS_ADDRESS = 0x3C;
@@ -114,7 +114,7 @@ void i2c2_write8_8(uint8_t addr, uint8_t register_pointer, uint8_t register_valu
  * @param register_pointer  pointer to 16 bit register value
  * @param register_value    pointer to 16 bit value 
  */
-uint16_t i2c2_read8_16(uint8_t addr, uint8_t register_pointer, uint16_t *reg_data) {
+void i2c2_read8_16(uint8_t addr, uint8_t register_pointer, uint16_t *reg_data) {
     hi2c_read8_16(hi2c2, addr, register_pointer, reg_data);
     return;
 }
