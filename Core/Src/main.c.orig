@@ -112,6 +112,7 @@ int main(void)
 
   /* USER CODE END SysInit */
 
+<<<<<<< HEAD
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_I2C1_Init();
@@ -126,10 +127,47 @@ int main(void)
   char cmd[64];
   char buf[64];
   char *ptr = cmd;
-<<<<<<< HEAD
   flood_cam_spi();
+  sensor_togglepower(1);
+  uart_reset_sensors();
+  init_temp_sensors();
 =======
->>>>>>> 4f1e6e7 (changed boot behavior)
+    /* Initialize all configured peripherals */
+    MX_GPIO_Init();
+    MX_I2C1_Init();
+    MX_I2C2_Init();
+    MX_SPI1_Init();
+    MX_SPI2_Init();
+    MX_USART1_UART_Init();
+    /* USER CODE BEGIN 2 */
+    char cmd[64];
+    char buf[64];
+    char *ptr = cmd;
+    flood_cam_spi();
+    sensor_togglepower(1);
+    uart_reset_sensors();
+    init_temp_sensors();
+
+
+>>>>>>> refs/remotes/origin/main
+#ifdef UART_DEBUG
+  DBG_PUT("-----------------------------------\r\n");
+  DBG_PUT("Iris Electronics Unit Test Software\r\n"
+		  "           UART Edition            \r\n");
+  DBG_PUT("-----------------------------------\r\n");
+//  help();
+#endif
+
+<<<<<<< HEAD
+=======
+    // init_temp_sensors();
+    NAND_SPI_Init(&hspi2);
+    init_nand_flash();
+    /* USER CODE END 2 */
+       // //////////////////////////////////////////////////////////////////////////////////////////
+  char cmd[64];
+  char buf[64];
+  char *ptr = cmd;
   sensor_togglepower(1);
   uart_reset_sensors();
   init_temp_sensors();
@@ -143,6 +181,7 @@ int main(void)
 
 
 
+>>>>>>> refs/remotes/origin/main
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -204,6 +243,61 @@ int main(void)
 }
 
 /**
+<<<<<<< HEAD
+  * @brief System Clock Configuration
+  * @retval None
+  */
+void SystemClock_Config(void)
+{
+  RCC_OscInitTypeDef RCC_OscInitStruct = {0};
+  RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
+  RCC_PeriphCLKInitTypeDef PeriphClkInit = {0};
+=======
+<<<<<<< HEAD
+ * @brief System Clock Configuration
+ * @retval None
+ */
+void SystemClock_Config(void) {
+    RCC_OscInitTypeDef RCC_OscInitStruct = {0};
+    RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
+    RCC_PeriphCLKInitTypeDef PeriphClkInit = {0};
+>>>>>>> refs/remotes/origin/main
+
+  /** Configure the main internal regulator output voltage
+  */
+  __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
+
+  /** Initializes the RCC Oscillators according to the specified parameters
+  * in the RCC_OscInitTypeDef structure.
+  */
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
+  RCC_OscInitStruct.HSEState = RCC_HSE_BYPASS;
+  RCC_OscInitStruct.PLL.PLLState = RCC_PLL_NONE;
+  if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  /** Initializes the CPU, AHB and APB buses clocks
+  */
+  RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK|RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
+  RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_HSE;
+  RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
+  RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1;
+  RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
+
+<<<<<<< HEAD
+=======
+    if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_0) != HAL_OK) {
+        Error_Handler();
+    }
+    PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_USART1 | RCC_PERIPHCLK_I2C1;
+    PeriphClkInit.Usart1ClockSelection = RCC_USART1CLKSOURCE_PCLK2;
+    PeriphClkInit.I2c1ClockSelection = RCC_I2C1CLKSOURCE_PCLK1;
+    if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK) {
+        Error_Handler();
+    }
+=======
   * @brief System Clock Configuration
   * @retval None
   */
@@ -236,6 +330,7 @@ void SystemClock_Config(void)
   RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1;
   RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
 
+>>>>>>> refs/remotes/origin/main
   if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_0) != HAL_OK)
   {
     Error_Handler();
@@ -247,6 +342,7 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
+<<<<<<< HEAD
 }
 
 /**
@@ -256,6 +352,18 @@ void SystemClock_Config(void)
   */
 static void MX_I2C1_Init(void)
 {
+=======
+>>>>>>> 4f1e6e7... changed boot behavior
+}
+
+/**
+<<<<<<< HEAD
+ * @brief I2C1 Initialization Function
+ * @param None
+ * @retval None
+ */
+static void MX_I2C1_Init(void) {
+>>>>>>> refs/remotes/origin/main
 
   /* USER CODE BEGIN I2C1_Init 0 */
 
@@ -295,6 +403,56 @@ static void MX_I2C1_Init(void)
 
   /* USER CODE END I2C1_Init 2 */
 
+<<<<<<< HEAD
+=======
+    /* USER CODE END I2C1_Init 2 */
+=======
+  * @brief I2C1 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_I2C1_Init(void)
+{
+
+  /* USER CODE BEGIN I2C1_Init 0 */
+
+  /* USER CODE END I2C1_Init 0 */
+
+  /* USER CODE BEGIN I2C1_Init 1 */
+  /* USER CODE END I2C1_Init 1 */
+  hi2c1.Instance = I2C1;
+  hi2c1.Init.Timing = 0x00303D5B;
+  hi2c1.Init.OwnAddress1 = 0;
+  hi2c1.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
+  hi2c1.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
+  hi2c1.Init.OwnAddress2 = 0;
+  hi2c1.Init.OwnAddress2Masks = I2C_OA2_NOMASK;
+  hi2c1.Init.GeneralCallMode = I2C_GENERALCALL_DISABLE;
+  hi2c1.Init.NoStretchMode = I2C_NOSTRETCH_DISABLE;
+  if (HAL_I2C_Init(&hi2c1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  /** Configure Analogue filter
+  */
+  if (HAL_I2CEx_ConfigAnalogFilter(&hi2c1, I2C_ANALOGFILTER_ENABLE) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  /** Configure Digital filter
+  */
+  if (HAL_I2CEx_ConfigDigitalFilter(&hi2c1, 0) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN I2C1_Init 2 */
+
+  /* USER CODE END I2C1_Init 2 */
+
+>>>>>>> 6b7fef5... added functionality to flood sensor spi on boot
+>>>>>>> refs/remotes/origin/main
 }
 
 /**

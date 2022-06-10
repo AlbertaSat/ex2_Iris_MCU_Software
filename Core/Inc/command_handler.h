@@ -34,9 +34,9 @@ typedef struct __attribute__((__packed__)) currentsense_packet_s {
 void spi_handle_command(uint8_t cmd);
 void uart_handle_command(char *cmd);
 void take_image();
-void transfer_image();
 void get_image_length();
 void count_images();
+void sensor_reset(uint8_t sensor);
 void sensor_idle();
 void sensor_active();
 void get_housekeeping();
@@ -45,8 +45,9 @@ void update_current_limits();
 void _initalize_sensor(uint8_t sensor);
 uint8_t get_image_num(uint8_t hk);
 void iterate_image_num();
-void uart_get_hk_packet(uint8_t *out);
+int scan_i2c(void);
 void print_progress(uint8_t count, uint8_t max);
+// void _initalize_sensor();
 void flood_cam_spi();
 
 #endif /* INC_COMMAND_HANDLER_H_ */
