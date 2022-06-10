@@ -22,8 +22,8 @@
 
 extern int format;
 
-extern int VIS_DETECTED;
-extern int NIR_DETECTED;
+extern uint8_t VIS_DETECTED;
+extern uint8_t NIR_DETECTED;
 
 typedef struct __attribute__((__packed__)) currentsense_packet_s {
     uint8_t reg;
@@ -45,7 +45,7 @@ void update_current_limits();
 void _initalize_sensor(uint8_t sensor);
 uint8_t get_image_num(uint8_t hk);
 void iterate_image_num();
-int scan_i2c(void);
+int uart_scan_i2c(void);
 void print_progress(uint8_t count, uint8_t max);
 // void _initalize_sensor();
 void flood_cam_spi();

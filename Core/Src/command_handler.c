@@ -172,18 +172,6 @@ void _transfer_images_to_flash(){
 	return;
 }
 
-
-void _transfer_images_to_flash() {
-    /*
-     * todo: 	@RON, this is called at the end of take_image() after acking over spi.
-     * 			This needs to transfer images from the flash buffer on the Arducam chip
-     * 			from each of the VIS and NIR sensors to appropriate locations on the NAND
-     * 			flash.
-     */
-
-    return;
-}
-
 void iterate_image_num() { total_image_num += 2; }
 
 uint8_t get_image_num(uint8_t hk) {
@@ -194,30 +182,6 @@ uint8_t get_image_num(uint8_t hk) {
     }
     SPI1_IT_Transmit(&total_image_num);
     return 1;
-}
-     
-void spi_handle_command(uint8_t cmd) {
-    switch(cmd) {
-    case GET_HK:
-//    	get_housekeeping();
-    	break;
-    case CAPTURE_IMAGE:
-//    	handle_capture_cmd(cmd);
-    	iterate_image_num();
-    	break;
-    case GET_IMAGE_NUM:
-//    	get_image_num();
-    	break;
-    case COUNT_IMAGES:
-//    	count_images();
-    	break;
-	case SENSOR_ACTIVE:
-		sensor_active();
-		break;
-	case SENSOR_IDLE:
-		sensor_idle();
-		break;
-	}
 }
 
 void _initalize_sensor(uint8_t sensor) {
