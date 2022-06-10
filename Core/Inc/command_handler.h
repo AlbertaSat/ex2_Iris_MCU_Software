@@ -30,7 +30,6 @@ typedef struct __attribute__((__packed__)) currentsense_packet_s {
     uint16_t value;
 } currentsense_packet_t;
 
-
 void spi_handle_command(uint8_t cmd);
 void uart_handle_command(char *cmd);
 void take_image();

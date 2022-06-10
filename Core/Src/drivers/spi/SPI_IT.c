@@ -12,7 +12,7 @@ extern SPI_HandleTypeDef hspi1;
 
 /**
  * @brief Transmits data over SPI1 with interrupts enabled
- * 
+ *
  * @param TX_Data pointer to data to transmit
  */
 void SPI1_IT_Transmit(uint8_t *TX_Data) {
@@ -24,7 +24,7 @@ void SPI1_IT_Transmit(uint8_t *TX_Data) {
 
 /**
  * @brief Recieve data over SPI1 with interrupts enabled
- * 
+ *
  * @param RX_Data pointer to data buffer
  */
 void SPI1_IT_Recieve(uint8_t *RX_Data) {

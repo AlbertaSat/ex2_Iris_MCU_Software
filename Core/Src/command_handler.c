@@ -38,7 +38,7 @@ int format = JPEG;
 /**
  * @brief prototype for taking image; for use with SPI ONLY
  *        Untested.
- * 
+ *
  */
 void take_image() {
     /*
@@ -73,9 +73,9 @@ void take_image() {
     // ack over SPI
     SPI1_IT_Transmit(&ack);
 
-	//todo:
-    // keep track of how many images we have captured. This could come after transferring
-    // to flash
+    // todo:
+    //  keep track of how many images we have captured. This could come after transferring
+    //  to flash
     //	_iterate_image_number();
 
     // kick over images to our NAND flash
@@ -86,9 +86,9 @@ void take_image() {
 
 /**
  * @brief Get the image length object from NAND FLASH and transmit it over SPI
- * 
+ *
  * Untested
- * 
+ *
  */
 void get_image_length() {
     // todo:	@RON:   Need a way to get image length from NAND flash
@@ -100,9 +100,9 @@ void get_image_length() {
 
 /**
  * @brief Counts number of images stored in the flash file system and transmits it over SPI
- * 
+ *
  * Untested
- * 
+ *
  */
 void count_images() {
     // todo: @ron - can we consider implementing a function to count images in flash rather than iterating a local
@@ -113,23 +113,23 @@ void count_images() {
 
 /**
  * @brief Sends arducam sensors into an idle (re: powered off) state by turning off FET driver pin
- * 
+ *
  */
 void sensor_idle() {
     /*
-    * Todo: Look into SPI register 0x06 for idle power mode on the sensors. This shouldn't
-    * 		 cut power to it and require reprogramming.
-    */
+     * Todo: Look into SPI register 0x06 for idle power mode on the sensors. This shouldn't
+     * 		 cut power to it and require reprogramming.
+     */
     // pull mosfet driver pin low, cutting power to sensors
     HAL_GPIO_WritePin(CAM_EN_GPIO_Port, CAM_EN_Pin, GPIO_PIN_RESET);
-	SPI1_IT_Transmit(&ack);
+    SPI1_IT_Transmit(&ack);
 
     return;
 }
 
 /**
  * @brief Activates sensors by enabling FET driver pin and programming to basic functionality
- * 
+ *
  */
 void sensor_active() {
     // pull mosfet driver pin high, powering sensors
@@ -147,7 +147,7 @@ void sensor_active() {
 
 /**
  * @brief Get the housekeeping object and transmits it over SPI
- * 
+ *
  */
 void get_housekeeping() {
     hk = _get_housekeeping();
@@ -158,9 +158,9 @@ void get_housekeeping() {
 }
 
 /**
- * @brief   Updates sensor I2C regs based on input struct. Untested, and unknown if 
+ * @brief   Updates sensor I2C regs based on input struct. Untested, and unknown if
  *          implementation will occur
- * 
+ *
  */
 void update_sensor_I2C_regs() {
     /*
@@ -184,47 +184,47 @@ void update_sensor_I2C_regs() {
 /**
  * @brief   Updates I2C regs on current sense IC chip from input struct.
  *          Needs to be written
- * 
+ *
  */
 void update_current_limits() { return; }
 
 /**
  * @brief   Floods camera SPI with dummy data to non-addressable regs to init sensors
- * 
+ *
  */
-void flood_cam_spi(){
-	for (uint8_t i=0x60; i<0x6F; i++){
-		read_spi_reg(i, VIS_SENSOR);
-		read_spi_reg(i, NIR_SENSOR);
-	}
+void flood_cam_spi() {
+    for (uint8_t i = 0x60; i < 0x6F; i++) {
+        read_spi_reg(i, VIS_SENSOR);
+        read_spi_reg(i, NIR_SENSOR);
+    }
 }
 
 /**
  * @brief Transfers images from arducams to nand flash. This will occur in an idle state
- * 
+ *
  */
-void _transfer_images_to_flash(){
-	/*
-	 * todo: 	@RON, this is called at the end of take_image() after acking over spi.
-	 * 			This needs to transfer images from the flash buffer on the Arducam chip
-	 * 			from each of the VIS and NIR sensors to appropriate locations on the NAND
-	 * 			flash.
-	 */
+void _transfer_images_to_flash() {
+    /*
+     * todo: 	@RON, this is called at the end of take_image() after acking over spi.
+     * 			This needs to transfer images from the flash buffer on the Arducam chip
+     * 			from each of the VIS and NIR sensors to appropriate locations on the NAND
+     * 			flash.
+     */
 
-	return;
+    return;
 }
 
 /**
  * @brief   iterates internal image number by 2 (2 cameras take a picture, += 2)
- * 
+ *
  */
 void iterate_image_num() { total_image_num += 2; }
 
 /**
  * @brief Get the total image number
- * 
+ *
  * @param hk 1 for integer return (what's used for hk); 0 for spi return
- * @return uint8_t 
+ * @return uint8_t
  */
 uint8_t get_image_num(uint8_t hk) {
     if (hk) {
@@ -235,8 +235,8 @@ uint8_t get_image_num(uint8_t hk) {
 }
 
 /**
- * @brief Initializes sensor 
- * 
+ * @brief Initializes sensor
+ *
  * @param sensor VIS_SENSOR or NIR_SENSOR
  */
 void _initalize_sensor(uint8_t sensor) {
@@ -276,18 +276,20 @@ void _initalize_sensor(uint8_t sensor) {
     }
 }
 
-static inline const char* next_token(const char *ptr) {
+static inline const char *next_token(const char *ptr) {
     /* move to the next space */
-    while(*ptr && *ptr != ' ') ptr++;
+    while (*ptr && *ptr != ' ')
+        ptr++;
     /* move past any whitespace */
-    while(*ptr && isspace(*ptr)) ptr++;
+    while (*ptr && isspace(*ptr))
+        ptr++;
 
     return (*ptr) ? ptr : NULL;
 }
 
 /**
  * @brief UART command handler
- * 
+ *
  * @param pointer to char command from main
  */
 void uart_handle_command(char *cmd) {
@@ -348,7 +350,7 @@ void uart_handle_command(char *cmd) {
             const char *i = next_token(cmd);
             switch (*i) {
             case 's':
-            	uart_reset_sensors();
+                uart_reset_sensors();
                 break;
             }
         }

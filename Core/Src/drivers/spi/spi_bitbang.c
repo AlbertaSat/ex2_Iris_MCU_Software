@@ -57,10 +57,10 @@
 
 /**
  * @brief reads spi register from target sensor
- * 
+ *
  * @param addr      8 bit register address
  * @param sensor    target sensor
- * @return uint8_t 
+ * @return uint8_t
  * todo: consider switching to pointers (will require a decent amount of refactor)
  */
 uint8_t read_spi_reg(uint8_t addr, uint8_t sensor) {
@@ -102,12 +102,12 @@ uint8_t read_spi_reg(uint8_t addr, uint8_t sensor) {
 
 /**
  * @brief writes spi register on target sensor
- * 
+ *
  * @param addr      target spi register
  * @param packet    value to write to register
  * @param sensor    target sensor
- * @return true 
- * @return false 
+ * @return true
+ * @return false
  * todo: switch to pointers; stop using bools
  */
 bool write_spi_reg(uint8_t addr, uint8_t packet, uint8_t sensor) {
@@ -145,8 +145,8 @@ bool write_spi_reg(uint8_t addr, uint8_t packet, uint8_t sensor) {
 
 /**
  * @brief Reads multiple bytes from target spi register
- *  
- * @param addr      target register address 
+ *
+ * @param addr      target register address
  * @param length    number of bytes to read
  * @param sensor    target sensor
  */
@@ -190,10 +190,10 @@ void spi_read_multiple_bytes(uint8_t addr, uint32_t length, uint8_t sensor) {
 
 /**
  * @brief Gets state of j'th bit in a byte
- * 
+ *
  * @param byte  byte to read
  * @param j     position of bit
- * @return      GPIO_PinState 
+ * @return      GPIO_PinState
  */
 GPIO_PinState bit_read(uint8_t byte, int j) {
     byte = byte << j;

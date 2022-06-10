@@ -16,7 +16,7 @@ static void testTempSensor(void);
 
 /**
  * @brief Tests basic lifesigns of Iris board
- * 
+ *
  */
 void CHECK_LED_I2C_SPI_TS(void) {
 
@@ -71,13 +71,13 @@ void CHECK_LED_I2C_SPI_TS(void) {
 
 /**
  * @brief toggles the test LED
- * 
+ *
  */
 void _toggleLED(void) { HAL_GPIO_TogglePin(TEST_OUT1_GPIO_Port, TEST_OUT1_Pin); }
 
 /**
  * @brief Tests arducam sensor for use with lifesign testing
- * 
+ *
  * @param sensor target sensor
  */
 void _testArducamSensor(uint8_t sensor) {
@@ -104,7 +104,7 @@ void _testArducamSensor(uint8_t sensor) {
 
 /**
  * @brief Scans the I2C bus for devices. Prints out if at least one is found
- * 
+ *
  */
 void _testScanI2C() {
     HAL_StatusTypeDef result;
@@ -131,7 +131,7 @@ void _testScanI2C() {
 
 /**
  * @brief Tests temp sensors; parses for non-zero readout from the temperature regs
- * 
+ *
  */
 static void testTempSensor(void) {
     DBG_PUT("\n");
@@ -157,7 +157,7 @@ static void testTempSensor(void) {
 /**
  * @brief Prints temperature from sensor in degrees Celsius format without
  *        using floats.
- * 
+ *
  * @param temp 2 byte temperature value from sensor
  * @param sensor I2C (7 bit) address of temperature sensor
  */

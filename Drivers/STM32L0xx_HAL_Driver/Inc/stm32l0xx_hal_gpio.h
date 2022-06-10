@@ -170,10 +170,11 @@ typedef enum { GPIO_PIN_RESET = 0U, GPIO_PIN_SET } GPIO_PinState;
  * @brief GPIO Output Maximum frequency
  * @{
  */
-#define GPIO_SPEED_FREQ_LOW (0x00000000U)    /*!< range up to 0.4 MHz, please refer to the product datasheet */
-#define GPIO_SPEED_FREQ_MEDIUM (0x00000001U) /*!< range 0.4 MHz to 2 MHz, please refer to the product datasheet   \
-                                              */
-#define GPIO_SPEED_FREQ_HIGH (0x00000002U)   /*!< range   2 MHz to 10 MHz, please refer to the product datasheet */
+#define GPIO_SPEED_FREQ_LOW (0x00000000U) /*!< range up to 0.4 MHz, please refer to the product datasheet */
+#define GPIO_SPEED_FREQ_MEDIUM                                                                                    \
+    (0x00000001U)                          /*!< range 0.4 MHz to 2 MHz, please refer to the product datasheet     \
+                                            */
+#define GPIO_SPEED_FREQ_HIGH (0x00000002U) /*!< range   2 MHz to 10 MHz, please refer to the product datasheet */
 #define GPIO_SPEED_FREQ_VERY_HIGH                                                                                 \
     (0x00000003U) /*!< range  10 MHz to 35 MHz, please refer to the product datasheet */
 

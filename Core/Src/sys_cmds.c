@@ -10,8 +10,8 @@ extern I2C_HandleTypeDef hi2c2;
 
 /**
  * @brief Resets target sensor to default parameters
- * 
- * @param sensor 
+ *
+ * @param sensor
  */
 void sensor_reset(uint8_t sensor) {
     char buf[64];
@@ -63,8 +63,8 @@ void sensor_reset(uint8_t sensor) {
 
 /**
  * @brief Scans I2C2 (internal) bus for devices. Debug purpose only
- * 
- * @return int 
+ *
+ * @return int
  */
 int uart_scan_i2c(void) {
     HAL_StatusTypeDef result;

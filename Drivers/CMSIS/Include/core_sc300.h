@@ -1089,8 +1089,9 @@ typedef struct {
 #define TPI_DEVID_AsynClkIn_Msk (0x1UL << TPI_DEVID_AsynClkIn_Pos) /*!< TPI DEVID: AsynClkIn Mask */
 
 #define TPI_DEVID_NrTraceInput_Pos 0U /*!< TPI DEVID: NrTraceInput Position */
-#define TPI_DEVID_NrTraceInput_Msk (0x1FUL /*<< TPI_DEVID_NrTraceInput_Pos*/) /*!< TPI DEVID: NrTraceInput Mask   \
-                                                                               */
+#define TPI_DEVID_NrTraceInput_Msk                                                                                \
+    (0x1FUL /*<< TPI_DEVID_NrTraceInput_Pos*/) /*!< TPI DEVID: NrTraceInput Mask                                  \
+                                                */
 
 /* TPI DEVTYPE Register Definitions */
 #define TPI_DEVTYPE_SubType_Pos 4U                                     /*!< TPI DEVTYPE: SubType Position */
@@ -1258,8 +1259,9 @@ typedef struct {
 #define CoreDebug_DCRSR_REGWnR_Msk (1UL << CoreDebug_DCRSR_REGWnR_Pos) /*!< CoreDebug DCRSR: REGWnR Mask */
 
 #define CoreDebug_DCRSR_REGSEL_Pos 0U /*!< CoreDebug DCRSR: REGSEL Position */
-#define CoreDebug_DCRSR_REGSEL_Msk (0x1FUL /*<< CoreDebug_DCRSR_REGSEL_Pos*/) /*!< CoreDebug DCRSR: REGSEL Mask   \
-                                                                               */
+#define CoreDebug_DCRSR_REGSEL_Msk                                                                                \
+    (0x1FUL /*<< CoreDebug_DCRSR_REGSEL_Pos*/) /*!< CoreDebug DCRSR: REGSEL Mask                                  \
+                                                */
 
 /* Debug Exception and Monitor Control Register Definitions */
 #define CoreDebug_DEMCR_TRCENA_Pos 24U                                 /*!< CoreDebug DEMCR: TRCENA Position */

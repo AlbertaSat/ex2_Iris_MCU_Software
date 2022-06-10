@@ -130,7 +130,6 @@ int main(void) {
     uart_reset_sensors();
     init_temp_sensors();
 
-
 #ifdef UART_DEBUG
     DBG_PUT("-----------------------------------\r\n");
     DBG_PUT("Iris Electronics Test Software\r\n"

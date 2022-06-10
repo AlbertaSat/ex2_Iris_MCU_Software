@@ -1104,8 +1104,9 @@ typedef struct {
 #define DBGMCU_APB1_FZ_DBG_TIM7_STOP DBGMCU_APB1_FZ_DBG_TIM7_STOP_Msk
 #define DBGMCU_APB1_FZ_DBG_RTC_STOP_Pos (10U)
 #define DBGMCU_APB1_FZ_DBG_RTC_STOP_Msk (0x1UL << DBGMCU_APB1_FZ_DBG_RTC_STOP_Pos) /*!< 0x00000400 */
-#define DBGMCU_APB1_FZ_DBG_RTC_STOP DBGMCU_APB1_FZ_DBG_RTC_STOP_Msk /*!< RTC Calendar frozen when core is halted  \
-                                                                     */
+#define DBGMCU_APB1_FZ_DBG_RTC_STOP                                                                               \
+    DBGMCU_APB1_FZ_DBG_RTC_STOP_Msk /*!< RTC Calendar frozen when core is halted                                  \
+                                     */
 #define DBGMCU_APB1_FZ_DBG_WWDG_STOP_Pos (11U)
 #define DBGMCU_APB1_FZ_DBG_WWDG_STOP_Msk (0x1UL << DBGMCU_APB1_FZ_DBG_WWDG_STOP_Pos) /*!< 0x00000800 */
 #define DBGMCU_APB1_FZ_DBG_WWDG_STOP                                                                              \
@@ -3062,8 +3063,9 @@ typedef struct {
 
 #define LPTIM_CFGR_TRGFLT_Pos (6U)
 #define LPTIM_CFGR_TRGFLT_Msk (0x3UL << LPTIM_CFGR_TRGFLT_Pos) /*!< 0x000000C0 */
-#define LPTIM_CFGR_TRGFLT LPTIM_CFGR_TRGFLT_Msk /*!< TRGFLT[1:0] bits (Configurable digital filter for trigger)   \
-                                                 */
+#define LPTIM_CFGR_TRGFLT                                                                                         \
+    LPTIM_CFGR_TRGFLT_Msk /*!< TRGFLT[1:0] bits (Configurable digital filter for trigger)                         \
+                           */
 #define LPTIM_CFGR_TRGFLT_0 (0x1UL << LPTIM_CFGR_TRGFLT_Pos) /*!< 0x00000040 */
 #define LPTIM_CFGR_TRGFLT_1 (0x2UL << LPTIM_CFGR_TRGFLT_Pos) /*!< 0x00000080 */
 
@@ -5191,8 +5193,9 @@ typedef struct {
     SYSCFG_CFGR3_ENBUF_VREFINT_ADC_Msk /*!< VREFINT reference for ADC enable bit */
 #define SYSCFG_CFGR3_ENBUF_SENSOR_ADC_Pos (9U)
 #define SYSCFG_CFGR3_ENBUF_SENSOR_ADC_Msk (0x1UL << SYSCFG_CFGR3_ENBUF_SENSOR_ADC_Pos) /*!< 0x00000200 */
-#define SYSCFG_CFGR3_ENBUF_SENSOR_ADC SYSCFG_CFGR3_ENBUF_SENSOR_ADC_Msk /*!< Sensor reference for ADC enable bit  \
-                                                                         */
+#define SYSCFG_CFGR3_ENBUF_SENSOR_ADC                                                                             \
+    SYSCFG_CFGR3_ENBUF_SENSOR_ADC_Msk /*!< Sensor reference for ADC enable bit                                    \
+                                       */
 #define SYSCFG_CFGR3_ENBUFLP_VREFINT_COMP_Pos (12U)
 #define SYSCFG_CFGR3_ENBUFLP_VREFINT_COMP_Msk (0x1UL << SYSCFG_CFGR3_ENBUFLP_VREFINT_COMP_Pos) /*!< 0x00001000 */
 #define SYSCFG_CFGR3_ENBUFLP_VREFINT_COMP                                                                         \
