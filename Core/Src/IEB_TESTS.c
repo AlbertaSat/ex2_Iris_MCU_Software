@@ -14,6 +14,10 @@ extern I2C_HandleTypeDef hi2c2;
 
 static void testTempSensor(void);
 
+/**
+ * @brief Tests basic lifesigns of Iris board
+ * 
+ */
 void CHECK_LED_I2C_SPI_TS(void) {
 
     // Blink IO LED
@@ -65,8 +69,17 @@ void CHECK_LED_I2C_SPI_TS(void) {
     HAL_Delay(1000);
 }
 
+/**
+ * @brief toggles the test LED
+ * 
+ */
 void _toggleLED(void) { HAL_GPIO_TogglePin(TEST_OUT1_GPIO_Port, TEST_OUT1_Pin); }
 
+/**
+ * @brief Tests arducam sensor for use with lifesign testing
+ * 
+ * @param sensor target sensor
+ */
 void _testArducamSensor(uint8_t sensor) {
     arducam_wait_for_ready(sensor);
     write_reg(AC_REG_RESET, 1, sensor);
@@ -89,6 +102,10 @@ void _testArducamSensor(uint8_t sensor) {
     }
 }
 
+/**
+ * @brief Scans the I2C bus for devices. Prints out if at least one is found
+ * 
+ */
 void _testScanI2C() {
     HAL_StatusTypeDef result;
     uint8_t i;
@@ -112,6 +129,10 @@ void _testScanI2C() {
     }
 }
 
+/**
+ * @brief Tests temp sensors; parses for non-zero readout from the temperature regs
+ * 
+ */
 static void testTempSensor(void) {
     DBG_PUT("\n");
     uint16_t vis_temp, nir_temp, nand_temp, gate_temp;
@@ -133,6 +154,13 @@ static void testTempSensor(void) {
     return;
 }
 
+/**
+ * @brief Prints temperature from sensor in degrees Celsius format without
+ *        using floats.
+ * 
+ * @param temp 2 byte temperature value from sensor
+ * @param sensor I2C (7 bit) address of temperature sensor
+ */
 void printTemp(uint16_t temp, uint8_t sensor) {
     char buf[64];
     sprintf(buf, "Sensor 0x%x Temperature: %d.%04d C\r\n", sensor, (temp >> 8) - 64, ((temp & 0xFF) >> 4) * 625);

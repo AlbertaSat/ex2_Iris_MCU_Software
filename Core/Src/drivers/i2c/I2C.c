@@ -5,13 +5,20 @@
 #include "debug.h"
 #include "main.h"
 extern I2C_HandleTypeDef hi2c2;
-
+`
 #define SCCB_READ 1
 
 static uint16_t VIS_ADDRESS = 0x3C;
 static uint16_t NIR_ADDRESS = 0x3E;
 
 // arducam functions
+/**
+ * @brief Writes Arducam Sensor i2c register
+ * 
+ * @param regID target register ID; 16 bit
+ * @param regDat register data to write; 8 bit
+ * @param sensor target sensor
+ */
 void wrSensorReg16_8(uint16_t regID, uint8_t regDat, uint8_t sensor) {
     if (sensor == VIS_SENSOR) {
         i2c2_write16_8(VIS_ADDRESS, regID, regDat);
@@ -21,6 +28,12 @@ void wrSensorReg16_8(uint16_t regID, uint8_t regDat, uint8_t sensor) {
     HAL_Delay(1);
 }
 
+/**
+ * @brief Writes a struct of (register, value) to a target sensor
+ * 
+ * @param reglist sensor_reg struct containing registers and values to write to sensor
+ * @param sensor  target sensor
+ */
 void wrSensorRegs16_8(struct sensor_reg reglist[], uint8_t sensor) {
     struct sensor_reg *curr = reglist;
     for (curr = reglist; curr->reg != 0xffff; curr++) {
@@ -29,48 +42,103 @@ void wrSensorRegs16_8(struct sensor_reg reglist[], uint8_t sensor) {
     return;
 }
 
+/**
+ * @brief reads sensor reg 
+ * 
+ * @param regID target register ID; 16 bit
+ * @param regDat register data; 8 bit
+ * @param sensor target sensor
+ */
 void rdSensorReg16_8(uint16_t regID, uint8_t *regDat, uint8_t sensor) {
     if (sensor == VIS_SENSOR) {
-        //        rc = HAL_I2C_Mem_Read(&hi2c2, VIS_ADDRESS, regID, I2C_MEMADD_SIZE_16BIT, regDat, 1, 100);
         i2c2_read16_8(VIS_ADDRESS, regID, regDat);
     } else {
-        //        rc = HAL_I2C_Mem_Read(&hi2c2, NIR_ADDRESS, regID, I2C_MEMADD_SIZE_16BIT, regDat, 1, 100);
         i2c2_read16_8(NIR_ADDRESS, regID, regDat);
     }
     return;
 }
 
 // I2C2 Functions
+/**
+ * @brief reads 16 bit register with 8 bit value on i2c bus 2 (internal)
+ * 
+ * @param addr              7 bit device address
+ * @param register_pointer  pointer to 16 bit register value
+ * @param reg_data          pointer to where to write the register data
+ */
 void i2c2_read16_8(uint8_t addr, uint16_t register_pointer, uint8_t *reg_data) {
     hi2c_read16_8(hi2c2, addr, register_pointer, reg_data);
     return;
 }
-void i2c2_write16_8(uint8_t addr, uint16_t register_pointer, uint16_t register_value) {
+
+/**
+ * @brief writes 16 bit register with 8 bit value on i2c bus 2 (internal)
+ * 
+ * @param addr              7 bit device address
+ * @param register_pointer  pointer to 16 bit register value
+ * @param register_value    8 bit value to write to register
+ */
+void i2c2_write16_8(uint8_t addr, uint16_t register_pointer, uint8_t register_value) {
     hi2c_write16_8(hi2c2, addr, register_pointer, register_value);
     return;
 }
 
+/**
+ * @brief reads 8 bit register with 8 bit value on i2c bus 2 (internal)
+ * 
+ * @param addr              7 bit device address
+ * @param register_pointer  pointer to 8 bit register value
+ * @param reg_data          pointer to where to write the register data
+ */
 void i2c2_read8_8(uint8_t addr, uint8_t register_pointer, uint8_t *reg_data){
 	hi2c_read8_8(hi2c2, addr, register_pointer, reg_data);
 	return;
 }
+
+/**
+ * @brief writes 8 bit register with 8 bit value on i2c bus 2 (internal)
+ * 
+ * @param addr              7 bit device address
+ * @param register_pointer  pointer to 8 bit register value
+ * @param register_value    8 bit value to write to register
+ */
 void i2c2_write8_8(uint8_t addr, uint8_t register_pointer, uint8_t register_value) {
     hi2c_write8_8(hi2c2, addr, register_pointer, register_value);
     return;
 }
 
-// untested
-uint16_t i2c2_read8_16(uint8_t addr, uint8_t register_pointer) {
-    uint16_t val = hi2c_read8_16(hi2c2, addr, register_pointer);
-    return val;
+/**
+ * @brief reads 8 bit register with 16 bit value on i2c bus 2 (internal)
+ * 
+ * @param addr              7 bit device address
+ * @param register_pointer  pointer to 16 bit register value
+ * @param register_value    pointer to 16 bit value 
+ */
+uint16_t i2c2_read8_16(uint8_t addr, uint8_t register_pointer, uint16_t *reg_data) {
+    hi2c_read8_16(hi2c2, addr, register_pointer, reg_data);
+    return;
 }
-// untested
+
+/**
+ * @brief writes 8 bit register with 16 bit value on i2c bus 2 (internal)
+ * 
+ * @param addr              7 bit device address
+ * @param register_pointer  pointer to 8 bit register value
+ * @param register_value    16 bit value to write to register
+ */
 void i2c2_write8_16(uint8_t addr, uint8_t register_pointer, uint16_t register_value) {
     hi2c_write8_16(hi2c2, addr, register_pointer, register_value);
     return;
 }
 
-// General functions
+/**
+ * @brief General function to read 8 bit value from 16 bit register via I2C
+ * 
+ * @param hi2c              I2C_HandleTypeDef structure
+ * @param addr              7 bit device address
+ * @param register_pointer  pointer to 16 bit register address
+ * @param reg_data          pointer to 8 bit register value
+ */
 void hi2c_read16_8(I2C_HandleTypeDef hi2c, uint8_t addr, uint16_t register_pointer, uint8_t *reg_data) {
     HAL_StatusTypeDef rc;
     rc = HAL_I2C_Mem_Read(&hi2c, addr << 1, (uint16_t)register_pointer, I2C_MEMADD_SIZE_16BIT, reg_data, 1, 100);
@@ -81,6 +149,14 @@ void hi2c_read16_8(I2C_HandleTypeDef hi2c, uint8_t addr, uint16_t register_point
     return;
 }
 
+/**
+ * @brief General function to write 8 bit value to 16 bit register via I2C
+ * 
+ * @param hi2c              I2C_HandleTypeDef structure
+ * @param addr              7 bit device address
+ * @param register_pointer  pointer to 16 bit register address
+ * @param register_value    8 bit register value
+ */
 void hi2c_write16_8(I2C_HandleTypeDef hi2c, uint8_t addr, uint16_t register_pointer, uint16_t register_value) {
     uint8_t dataBuffer[1];
     HAL_StatusTypeDef status = HAL_OK;
@@ -94,8 +170,14 @@ void hi2c_write16_8(I2C_HandleTypeDef hi2c, uint8_t addr, uint16_t register_poin
     }
 }
 
-// UNTESTED BELOW
-
+/**
+ * @brief General function to read 8 bit value from 8 bit register via I2C
+ * 
+ * @param hi2c              I2C_HandleTypeDef structure
+ * @param addr              7 bit device address
+ * @param register_pointer  pointer to 8 bit register address
+ * @param reg_data          pointer to 8 bit register value
+ */
 void hi2c_read8_8(I2C_HandleTypeDef hi2c, uint8_t addr, uint8_t register_pointer, uint8_t *reg_data)
 {
     HAL_StatusTypeDef status = HAL_OK;
@@ -107,6 +189,14 @@ void hi2c_read8_8(I2C_HandleTypeDef hi2c, uint8_t addr, uint8_t register_pointer
     }
 }
 
+/**
+ * @brief General function to write 8 bit value to 8 bit register via I2C
+ * 
+ * @param hi2c              I2C_HandleTypeDef structure
+ * @param addr              7 bit device address
+ * @param register_pointer  pointer to 8 bit register address
+ * @param register_value    pointer to 8 bit register value
+ */
 void hi2c_write8_8(I2C_HandleTypeDef hi2c, uint8_t addr, uint8_t register_pointer, uint8_t register_value) {
     uint8_t dataBuffer[1];
     HAL_StatusTypeDef status = HAL_OK;
@@ -120,19 +210,34 @@ void hi2c_write8_8(I2C_HandleTypeDef hi2c, uint8_t addr, uint8_t register_pointe
     }
 }
 
-uint16_t hi2c_read8_16(I2C_HandleTypeDef hi2c, uint8_t addr, uint8_t register_pointer) {
-    uint16_t return_value = 0;
+/**
+ * @brief General function to read 16 bit value from 8 bit register via I2C
+ * 
+ * @param hi2c              I2C_HandleTypeDef structure
+ * @param addr              7 bit device address
+ * @param register_pointer  pointer to 8 bit register address
+ * @param reg_data          pointer to 16 bit register value
+ */
+void hi2c_read8_16(I2C_HandleTypeDef hi2c, uint8_t addr, uint8_t register_pointer, uint16_t *reg_data) {
     HAL_StatusTypeDef status = HAL_OK;
     status =
-        HAL_I2C_Mem_Read(&hi2c, addr << 1, (uint8_t)register_pointer, I2C_MEMADD_SIZE_8BIT, &return_value, 2, 100);
+        HAL_I2C_Mem_Read(&hi2c, addr << 1, (uint8_t)register_pointer, I2C_MEMADD_SIZE_8BIT, reg_data, 2, 100);
     if (status != HAL_OK) {
         char buf[64];
         sprintf(buf, "I2C8_16 read from 0x%x register 0x%x failed\r\n", addr, register_pointer);
         DBG_PUT(buf);
     }
-    return return_value;
+    return;
 }
 
+/**
+ * @brief General function to write 16 bit value to 8 bit register via I2C
+ * 
+ * @param hi2c              I2C_HandleTypeDef structure
+ * @param addr              7 bit device address
+ * @param register_pointer  pointer to 8 bit register address
+ * @param register_value    pointer to 16 bit register value
+ */
 void hi2c_write8_16(I2C_HandleTypeDef hi2c, uint8_t addr, uint8_t register_pointer, uint16_t register_value) {
     uint16_t dataBuffer[1];
     HAL_StatusTypeDef status = HAL_OK;

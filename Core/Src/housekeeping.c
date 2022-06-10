@@ -28,6 +28,11 @@ housekeeping_packet_t _get_housekeeping() {
     return hk;
 }
 
+/**
+ * @brief Decodes hk packet for debug purposes. Prints output over UART
+ * 
+ * @param hk housekeeping_packet_t 
+ */
 void decode_hk_packet(housekeeping_packet_t hk) {
     char buf[64];
     sprintf(buf, "hk.vis_temp:0x%x, %d.%04d C\r\n", hk.vis_temp, (hk.vis_temp >> 8) - 64,

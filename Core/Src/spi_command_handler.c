@@ -1,5 +1,10 @@
 #include <command_handler.h>
 
+/**
+ * @brief SPI command handler
+ * 
+ * @param cmd Byte command from Athena / SPI Master
+ */
 void spi_handle_command(uint8_t cmd) {
     switch (cmd) {
     case GET_HK:
