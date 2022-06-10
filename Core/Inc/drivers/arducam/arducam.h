@@ -60,6 +60,9 @@ bool arducam_wait_for_ready(uint8_t sensor);
 void arducam_raw_init(int width, int depth, uint8_t sensor);
 void arducam_get_resolution(int *width, int *depth, uint8_t sensor);
 int arducam_set_resolution(int format, int width, uint8_t sensor);
+int arducam_get_saturation(uint8_t sensor);
+void arducam_set_saturation(int saturation, uint8_t sensor);
+uint8_t get_bit(uint8_t addr, uint8_t bit, uint8_t sensor);
 
 void SingleCapTransfer(int fmt, uint8_t sensor);
 
