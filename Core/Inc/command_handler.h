@@ -46,6 +46,9 @@ uint8_t get_image_num(uint8_t hk);
 void iterate_image_num();
 int uart_scan_i2c(void);
 void print_progress(uint8_t count, uint8_t max);
+void handle_i2c16_8_cmd(const char *cmd);
+void help();
+
 // void _initalize_sensor();
 void flood_cam_spi();
 
