@@ -13,12 +13,13 @@
 #include "I2C.h"
 #include "housekeeping.h"
 #define REG_SYS_CTL0 0x3008 /* System Control */
-#define GET_IMAGE_NUM 0x15
-#define CAPTURE_IMAGE 0x10
-#define COUNT_IMAGES 0x35
-#define SENSOR_IDLE 0x30
-#define SENSOR_ACTIVE 0x40
-#define GET_HK 0x50
+
+//#define GET_IMAGE_NUM 0x15
+//#define CAPTURE_IMAGE 0x10
+//#define COUNT_IMAGES 0x35
+//#define SENSOR_IDLE 0x30
+//#define SENSOR_ACTIVE 0x40
+//#define GET_HK 0x50
 
 extern int format;
 
@@ -30,7 +31,7 @@ typedef struct __attribute__((__packed__)) currentsense_packet_s {
     uint16_t value;
 } currentsense_packet_t;
 
-void spi_handle_command(uint8_t cmd);
+
 void uart_handle_command(char *cmd);
 void take_image();
 void get_image_length();
