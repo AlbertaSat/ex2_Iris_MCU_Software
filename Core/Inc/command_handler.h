@@ -12,7 +12,6 @@
 #include "SPI_IT.h"
 #include "I2C.h"
 #include "housekeeping.h"
-
 #define REG_SYS_CTL0 0x3008 /* System Control */
 #define GET_IMAGE_NUM 0x15
 #define CAPTURE_IMAGE 0x10
@@ -23,22 +22,19 @@
 
 extern int format;
 
-extern int VIS_DETECTED;
-extern int NIR_DETECTED;
+extern uint8_t VIS_DETECTED;
+extern uint8_t NIR_DETECTED;
 
 typedef struct __attribute__((__packed__)) currentsense_packet_s {
     uint8_t reg;
     uint16_t value;
 } currentsense_packet_t;
 
-
 void spi_handle_command(uint8_t cmd);
 void uart_handle_command(char *cmd);
-
 void take_image();
 void get_image_length();
 void count_images();
-
 void sensor_reset(uint8_t sensor);
 void sensor_idle();
 void sensor_active();
@@ -48,11 +44,9 @@ void update_current_limits();
 void _initalize_sensor(uint8_t sensor);
 uint8_t get_image_num(uint8_t hk);
 void iterate_image_num();
-
-int scan_i2c(void);
-
+int uart_scan_i2c(void);
 void print_progress(uint8_t count, uint8_t max);
-
 // void _initalize_sensor();
+void flood_cam_spi();
 
 #endif /* INC_COMMAND_HANDLER_H_ */

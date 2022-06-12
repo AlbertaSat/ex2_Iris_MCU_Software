@@ -9,7 +9,8 @@
 #include "IEB_TESTS.h"
 #include "flash_cmds.h"
 #include "housekeeping.h"
-
+extern int format;
+extern I2C_HandleTypeDef hi2c2;
 // extern struct housekeeping_packet hk;
 
 FileHandle_t *file;
@@ -24,7 +25,7 @@ static inline const char *next_token(const char *ptr) {
     return (*ptr) ? ptr : NULL;
 }
 
-static void help() {
+void help() {
     // UART DEBUG ONLY
 #ifdef UART_DEBUG
     DBG_PUT("TO RUN TESTS: test\r\n\n\n");
@@ -36,7 +37,9 @@ static void help() {
     DBG_PUT("\t\tformat<vis/nir> [JPEG|BMP|RAW]\r\n");
     DBG_PUT("\t\t hk | Gets housekeeping\r\n");
     DBG_PUT("\t\twidth <vis/nir> [<pixels>]\r\n");
-    DBG_PUT("\tscan | Scan I2C bus 2\r\n");
+    DBG_PUT("\t\tscan | Scan I2C bus 2\r\n");
+    DBG_PUT("\t\ti2c read deviceaddress registeraddress | read from i2c device register. values in hex\r\n");
+    DBG_PUT("\t\ti2c write deviceaddress registeraddress value | write to i2c device register. values in hex\r\n");
     DBG_PUT("\tNeeds work\r\n");
     DBG_PUT("\t\txfer sensor media filename | transfer image over media\r\n");
     DBG_PUT("\tNot tested/partially implemented:\r\n");
@@ -47,7 +50,7 @@ static void help() {
 #endif
 }
 
-static void uart_handle_format_cmd(const char *cmd) {
+void uart_handle_format_cmd(const char *cmd) {
     // TODO: Needs to handle sensor input
     const char *format_names[3] = {"BMP", "JPEG", "RAW"};
     char buf[64];
@@ -105,7 +108,7 @@ static void uart_handle_format_cmd(const char *cmd) {
     DBG_PUT("\r\n");
 }
 
-static void handle_reg_cmd(const char *cmd) {
+void handle_reg_cmd(const char *cmd) {
     char buf[64];
     const char *wptr = next_token(cmd);
 
@@ -178,7 +181,7 @@ static void handle_reg_cmd(const char *cmd) {
     DBG_PUT(buf);
 }
 
-static void uart_handle_width_cmd(const char *cmd) {
+void uart_handle_width_cmd(const char *cmd) {
     char buf[64];
     const char *wptr = next_token(cmd);
     if (!wptr) {
@@ -253,7 +256,7 @@ static void uart_handle_width_cmd(const char *cmd) {
         DBG_PUT(buf);
 }
 
-static void uart_handle_capture_cmd(const char *cmd) {
+void uart_handle_capture_cmd(const char *cmd) {
     const char *wptr = next_token(cmd);
 
     int target_sensor;
@@ -283,7 +286,7 @@ static void uart_handle_capture_cmd(const char *cmd) {
     arducam_capture_image(target_sensor);
 }
 
-static void uart_handle_xfer_cmd(const char *cmd) {
+void uart_handle_xfer_cmd(const char *cmd) {
     const char *wptr = next_token(cmd);
 
     int target_sensor;
@@ -343,7 +346,7 @@ static void uart_handle_xfer_cmd(const char *cmd) {
     transfer_image(target_sensor, fname, media);
 }
 
-static void uart_handle_read_file_cmd(const char *cmd) {
+void uart_handle_read_file_cmd(const char *cmd) {
     const char *wptr = next_token(cmd);
 
     int which;
@@ -373,7 +376,7 @@ static void uart_handle_read_file_cmd(const char *cmd) {
     transfer_file(which, media);
 }
 
-static void uart_handle_list_files_cmd(const char *cmd) {
+void uart_handle_list_files_cmd(const char *cmd) {
     const char *wptr = next_token(cmd);
 
     int how_many;
@@ -385,27 +388,100 @@ static void uart_handle_list_files_cmd(const char *cmd) {
     list_files(how_many);
 }
 
+void uart_reset_sensors(void) {
+    char buf[64];
+    // Reset the CPLD
+
+    arducam_wait_for_ready(VIS_SENSOR);
+    write_reg(AC_REG_RESET, 1, VIS_SENSOR);
+    write_reg(AC_REG_RESET, 1, VIS_SENSOR);
+    HAL_Delay(100);
+    write_reg(AC_REG_RESET, 0, VIS_SENSOR);
+    HAL_Delay(100);
+
+    if (!arducam_wait_for_ready(VIS_SENSOR)) {
+        DBG_PUT("VIS Camera: SPI Unavailable\r\n");
+    } else {
+        DBG_PUT("VIS Camera: SPI Initialized\r\n");
+    }
+
+    // Change MCU mode
+    write_reg(ARDUCHIP_MODE, 0x0, VIS_SENSOR);
+    wrSensorReg16_8(0xff, 0x01, VIS_SENSOR);
+
+    uint8_t vid = 0, pid = 0;
+    rdSensorReg16_8(OV5642_CHIPID_HIGH, &vid, VIS_SENSOR);
+    rdSensorReg16_8(OV5642_CHIPID_LOW, &pid, VIS_SENSOR);
+
+    if (vid != 0x56 || pid != 0x42) {
+        sprintf(buf, "VIS Camera I2C Address: Unknown\r\nVIS not available\r\n\n");
+        DBG_PUT(buf);
+        VIS_DETECTED = 0;
+
+    } else {
+        DBG_PUT("VIS Camera I2C Address: 0x3C\r\n");
+        VIS_DETECTED = 1;
+    }
+    if (VIS_DETECTED == 1) {
+        format = JPEG;
+        Arduino_init(format, VIS_SENSOR);
+        sprintf(buf, "VIS Camera Mode: JPEG\r\n\n");
+        DBG_PUT(buf);
+    }
+    // Test NIR Sensor
+    arducam_wait_for_ready(NIR_SENSOR);
+
+    // Reset the CPLD
+    write_reg(AC_REG_RESET, 1, NIR_SENSOR);
+    HAL_Delay(100);
+    write_reg(AC_REG_RESET, 0, NIR_SENSOR);
+    HAL_Delay(100);
+
+    if (!arducam_wait_for_ready(NIR_SENSOR)) {
+        DBG_PUT("NIR Camera: SPI Unavailable\r\n");
+    } else {
+        DBG_PUT("NIR Camera: SPI Initialized\r\n");
+    }
+
+    // Change MCU mode
+    write_reg(ARDUCHIP_MODE, 0x0, NIR_SENSOR);
+    wrSensorReg16_8(0xff, 0x01, NIR_SENSOR);
+
+    vid = 0;
+    pid = 0;
+    rdSensorReg16_8(OV5642_CHIPID_HIGH, &vid, NIR_SENSOR);
+    rdSensorReg16_8(OV5642_CHIPID_LOW, &pid, NIR_SENSOR);
+
+    if (vid != 0x56 || pid != 0x42) {
+        sprintf(buf, "NIR Camera I2C Address: Unknown\r\nCamera not available\r\n\n");
+        DBG_PUT(buf);
+        NIR_DETECTED = 0;
+
+    } else {
+        DBG_PUT("NIR Camera I2C Address: 0x3E\r\n");
+        NIR_DETECTED = 1;
+    }
+    if (NIR_DETECTED == 1) {
+        format = JPEG;
+        Arduino_init(format, NIR_SENSOR);
+        sprintf(buf, "NIR Camera Mode: JPEG\r\n\n");
+        DBG_PUT(buf);
+    }
+    HAL_Delay(1000);
+}
+
 void sensor_togglepower(int i) {
     if (i == 1) {
-        write_reg(0x06, 0x03, NIR_SENSOR);
-        write_reg(0x06, 0x03, VIS_SENSOR);
-        DBG_PUT("Sensors awake\r\n");
+        HAL_GPIO_WritePin(CAM_EN_GPIO_Port, CAM_EN_Pin, GPIO_PIN_SET);
+        DBG_PUT("Sensor Power Enabled.\r\n");
         return;
     }
-    write_reg(0x06, 0x05, NIR_SENSOR);
-    write_reg(0x06, 0x05, VIS_SENSOR);
-
-    DBG_PUT("Sensors Idle\r\n");
-    //        HAL_GPIO_WritePin(CAM_EN_GPIO_Port, CAM_EN_Pin, GPIO_PIN_SET);
-    //        DBG_PUT("Sensor Power Enabled.\r\n");
-    return;
-    //    }
-    //    HAL_GPIO_WritePin(CAM_EN_GPIO_Port, CAM_EN_Pin, GPIO_PIN_RESET);
-    //    DBG_PUT("Sensor Power Disabled.\r\n");
+    HAL_GPIO_WritePin(CAM_EN_GPIO_Port, CAM_EN_Pin, GPIO_PIN_RESET);
+    DBG_PUT("Sensor Power Disabled.\r\n");
 }
 
 // todo implement sensor selection
-static void uart_handle_saturation_cmd(const char *cmd, uint8_t sensor) {
+void uart_handle_saturation_cmd(const char *cmd, uint8_t sensor) {
     char buf[64];
     const char *satarg = next_token(cmd);
     int saturation;
@@ -423,7 +499,7 @@ static void uart_handle_saturation_cmd(const char *cmd, uint8_t sensor) {
     DBG_PUT(buf);
 }
 
-static void handle_i2c16_8_cmd(const char *cmd) {
+void handle_i2c16_8_cmd(const char *cmd) {
     char buf[64];
     const char *rwarg = next_token(cmd);
 
@@ -458,8 +534,8 @@ static void handle_i2c16_8_cmd(const char *cmd) {
 
     switch (*rwarg) {
     case 'r': {
-        uint16_t val;
-        val = i2c2_read8_16(addr, reg); // switch back to 16-8
+        uint8_t val = 0x00;
+        i2c2_read16_8(addr, reg, &val); // switch back to 16-8
         sprintf(buf, "Device 0x%lx register 0x%lx = 0x%x\r\n", addr, reg, val);
     } break;
 
@@ -474,7 +550,6 @@ static void handle_i2c16_8_cmd(const char *cmd) {
             sprintf(buf, "reg write 0x%lx: bad val '%s'\r\n", reg, valptr);
             break;
         }
-        //            wrSensorReg16_8(reg, val, target_sensor);
         i2c2_write16_8(addr, reg, val);
 
         sprintf(buf, "Device 0x%lx register 0x%lx wrote 0x%02lx\r\n", addr, reg, val);
@@ -486,7 +561,7 @@ static void handle_i2c16_8_cmd(const char *cmd) {
     DBG_PUT(buf);
 }
 
-static void uart_get_hk_packet(uint8_t *out) {
+void uart_get_hk_packet(uint8_t *out) {
     // uint8_t *out as arg
     housekeeping_packet_t hk;
     hk = _get_housekeeping();
@@ -505,98 +580,5 @@ void print_progress(uint8_t count, uint8_t max) {
     DBG_PUT(buf);
     if (count == max) {
         DBG_PUT("\r\n");
-    }
-}
-
-void uart_handle_command(char *cmd) {
-    uint8_t in[sizeof(housekeeping_packet_t)];
-    switch (*cmd) {
-    case 'c':
-        uart_handle_capture_cmd(cmd);
-        //        take_image();
-        break;
-    case 'f':
-        uart_handle_format_cmd(cmd);
-        break;
-
-    case 'r':
-        uart_handle_read_file_cmd(cmd);
-        break;
-
-    case 'x':
-        uart_handle_xfer_cmd(cmd);
-        break;
-
-    case 'l':
-        uart_handle_list_files_cmd(cmd);
-        break;
-
-    case 'w':
-        uart_handle_width_cmd(cmd);
-        break;
-    case 't':
-        CHECK_LED_I2C_SPI_TS();
-        break;
-    case 's':
-        switch (*(cmd + 1)) {
-        case 'c':
-            scan_i2c();
-            break;
-
-        case 'a':;
-            const char *c = next_token(cmd);
-            switch (*c) {
-            case 'v':
-                uart_handle_saturation_cmd(c, VIS_SENSOR);
-                break;
-            case 'n':
-                uart_handle_saturation_cmd(c, NIR_SENSOR);
-                break;
-            default:
-                DBG_PUT("Target Error\r\n");
-                break;
-            }
-        }
-        break;
-
-    case 'p':; // janky use of semicolon??
-        const char *p = next_token(cmd);
-        switch (*(p + 1)) {
-        case 'n':
-            sensor_active();
-            break;
-        case 'f':
-            sensor_idle();
-            break;
-        default:
-            DBG_PUT("Use either on or off\r\n");
-            break;
-        }
-        break;
-    case 'i':;
-        switch (*(cmd + 1)) {
-        case '2':
-            handle_i2c16_8_cmd(cmd); // needs to handle 16 / 8 bit stuff
-            break;
-        default:;
-            const char *i = next_token(cmd);
-            switch (*i) {
-            case 's':
-                sensor_reset(VIS_SENSOR);
-                sensor_reset(NIR_SENSOR);
-                break;
-            }
-        }
-        break;
-
-    case 'h':
-        switch (*(cmd + 1)) {
-        case 'k':
-            uart_get_hk_packet(in);
-            break;
-        default:
-            help();
-            break;
-        }
     }
 }

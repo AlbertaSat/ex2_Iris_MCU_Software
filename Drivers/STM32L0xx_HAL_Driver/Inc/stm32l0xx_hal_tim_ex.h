@@ -61,10 +61,11 @@ extern "C" {
 #define TIM2_ETR_HSI16 (TIM2_OR_ETR_RMP_1 | TIM2_OR_ETR_RMP_0) /*!< TIM2 ETR input is connected to HSI16 clock */
 #define TIM2_ETR_LSE (TIM2_OR_ETR_RMP_2 | TIM2_OR_ETR_RMP_0)   /*!< TIM2 ETR input is connected to LSE clock */
 #if defined(COMP1) && defined(COMP2)
-#define TIM2_ETR_COMP2_OUT (TIM2_OR_ETR_RMP_2 | TIM2_OR_ETR_RMP_1) /*!< TIM2 ETR input is connected to COMP2_OUT  \
-                                                                    */
-#define TIM2_ETR_COMP1_OUT TIM2_OR_ETR_RMP                         /*!< TIM2 ETR input is connected to COMP1_OUT */
-#endif                                                             /* COMP1 && COMP2 */
+#define TIM2_ETR_COMP2_OUT                                                                                        \
+    (TIM2_OR_ETR_RMP_2 | TIM2_OR_ETR_RMP_1) /*!< TIM2 ETR input is connected to COMP2_OUT                         \
+                                             */
+#define TIM2_ETR_COMP1_OUT TIM2_OR_ETR_RMP  /*!< TIM2 ETR input is connected to COMP1_OUT */
+#endif                                      /* COMP1 && COMP2 */
 
 #define TIM2_TI4_GPIO 0x00000000U /*!< TIM2 TI4 input connected to ORed GPIOs */
 #if defined(COMP1) && defined(COMP2)

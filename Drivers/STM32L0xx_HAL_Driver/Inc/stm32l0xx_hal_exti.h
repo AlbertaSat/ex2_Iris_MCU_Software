@@ -116,14 +116,16 @@ typedef struct {
      0x13u) /*!< External interrupt line 19 Connected to the RTC Tamper and Time Stamp events or CSS_LSE */
 #define EXTI_LINE_20 (EXTI_CONFIG | 0x14u) /*!< External interrupt line 20 Connected to the RTC wakeup timer */
 #if defined(EXTI_IMR_IM21)
-#define EXTI_LINE_21 (EXTI_CONFIG | 0x15u) /*!< External interrupt line 21 Connected to the Comparator 1 output   \
-                                            */
+#define EXTI_LINE_21                                                                                              \
+    (EXTI_CONFIG | 0x15u) /*!< External interrupt line 21 Connected to the Comparator 1 output                    \
+                           */
 #else
 #define EXTI_LINE_21 (EXTI_RESERVED | 0x15u) /*!< No interrupt supported in this line */
 #endif                                       /* EXTI_IMR_IM21 */
 #if defined(EXTI_IMR_IM22)
-#define EXTI_LINE_22 (EXTI_CONFIG | 0x16u) /*!< External interrupt line 22 Connected to the Comparator 2 output   \
-                                            */
+#define EXTI_LINE_22                                                                                              \
+    (EXTI_CONFIG | 0x16u) /*!< External interrupt line 22 Connected to the Comparator 2 output                    \
+                           */
 #else
 #define EXTI_LINE_22 (EXTI_RESERVED | 0x16u) /*!< No interrupt supported in this line */
 #endif                                       /* EXTI_IMR_IM22 */
@@ -144,10 +146,12 @@ typedef struct {
 #define EXTI_LINE_26                                                                                              \
     (EXTI_DIRECT | 0x1Au) /*!< External interrupt line 26 Connected to the internal USART2 wakeup event */
 #define EXTI_LINE_27 (EXTI_RESERVED | 0x1Bu) /*!< No interrupt supported in this line */
-#define EXTI_LINE_28 (EXTI_DIRECT | 0x1Cu) /*!< External interrupt line 28 Connected to the LPUART1 Wakeup event  \
-                                            */
-#define EXTI_LINE_29 (EXTI_DIRECT | 0x1Du) /*!< External interrupt line 29 Connected to the LPTIM1 Wakeup event   \
-                                            */
+#define EXTI_LINE_28                                                                                              \
+    (EXTI_DIRECT | 0x1Cu) /*!< External interrupt line 28 Connected to the LPUART1 Wakeup event                   \
+                           */
+#define EXTI_LINE_29                                                                                              \
+    (EXTI_DIRECT | 0x1Du) /*!< External interrupt line 29 Connected to the LPTIM1 Wakeup event                    \
+                           */
 
 /**
  * @}

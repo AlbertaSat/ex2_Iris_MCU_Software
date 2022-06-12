@@ -64,9 +64,10 @@ extern "C" {
 #include "cmsis_version.h"
 
 /*  CMSIS definitions */
-#define __ARMv8MBL_CMSIS_VERSION_MAIN (__CM_CMSIS_VERSION_MAIN) /*!< \deprecated [31:16] CMSIS HAL main version   \
-                                                                 */
-#define __ARMv8MBL_CMSIS_VERSION_SUB (__CM_CMSIS_VERSION_SUB)   /*!< \deprecated [15:0]  CMSIS HAL sub version */
+#define __ARMv8MBL_CMSIS_VERSION_MAIN                                                                             \
+    (__CM_CMSIS_VERSION_MAIN)                                 /*!< \deprecated [31:16] CMSIS HAL main version     \
+                                                               */
+#define __ARMv8MBL_CMSIS_VERSION_SUB (__CM_CMSIS_VERSION_SUB) /*!< \deprecated [15:0]  CMSIS HAL sub version */
 #define __ARMv8MBL_CMSIS_VERSION                                                                                  \
     ((__ARMv8MBL_CMSIS_VERSION_MAIN << 16U) |                                                                     \
      __ARMv8MBL_CMSIS_VERSION_SUB) /*!< \deprecated CMSIS HAL version number */
@@ -1018,8 +1019,9 @@ typedef struct {
 #define CoreDebug_DCRSR_REGWnR_Msk (1UL << CoreDebug_DCRSR_REGWnR_Pos) /*!< CoreDebug DCRSR: REGWnR Mask */
 
 #define CoreDebug_DCRSR_REGSEL_Pos 0U /*!< CoreDebug DCRSR: REGSEL Position */
-#define CoreDebug_DCRSR_REGSEL_Msk (0x1FUL /*<< CoreDebug_DCRSR_REGSEL_Pos*/) /*!< CoreDebug DCRSR: REGSEL Mask   \
-                                                                               */
+#define CoreDebug_DCRSR_REGSEL_Msk                                                                                \
+    (0x1FUL /*<< CoreDebug_DCRSR_REGSEL_Pos*/) /*!< CoreDebug DCRSR: REGSEL Mask                                  \
+                                                */
 
 /* Debug Exception and Monitor Control Register */
 #define CoreDebug_DEMCR_DWTENA_Pos 24U                                 /*!< CoreDebug DEMCR: DWTENA Position */
@@ -1125,10 +1127,11 @@ typedef struct {
 #define SCS_BASE_NS (0xE002E000UL)       /*!< System Control Space Base Address (non-secure address space) */
 #define CoreDebug_BASE_NS (0xE002EDF0UL) /*!< Core Debug Base Address           (non-secure address space) */
 #define SysTick_BASE_NS                                                                                           \
-    (SCS_BASE_NS + 0x0010UL)                  /*!< SysTick Base Address              (non-secure address space) */
-#define NVIC_BASE_NS (SCS_BASE_NS + 0x0100UL) /*!< NVIC Base Address                 (non-secure address space)   \
-                                               */
-#define SCB_BASE_NS (SCS_BASE_NS + 0x0D00UL)  /*!< System Control Block Base Address (non-secure address space) */
+    (SCS_BASE_NS + 0x0010UL) /*!< SysTick Base Address              (non-secure address space) */
+#define NVIC_BASE_NS                                                                                              \
+    (SCS_BASE_NS + 0x0100UL)                 /*!< NVIC Base Address                 (non-secure address space)    \
+                                              */
+#define SCB_BASE_NS (SCS_BASE_NS + 0x0D00UL) /*!< System Control Block Base Address (non-secure address space) */
 
 #define SCB_NS ((SCB_Type *)SCB_BASE_NS) /*!< SCB configuration struct          (non-secure address space) */
 #define SysTick_NS                                                                                                \

@@ -1531,8 +1531,9 @@ typedef struct {
 #define TPI_DEVID_FIFOSZ_Msk (0x7UL << TPI_DEVID_FIFOSZ_Pos) /*!< TPI DEVID: FIFOSZ Mask */
 
 #define TPI_DEVID_NrTraceInput_Pos 0U /*!< TPI DEVID: NrTraceInput Position */
-#define TPI_DEVID_NrTraceInput_Msk (0x3FUL /*<< TPI_DEVID_NrTraceInput_Pos*/) /*!< TPI DEVID: NrTraceInput Mask   \
-                                                                               */
+#define TPI_DEVID_NrTraceInput_Msk                                                                                \
+    (0x3FUL /*<< TPI_DEVID_NrTraceInput_Pos*/) /*!< TPI DEVID: NrTraceInput Mask                                  \
+                                                */
 
 /* TPI DEVTYPE Register Definitions */
 #define TPI_DEVTYPE_SubType_Pos 4U                                     /*!< TPI DEVTYPE: SubType Position */
@@ -1944,8 +1945,9 @@ typedef struct {
 #define CoreDebug_DCRSR_REGWnR_Msk (1UL << CoreDebug_DCRSR_REGWnR_Pos) /*!< CoreDebug DCRSR: REGWnR Mask */
 
 #define CoreDebug_DCRSR_REGSEL_Pos 0U /*!< CoreDebug DCRSR: REGSEL Position */
-#define CoreDebug_DCRSR_REGSEL_Msk (0x1FUL /*<< CoreDebug_DCRSR_REGSEL_Pos*/) /*!< CoreDebug DCRSR: REGSEL Mask   \
-                                                                               */
+#define CoreDebug_DCRSR_REGSEL_Msk                                                                                \
+    (0x1FUL /*<< CoreDebug_DCRSR_REGSEL_Pos*/) /*!< CoreDebug DCRSR: REGSEL Mask                                  \
+                                                */
 
 /* Debug Exception and Monitor Control Register Definitions */
 #define CoreDebug_DEMCR_TRCENA_Pos 24U                                 /*!< CoreDebug DEMCR: TRCENA Position */
@@ -2092,14 +2094,16 @@ typedef struct {
 #define SCS_BASE_NS (0xE002E000UL)       /*!< System Control Space Base Address (non-secure address space) */
 #define CoreDebug_BASE_NS (0xE002EDF0UL) /*!< Core Debug Base Address           (non-secure address space) */
 #define SysTick_BASE_NS                                                                                           \
-    (SCS_BASE_NS + 0x0010UL)                  /*!< SysTick Base Address              (non-secure address space) */
-#define NVIC_BASE_NS (SCS_BASE_NS + 0x0100UL) /*!< NVIC Base Address                 (non-secure address space)   \
-                                               */
-#define SCB_BASE_NS (SCS_BASE_NS + 0x0D00UL)  /*!< System Control Block Base Address (non-secure address space) */
+    (SCS_BASE_NS + 0x0010UL) /*!< SysTick Base Address              (non-secure address space) */
+#define NVIC_BASE_NS                                                                                              \
+    (SCS_BASE_NS + 0x0100UL)                 /*!< NVIC Base Address                 (non-secure address space)    \
+                                              */
+#define SCB_BASE_NS (SCS_BASE_NS + 0x0D00UL) /*!< System Control Block Base Address (non-secure address space) */
 
-#define SCnSCB_NS ((SCnSCB_Type *)SCS_BASE_NS) /*!< System control Register not in SCB(non-secure address space)  \
-                                                */
-#define SCB_NS ((SCB_Type *)SCB_BASE_NS)       /*!< SCB configuration struct          (non-secure address space) */
+#define SCnSCB_NS                                                                                                 \
+    ((SCnSCB_Type *)SCS_BASE_NS)         /*!< System control Register not in SCB(non-secure address space)        \
+                                          */
+#define SCB_NS ((SCB_Type *)SCB_BASE_NS) /*!< SCB configuration struct          (non-secure address space) */
 #define SysTick_NS                                                                                                \
     ((SysTick_Type *)SysTick_BASE_NS)       /*!< SysTick configuration struct      (non-secure address space) */
 #define NVIC_NS ((NVIC_Type *)NVIC_BASE_NS) /*!< NVIC configuration struct         (non-secure address space) */

@@ -129,11 +129,9 @@ int main(void) {
     MX_SPI1_Init();
     MX_SPI2_Init();
     MX_USART1_UART_Init();
+
     /* USER CODE BEGIN 2 */
-
     NAND_SPI_Init(&hspi2);
-    sensor_active();
-
     char cmd[64];
     char buf[64];
     char *ptr = cmd;
@@ -164,6 +162,12 @@ int main(void) {
       for (i = 0; i < 512; i++) {
       	  image_buffer[i] = i;
         }
+
+    flood_cam_spi();
+    sensor_togglepower(1);
+    uart_reset_sensors();
+    init_temp_sensors();
+
 #ifdef UART_DEBUG
     DBG_PUT("-----------------------------------\r\n");
     DBG_PUT("Iris Electronics Test Software\r\n"

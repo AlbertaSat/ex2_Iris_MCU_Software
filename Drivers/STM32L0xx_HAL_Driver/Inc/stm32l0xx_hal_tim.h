@@ -410,7 +410,8 @@ typedef void (*pTIM_CallbackTypeDef)(TIM_HandleTypeDef *htim); /*!< pointer to t
 /** @defgroup TIM_Event_Source TIM Event Source
  * @{
  */
-#define TIM_EVENTSOURCE_UPDATE TIM_EGR_UG  /*!< Reinitialize the counter and generates an update of the registers \
+#define TIM_EVENTSOURCE_UPDATE                                                                                    \
+    TIM_EGR_UG                             /*!< Reinitialize the counter and generates an update of the registers \
                                             */
 #define TIM_EVENTSOURCE_CC1 TIM_EGR_CC1G   /*!< A capture/compare event is generated on channel 1 */
 #define TIM_EVENTSOURCE_CC2 TIM_EGR_CC2G   /*!< A capture/compare event is generated on channel 2 */
@@ -780,16 +781,17 @@ typedef void (*pTIM_CallbackTypeDef)(TIM_HandleTypeDef *htim); /*!< pointer to t
 /** @defgroup TIM_Trigger_Selection TIM Trigger Selection
  * @{
  */
-#define TIM_TS_ITR0 0x00000000U                                     /*!< Internal Trigger 0 (ITR0)              */
-#define TIM_TS_ITR1 TIM_SMCR_TS_0                                   /*!< Internal Trigger 1 (ITR1)              */
-#define TIM_TS_ITR2 TIM_SMCR_TS_1                                   /*!< Internal Trigger 2 (ITR2)              */
-#define TIM_TS_ITR3 (TIM_SMCR_TS_0 | TIM_SMCR_TS_1)                 /*!< Internal Trigger 3 (ITR3)              */
-#define TIM_TS_TI1F_ED TIM_SMCR_TS_2                                /*!< TI1 Edge Detector (TI1F_ED)            */
-#define TIM_TS_TI1FP1 (TIM_SMCR_TS_0 | TIM_SMCR_TS_2)               /*!< Filtered Timer Input 1 (TI1FP1)        */
-#define TIM_TS_TI2FP2 (TIM_SMCR_TS_1 | TIM_SMCR_TS_2)               /*!< Filtered Timer Input 2 (TI2FP2)        */
-#define TIM_TS_ETRF (TIM_SMCR_TS_0 | TIM_SMCR_TS_1 | TIM_SMCR_TS_2) /*!< Filtered External Trigger input (ETRF)   \
-                                                                     */
-#define TIM_TS_NONE 0x0000FFFFU                                     /*!< No trigger selected                    */
+#define TIM_TS_ITR0 0x00000000U                       /*!< Internal Trigger 0 (ITR0)              */
+#define TIM_TS_ITR1 TIM_SMCR_TS_0                     /*!< Internal Trigger 1 (ITR1)              */
+#define TIM_TS_ITR2 TIM_SMCR_TS_1                     /*!< Internal Trigger 2 (ITR2)              */
+#define TIM_TS_ITR3 (TIM_SMCR_TS_0 | TIM_SMCR_TS_1)   /*!< Internal Trigger 3 (ITR3)              */
+#define TIM_TS_TI1F_ED TIM_SMCR_TS_2                  /*!< TI1 Edge Detector (TI1F_ED)            */
+#define TIM_TS_TI1FP1 (TIM_SMCR_TS_0 | TIM_SMCR_TS_2) /*!< Filtered Timer Input 1 (TI1FP1)        */
+#define TIM_TS_TI2FP2 (TIM_SMCR_TS_1 | TIM_SMCR_TS_2) /*!< Filtered Timer Input 2 (TI2FP2)        */
+#define TIM_TS_ETRF                                                                                               \
+    (TIM_SMCR_TS_0 | TIM_SMCR_TS_1 | TIM_SMCR_TS_2) /*!< Filtered External Trigger input (ETRF)                   \
+                                                     */
+#define TIM_TS_NONE 0x0000FFFFU                     /*!< No trigger selected                    */
 /**
  * @}
  */

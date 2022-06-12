@@ -3,11 +3,16 @@
 #include "command_handler.h"
 #include "debug.h"
 
-int VIS_DETECTED = 0;
-int NIR_DETECTED = 0;
+uint8_t VIS_DETECTED = 0;
+uint8_t NIR_DETECTED = 0;
 
 extern I2C_HandleTypeDef hi2c2;
 
+/**
+ * @brief Resets target sensor to default parameters
+ *
+ * @param sensor
+ */
 void sensor_reset(uint8_t sensor) {
     char buf[64];
 
@@ -56,7 +61,12 @@ void sensor_reset(uint8_t sensor) {
     HAL_Delay(1000);
 }
 
-int scan_i2c(void) {
+/**
+ * @brief Scans I2C2 (internal) bus for devices. Debug purpose only
+ *
+ * @return int
+ */
+int uart_scan_i2c(void) {
     HAL_StatusTypeDef result;
     uint8_t i;
     char buf[64];

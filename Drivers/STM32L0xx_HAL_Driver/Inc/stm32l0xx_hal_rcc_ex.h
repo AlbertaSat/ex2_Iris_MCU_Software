@@ -274,8 +274,9 @@ typedef struct {
 /** @defgroup RCCEx_EXTI_LINE_LSECSS  RCC LSE CSS external interrupt line
  * @{
  */
-#define RCC_EXTI_LINE_LSECSS (EXTI_IMR_IM19) /*!< External interrupt line 19 connected to the LSE CSS EXTI Line   \
-                                              */
+#define RCC_EXTI_LINE_LSECSS                                                                                      \
+    (EXTI_IMR_IM19) /*!< External interrupt line 19 connected to the LSE CSS EXTI Line                            \
+                     */
 /**
  * @}
  */
