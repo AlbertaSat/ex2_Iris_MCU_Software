@@ -161,10 +161,10 @@ int main(void) {
 		image_buffer[i] = i;
 	}
 
-	flood_cam_spi();
-	sensor_togglepower(1);
-	uart_reset_sensors();
-	init_temp_sensors();
+//	flood_cam_spi();
+//	sensor_togglepower(1);
+//	uart_reset_sensors();
+//	init_temp_sensors();
 
 #ifdef UART_DEBUG
 	DBG_PUT("-----------------------------------\r\n");

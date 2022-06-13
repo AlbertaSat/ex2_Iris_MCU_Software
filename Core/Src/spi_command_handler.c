@@ -1,4 +1,5 @@
 #include <spi_command_handler.h>
+#include <command_handler.h>
 #include "main.h"
 
 extern SPI_HandleTypeDef hspi1;
@@ -10,7 +11,7 @@ void spi_transmit(uint8_t *tx_data, uint16_t data_length) {
 }
 
 void spi_receive(uint8_t *rx_data, uint16_t data_length) {
-	HAL_SPI_Receive(&hspi1, rx_data, 1, HAL_MAX_DELAY);
+	HAL_SPI_Receive(&hspi1, rx_data, data_length, HAL_MAX_DELAY);
 }
 
 /**
@@ -77,9 +78,13 @@ int spi_handle_command() {
 
 	switch (cmd) {
 	case IRIS_SEND_HOUSEKEEPING:
-		//get_housekeeping();
-		spi_transmit(&tx_data, 1);
+	{
+		housekeeping_packet_t hk = _get_housekeeping();
+		uint8_t buffer[sizeof(hk)];
+		memcpy(buffer, &hk, sizeof(hk));
+		spi_transmit(buffer, sizeof(buffer));
 		return 0;
+	}
 	case IRIS_TAKE_PIC:
 //        take_image(cmd);
 //        iterate_image_num();
@@ -113,5 +118,7 @@ int spi_handle_command() {
 //    	update_current_limits();
 		spi_transmit(&tx_data, 1);
 		return 0;
+	default:
+		return -1;
 	}
 }
