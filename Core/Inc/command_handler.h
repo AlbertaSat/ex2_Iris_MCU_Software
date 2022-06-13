@@ -19,6 +19,7 @@
 #define SENSOR_IDLE 0x30
 #define SENSOR_ACTIVE 0x40
 #define GET_HK 0x50
+#define WATCHDOG 0x60
 
 extern int format;
 
@@ -46,6 +47,7 @@ uint8_t get_image_num(uint8_t hk);
 void sensor_togglepower(int i);
 void iterate_image_num();
 int uart_scan_i2c(void);
+void handle_wdt();
 void print_progress(uint8_t count, uint8_t max);
 void handle_i2c16_8_cmd(const char *cmd);
 void help();
