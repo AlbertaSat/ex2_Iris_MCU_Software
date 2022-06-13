@@ -39,7 +39,7 @@ void count_images();
 void sensor_reset(uint8_t sensor);
 void sensor_idle();
 void sensor_active();
-void get_housekeeping();
+void * get_housekeeping();
 void update_sensor_I2C_regs();
 void update_current_limits();
 void _initalize_sensor(uint8_t sensor);
