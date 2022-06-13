@@ -462,7 +462,7 @@ void handle_i2c16_8_cmd(const char *cmd){
 	case 'r':
 		{
 			uint8_t val;
-			i2c2_read8_8(addr, reg, &val);
+			i2c2_read16_8(addr, reg, &val);
 			sprintf(buf, "Device 0x%lx register 0x%lx = 0x%x\r\n", addr, reg, val);
 		}
 		break;
@@ -479,7 +479,7 @@ void handle_i2c16_8_cmd(const char *cmd){
 				sprintf(buf, "reg write 0x%lx: bad val '%s'\r\n", reg, valptr);
 				break;
 			}
-			i2c2_write8_8(addr, reg, val);
+			i2c2_write16_8(addr, reg, val);
 
 			sprintf(buf, "Device 0x%lx register 0x%lx wrote 0x%02lx\r\n", addr, reg, val);
 		}
