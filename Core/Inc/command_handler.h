@@ -43,13 +43,21 @@ void update_sensor_I2C_regs();
 void update_current_limits();
 void _initalize_sensor(uint8_t sensor);
 uint8_t get_image_num(uint8_t hk);
+void sensor_togglepower(int i);
 void iterate_image_num();
 int uart_scan_i2c(void);
 void print_progress(uint8_t count, uint8_t max);
 void handle_i2c16_8_cmd(const char *cmd);
 void help();
-
 // void _initalize_sensor();
 void flood_cam_spi();
+
+//uart
+void uart_get_hk_packet(uint8_t *out);
+void uart_handle_capture_cmd(const char *cmd);
+void uart_handle_format_cmd(const char *cmd);
+void uart_handle_width_cmd(const char *cmd);
+void uart_handle_saturation_cmd(const char *cmd, uint8_t sensor);
+void uart_reset_sensors(void);
 
 #endif /* INC_COMMAND_HANDLER_H_ */
