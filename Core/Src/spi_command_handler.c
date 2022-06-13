@@ -26,5 +26,8 @@ void spi_handle_command(uint8_t cmd) {
     case SENSOR_IDLE:
         sensor_idle();
         break;
+    case WATCHDOG:
+    	handle_wdt();
+    	break;
     }
 }
