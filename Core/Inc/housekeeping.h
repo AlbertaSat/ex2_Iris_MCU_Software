@@ -24,5 +24,6 @@ typedef struct __attribute__((__packed__)) housekeeping_packet_s {
 } housekeeping_packet_t;
 
 housekeeping_packet_t _get_housekeeping();
+void decode_hk_packet(housekeeping_packet_t hk);
 
 #endif /* INC_HOUSEKEEPING_H_ */
