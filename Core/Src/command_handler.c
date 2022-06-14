@@ -272,6 +272,10 @@ void _initalize_sensor(uint8_t sensor) {
     }
 }
 
+void handle_wdt(){
+	SPI1_IT_Transmit(&ack);
+}
+
 static inline const char *next_token(const char *ptr) {
     /* move to the next space */
     while (*ptr && *ptr != ' ')

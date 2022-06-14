@@ -11,112 +11,148 @@
  */
 
 #include <ina209.h>
+#include <I2C.h>
 
-uint16_t get_configuration(uint8_t addr) {
+
+void _flip_byte_order();
+
+void get_configuration(uint8_t addr, uint16_t *retval) {
     // POR is x399F
-    uint16_t rtn = _flip_byte_order(i2c2_read8_16(addr, 0x00));
-    return rtn;
-}
-
-void set_configuration(uint8_t addr, uint16_t val) {
-    i2c2_write8_16(addr, 0x00, _flip_byte_order(val));
+	i2c2_read8_16(addr, 0x00, retval);
+    _flip_byte_order(retval);
     return;
 }
 
-uint16_t get_status_flags(uint8_t addr) {
+void set_configuration(uint8_t addr, uint16_t *val) {
+	_flip_byte_order(val);
+    i2c2_write8_16(addr, 0x00, *val);
+    return;
+}
+
+void get_status_flags(uint8_t addr, uint16_t *retval) {
     //	POR is x0000
-    uint16_t rtn = _flip_byte_order(i2c2_read8_16(addr, 0x01));
-    return rtn;
+	i2c2_read8_16(addr, 0x01, retval);
+	_flip_byte_order(retval);
+    return ;
 }
 
 // probably not needed; designs have alert pin grounded
-uint16_t get_smbus_alert(uint8_t addr) {
-    uint16_t rtn = _flip_byte_order(i2c2_read8_16(addr, 0x02));
-    return rtn;
+void get_smbus_alert(uint8_t addr, uint16_t *retval) {
+	i2c2_read8_16(addr, 0x02, retval);
+	_flip_byte_order(retval);
+	return;
 }
 
-uint16_t get_shunt_voltage(uint8_t addr) {
-    uint16_t rtn = _flip_byte_order(i2c2_read8_16(addr, 0x03));
-    return rtn;
+void get_shunt_voltage(uint8_t addr, uint16_t *retval) {
+	i2c2_read8_16(addr, 0x03, retval);
+	_flip_byte_order(retval);
+	return;
 }
 
-uint16_t get_bus_voltage(uint8_t addr) {
-    uint16_t rtn = _flip_byte_order(i2c2_read8_16(addr, 0x04));
-    return rtn;
+void get_bus_voltage(uint8_t addr, uint16_t *retval) {
+	i2c2_read8_16(addr, 0x04, retval);
+	_flip_byte_order(retval);
+	return;
 }
 
-uint16_t get_power(uint8_t addr) {
-    uint16_t rtn = _flip_byte_order(i2c2_read8_16(addr, 0x05));
-    return rtn;
+void get_power(uint8_t addr, uint16_t *retval) {
+	i2c2_read8_16(addr, 0x05, retval);
+	_flip_byte_order(retval);
+	return;
 }
 
 // Current defaults to 0 on POR before calibration register (x16) is set
-uint16_t get_current(uint8_t addr) {
-    uint16_t rtn = _flip_byte_order(i2c2_read8_16(addr, 0x06));
-    return rtn;
+void get_current(uint8_t addr, uint16_t *retval) {
+	i2c2_read8_16(addr, 0x06, retval);
+	_flip_byte_order(retval);
+	return;
 }
 
-uint16_t get_shunt_voltage_peak_pos(uint8_t addr) {
-    uint16_t rtn = _flip_byte_order(i2c2_read8_16(addr, 0x07));
-    return rtn;
+void get_shunt_voltage_peak_pos(uint8_t addr, uint16_t *retval) {
+	i2c2_read8_16(addr, 0x07, retval);
+	_flip_byte_order(retval);
+	return;
 }
 
-uint16_t get_shunt_voltage_peak_neg(uint8_t addr) {
-    uint16_t rtn = _flip_byte_order(i2c2_read8_16(addr, 0x08));
-    return rtn;
-}
-
-uint16_t get_bus_voltage_peak_max(uint8_t addr) {
-    uint16_t rtn = _flip_byte_order(i2c2_read8_16(addr, 0x09));
-    return rtn;
-}
-
-uint16_t get_bus_voltage_peak_min(uint8_t addr) {
-    uint16_t rtn = _flip_byte_order(i2c2_read8_16(addr, 0x0A));
-    return rtn;
-}
-
-uint16_t get_power_peak(uint8_t addr) {
-    uint16_t rtn = _flip_byte_order(i2c2_read8_16(addr, 0x0B));
-    return rtn;
-}
-
-uint16_t get_power_overlimit(uint8_t addr) {
-    uint16_t rtn = _flip_byte_order(i2c2_read8_16(addr, 0x11));
-    return rtn;
-}
-
-void set_power_overlimit(uint8_t addr, uint16_t val) {
-    i2c2_write8_16(addr, 0x11, _flip_byte_order(val));
+void get_shunt_voltage_peak_neg(uint8_t addr, uint16_t *retval) {
+	i2c2_read8_16(addr, 0x08, retval);
+	_flip_byte_order(retval);
     return;
 }
 
-uint16_t get_bus_voltage_overlimit(uint8_t addr) {
-    uint16_t rtn = _flip_byte_order(i2c2_read8_16(addr, 0x12));
-    return rtn;
-}
-
-void set_bus_voltage_overlimit(uint8_t addr, uint16_t val) {
-    i2c2_write8_16(addr, 0x12, _flip_byte_order(val));
+void get_bus_voltage_peak_max(uint8_t addr, uint16_t *retval) {
+	i2c2_read8_16(addr, 0x09, retval);
+	_flip_byte_order(retval);
     return;
 }
 
-uint16_t get_bus_voltage_underlimit(uint8_t addr) {
-    uint16_t rtn = _flip_byte_order(i2c2_read8_16(addr, 0x13));
-    return rtn;
-}
-
-void set_bus_voltage_underlimit(uint8_t addr, uint16_t val) {
-    i2c2_write8_16(addr, 0x13, _flip_byte_order(val));
+void get_bus_voltage_peak_min(uint8_t addr, uint16_t *retval) {
+	i2c2_read8_16(addr, 0x0A, retval);
+	_flip_byte_order(retval);
     return;
 }
 
-uint16_t get_calibration(uint8_t addr) {
-    uint16_t rtn = _flip_byte_order(i2c2_read8_16(addr, 0x16));
-    return rtn;
+void get_power_peak(uint8_t addr, uint16_t *retval) {
+	i2c2_read8_16(addr, 0x0B, retval);
+	_flip_byte_order(retval);
+    return;
 }
 
-void set_calibration(uint8_t addr, uint16_t val) {
-    i2c2_write8_16(addr, 0x16, _flip_byte_order(val));
+void get_power_overlimit(uint8_t addr, uint16_t *retval) {
+	i2c2_read8_16(addr, 0x11, retval);
+	_flip_byte_order(retval);
+    return;
+}
+
+void set_power_overlimit(uint8_t addr, uint16_t *val) {
+	_flip_byte_order(val);
+	i2c2_write8_16(addr, 0x11, *val);
+    return;
+}
+
+void get_bus_voltage_overlimit(uint8_t addr, uint16_t *retval) {
+	i2c2_read8_16(addr, 0x12, retval);
+	_flip_byte_order(retval);
+    return;
+}
+
+void set_bus_voltage_overlimit(uint8_t addr, uint16_t  *val) {
+	_flip_byte_order(val);
+	i2c2_write8_16(addr, 0x12, *val);
+    return;
+}
+
+void get_bus_voltage_underlimit(uint8_t addr, uint16_t *retval) {
+	i2c2_read8_16(addr, 0x13, retval);
+	_flip_byte_order(retval);
+    return;
+}
+
+void set_bus_voltage_underlimit(uint8_t addr, uint16_t  *val) {
+	_flip_byte_order(val);
+    i2c2_write8_16(addr, 0x13, *val);
+    return;
+}
+
+void get_calibration(uint8_t addr, uint16_t *retval) {
+	i2c2_read8_16(addr, 0x16, retval);
+	_flip_byte_order(retval);
+    return;
+}
+
+void set_calibration(uint8_t addr, uint16_t *val) {
+	_flip_byte_order(val);
+	i2c2_write8_16(addr, 0x16, *val);
+    return;
+}
+
+void _flip_byte_order(uint16_t *input) {
+    // Data is transmitted MSB first, but STM is LSB.
+    // This flips the byte order.
+    uint8_t rtn = 0x0000;
+    uint8_t lsb = *input >> 8;
+    uint8_t msb = *input & 0x00FF;
+    rtn = msb << 8 | lsb;
+    *input = rtn;
     return;
 }

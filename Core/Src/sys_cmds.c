@@ -8,6 +8,7 @@ uint8_t NIR_DETECTED = 0;
 
 extern I2C_HandleTypeDef hi2c2;
 
+
 /**
  * @brief Resets target sensor to default parameters
  *
@@ -38,9 +39,9 @@ void sensor_reset(uint8_t sensor) {
     rdSensorReg16_8(OV5642_CHIPID_HIGH, &vid, sensor);
     rdSensorReg16_8(OV5642_CHIPID_LOW, &pid, sensor);
 
-    int *detected = &VIS_DETECTED;
+    int detected = VIS_DETECTED;
     if (sensor == NIR_SENSOR) {
-        detected = &NIR_DETECTED;
+        detected = NIR_DETECTED;
     } else if (sensor != VIS_SENSOR) {
         sprintf(buf, "illegal sensor %d\r\n", sensor);
         DBG_PUT(buf);
@@ -49,9 +50,9 @@ void sensor_reset(uint8_t sensor) {
     if (vid != 0x56 || pid != 0x42) {
         sprintf(buf, "Camera I2C Address: Unknown\r\nVIS not available\r\n\n");
         DBG_PUT(buf);
-        *detected = 0;
+        detected = 0;
     } else {
-        *detected = 1;
+        detected = 1;
         format = JPEG;
         Arduino_init(format, sensor);
         sprintf(buf, "Camera Mode: JPEG\r\n");

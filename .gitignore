@@ -74,3 +74,7 @@ host/img.jpg(1)
 .vscode/tasks.json
 host/exifpls.zip
 *.orig
+**/*.orig
+**/**/*.orig
+*.zip
+**/*zip
