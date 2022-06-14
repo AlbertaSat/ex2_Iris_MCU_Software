@@ -260,11 +260,8 @@ int main(void) {
 			}
 			break;
 		case HANDLE_COMMAND:
-			if (spi_handle_command() != -1) {
-				ss_state = HANDLE_COMMAND;
-			} else {
-				ss_state = FINISH;
-			}
+			spi_handle_command();
+			ss_state = FINISH;
 			break;
 		case FINISH:
 			ss_state = LISTENING;
