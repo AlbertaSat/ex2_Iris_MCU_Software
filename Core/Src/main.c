@@ -88,8 +88,8 @@ static void MX_USART1_UART_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-//uint8_t state = receiving;
-//uint8_t RX_Data = 0xFF;
+uint8_t state = receiving;
+uint8_t RX_Data = 0xFF;
 //
 //void spiSlaveReStart(SPI_HandleTypeDef *hspi);
 //void rcc_spi_force_reset(SPI_HandleTypeDef *hspi);
@@ -134,33 +134,6 @@ int main(void) {
 	char buf[64];
 	char *ptr = cmd;
 
-	uint8_t rx_data;
-	uint8_t tx_ack = 0xAA;
-	uint8_t tx_nack = 0xAA;
-	uint8_t tx_buffer[16];
-	uint8_t rx_buffer[5];
-	uint8_t image_buffer[512];
-	uint8_t incoming_com;
-
-	int i;
-	for (i = 0; i < 16; i++) {
-		tx_buffer[i] = i * 3;
-	}
-
-	housekeeping_packet_t hk;
-	hk.vis_temp = 0x10;
-	hk.nir_temp = 0x20;
-	hk.flash_temp = 0x30;
-	hk.gate_temp = 0x40;
-	hk.imagenum = 0x50;
-	hk.software_version = 0x60;
-	uint8_t hk_buffer[sizeof(hk)];
-	memcpy(hk_buffer, &hk, sizeof(hk));
-
-	for (i = 0; i < 512; i++) {
-		image_buffer[i] = i;
-	}
-
 //	flood_cam_spi();
 //	sensor_togglepower(1);
 //	uart_reset_sensors();
@@ -180,74 +153,7 @@ int main(void) {
 
 	/* Infinite loop */
 //    /* USER CODE BEGIN WHILE */
-//#ifdef SPI_DEBUG
-//    while (1) {
-//        switch (state) {
-//        case idle:
-//            break;
-//        case receiving:
-//            state = idle;
-//            HAL_SPI_Receive_IT(&hspi1, &RX_Data, sizeof(RX_Data));
-//            break;
-//        case transmitting:
-//            state = idle;
-//            // interrupt this shit hey
-//            HAL_SPI_Transmit(&hspi1, &RX_Data, sizeof(RX_Data), 1000);
-//            //				HAL_SPI_Transmit_IT(&hspi1, &RX_Data, sizeof(RX_Data));
-//            RX_Data = 0xFF;
-//            break;
-//        case handling_command:
-//            state = transmitting;
-//            spi_handle_command(RX_Data);
-//            break;
-//        }
-//    }
-//#endif // SPI_DEBUG
-//       // //////////////////////////////////////////////////////////////////////////////////////////
-//#ifdef UART_DEBUG
-//    state = idle;
-//    while (1) {
-//        switch (state) {
-//        case idle:
-//            DBG_PUT("\r:>> ");
-//            state = receiving;
-//            break;
-//        case receiving:;
-//            HAL_StatusTypeDef rc = HAL_UART_Receive(&huart1, (uint8_t *)ptr, 1, 20000);
-//            /* USER CODE END WHILE */
-//
-//            /* USER CODE BEGIN 3 */
-//            /* Build up the command one byte at a time */
-//            if (rc != HAL_OK) {
-//                if (rc != HAL_TIMEOUT) {
-//                    sprintf(buf, "UART read error: %x\r\n", rc);
-//                    DBG_PUT(buf);
-//                }
-//                continue;
-//            }
-//            /* Command is complete when we get EOL of some sort */
-//            if (*ptr == '\n' || *ptr == '\r') {
-//                *ptr = 0;
-//                DBG_PUT("\r\n");
-//                uart_handle_command(cmd);
-//                ptr = cmd;
-//                state = idle;
-//
-//            } else {
-//                *(ptr + 1) = 0;
-//                DBG_PUT(ptr);
-//
-//                if (*ptr == 0x7f) { // handle backspace
-//                    if (ptr > cmd)
-//                        --ptr;
-//                } else
-//                    ++ptr;
-//            }
-//            break;
-//        }
-//    }
-//
-//#endif // UART_DEBUG
+#ifdef SPI_DEBUG
 	while (1) {
 		/* USER CODE END WHILE */
 		/* USER CODE BEGIN 3 */
@@ -267,14 +173,53 @@ int main(void) {
 			ss_state = LISTENING;
 			break;
 		}
-		//    DBG_PUT("HULKK is the strongest avenger!\n");
-		//    HAL_Delay(5000);
-		//HAL_I2C_Slave_Receive(&hi2c1, buf_data, 24, HAL_MAX_DELAY);
 	}
-}
+#endif // SPI_DEBUG
+//       // //////////////////////////////////////////////////////////////////////////////////////////
+#ifdef UART_DEBUG
+    state = idle;
+    while (1) {
+        switch (state) {
+        case idle:
+            DBG_PUT("\r:>> ");
+            state = receiving;
+            break;
+        case receiving:;
+            HAL_StatusTypeDef rc = HAL_UART_Receive(&huart1, (uint8_t *)ptr, 1, 20000);
+            /* USER CODE END WHILE */
 
-uint8_t* read_bin_file(FILE *fptr, uint8_t *buffer) {
-	fread(buffer, PAGE_SIZE * sizeof(uint8_t), 1, fptr);
+            /* USER CODE BEGIN 3 */
+            /* Build up the command one byte at a time */
+            if (rc != HAL_OK) {
+                if (rc != HAL_TIMEOUT) {
+                    sprintf(buf, "UART read error: %x\r\n", rc);
+                    DBG_PUT(buf);
+                }
+                continue;
+            }
+            /* Command is complete when we get EOL of some sort */
+            if (*ptr == '\n' || *ptr == '\r') {
+                *ptr = 0;
+                DBG_PUT("\r\n");
+                uart_handle_command(cmd);
+                ptr = cmd;
+                state = idle;
+
+            } else {
+                *(ptr + 1) = 0;
+                DBG_PUT(ptr);
+
+                if (*ptr == 0x7f) { // handle backspace
+                    if (ptr > cmd)
+                        --ptr;
+                } else
+                    ++ptr;
+            }
+            break;
+        }
+    }
+
+#endif // UART_DEBUG
 }
 
 /**
