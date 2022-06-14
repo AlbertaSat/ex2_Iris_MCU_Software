@@ -83,7 +83,7 @@ static void MX_SPI1_Init(void);
 static void MX_SPI2_Init(void);
 static void MX_USART1_UART_Init(void);
 /* USER CODE BEGIN PFP */
-
+static void onboot_commands(void);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -133,22 +133,7 @@ int main(void) {
 	char cmd[64];
 	char buf[64];
 	char *ptr = cmd;
-
-//	flood_cam_spi();
-//	sensor_togglepower(1);
-//	uart_reset_sensors();
-//	init_temp_sensors();
-
-#ifdef UART_DEBUG
-	DBG_PUT("-----------------------------------\r\n");
-	DBG_PUT("Iris Electronics Test Software\r\n"
-			"         UART Edition         \r\n");
-	DBG_PUT("-----------------------------------\r\n");
-#endif
-
-	// init_temp_sensors();
-	NAND_SPI_Init(&hspi2);
-	init_nand_flash();
+	onboot_commands();
 	/* USER CODE END 2 */
 
 	/* Infinite loop */
@@ -571,6 +556,23 @@ static void MX_GPIO_Init(void) {
 ////		sprintf(buf, "Received 0x%x\r\n", RX_Data);
 ////		DBG_PUT(buf);
 //}
+
+static void onboot_commands(void){
+		flood_cam_spi();
+		init_temp_sensors();
+//		sensor_togglepower(1);
+//		uart_reset_sensors();
+		NAND_SPI_Init(&hspi2);
+		init_nand_flash();
+
+	#ifdef UART_DEBUG
+		DBG_PUT("-----------------------------------\r\n");
+		DBG_PUT("Iris Electronics Test Software\r\n"
+				"         UART Edition         \r\n");
+		DBG_PUT("-----------------------------------\r\n");
+	#endif
+		return;
+}
 /* USER CODE END 4 */
 
 /**
