@@ -47,8 +47,8 @@ extern "C" {
 /* Exported macro ------------------------------------------------------------*/
 /* USER CODE BEGIN EM */
 
-#define UART_DEBUG
-//#define SPI_DEBUG
+//#define UART_DEBUG
+#define SPI_DEBUG
 /* USER CODE END EM */
 
 /* Exported functions prototypes ---------------------------------------------*/
@@ -80,7 +80,7 @@ void Error_Handler(void);
 #define NAND_CS2_Pin GPIO_PIN_12
 #define NAND_CS2_GPIO_Port GPIOA
 /* USER CODE BEGIN Private defines */
-#define software_ver 0x12
+#define software_ver 0x13
 #define VIS_SENSOR 0
 #define NIR_SENSOR 1
 #define idle 0
