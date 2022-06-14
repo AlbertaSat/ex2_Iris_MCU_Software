@@ -149,12 +149,8 @@ void sensor_active() {
  * @brief Get the housekeeping object and transmits it over SPI
  *
  */
-void * get_housekeeping() {
-    hk = _get_housekeeping();
-    char buffer[sizeof(hk)];
-    memcpy(buffer, &hk, sizeof(hk));
-    //SPI1_IT_Transmit((uint8_t *)buffer); // not sure this is how it's supposed to work
-    return buffer;
+void get_housekeeping(housekeeping_packet_t *hk) {
+    *(hk) = _get_housekeeping();
 }
 
 /**
