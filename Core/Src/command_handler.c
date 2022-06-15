@@ -335,6 +335,9 @@ void uart_handle_command(char *cmd) {
     case 'f':
         uart_handle_format_cmd(cmd);
         break;
+    case 't':
+    	CHECK_LED_I2C_SPI_TS_NAND();
+    	break;
     case 'w':
         uart_handle_width_cmd(cmd);
         break;

@@ -55,7 +55,8 @@
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
-/* USER CODE END /semicolons strike again!PM */
+
+/* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
  I2C_HandleTypeDef hi2c1;
@@ -121,14 +122,14 @@ int main(void)
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
 //   init nand flash
-//  NAND_SPI_Init(&hspi2);
+  NAND_SPI_Init(&hspi2);
 
   char cmd[64];
   char buf[64];
   char *ptr = cmd;
-  flood_cam_spi();
-  sensor_togglepower(1);
-  uart_reset_sensors();
+//  flood_cam_spi();
+//  sensor_togglepower(1);
+//  uart_reset_sensors();
   init_temp_sensors();
 #ifdef UART_DEBUG
   DBG_PUT("-----------------------------------\r\n");
@@ -155,9 +156,9 @@ int main(void)
 				   break;
 			   case receiving:;
 				   HAL_StatusTypeDef rc = HAL_UART_Receive(&huart1, (uint8_t *) ptr, 1, 20000);
-			/* USER CODE END WHILE */
+    /* USER CODE END WHILE */
 
-			/* USER CODE BEGIN 3 */
+    /* USER CODE BEGIN 3 */
 				   /* Build up the command one byte at a time */
 				   if (rc != HAL_OK) {
 					   if (rc != HAL_TIMEOUT) {
@@ -227,7 +228,8 @@ void SystemClock_Config(void)
 
   /** Initializes the CPU, AHB and APB buses clocks
   */
-  RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK|RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
+  RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
+                              |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
   RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_HSE;
   RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
   RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1;
