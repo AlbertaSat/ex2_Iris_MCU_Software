@@ -15,6 +15,10 @@
 
 
 void _flip_byte_order();
+uint16_t CALI_REG =  0xF9A6;
+uint16_t POWER_OLREG =  0x0100;
+uint16_t ZEROREG =  0x0000;
+uint16_t FFREG = 0xFFFF;
 
 void get_configuration(uint8_t addr, uint16_t *retval) {
     // POR is x399F
@@ -37,10 +41,15 @@ void get_status_flags(uint8_t addr, uint16_t *retval) {
 }
 
 // probably not needed; designs have alert pin grounded
-void get_smbus_alert(uint8_t addr, uint16_t *retval) {
+void get_control_register(uint8_t addr, uint16_t *retval) {
 	i2c2_read8_16(addr, 0x02, retval);
 	_flip_byte_order(retval);
 	return;
+}
+
+void set_control_register(uint8_t addr, uint16_t *val){
+	_flip_byte_order(val);
+    i2c2_write8_16(addr, 0x02, *val);
 }
 
 void get_shunt_voltage(uint8_t addr, uint16_t *retval) {
@@ -155,4 +164,25 @@ void _flip_byte_order(uint16_t *input) {
     rtn = msb << 8 | lsb;
     *input = rtn;
     return;
+}
+
+void init_ina209(uint8_t addr){
+	// clear POR flags
+	uint16_t retval;
+	for (uint8_t i=0; i<5; i++){get_status_flags(addr, &retval);}
+	// set calibration register
+	set_calibration(addr, &CALI_REG);
+	// set power overlimit
+	set_power_overlimit(addr, &POWER_OLREG);
+	// set bit masks
+	set_control_register(addr, &ZEROREG);
+	HAL_Delay(2);
+	set_control_register(addr, &FFREG);
+	return;
+}
+
+void reset_ina209(uint8_t addr){
+	set_control_register(addr, &ZEROREG);
+	HAL_Delay(2);
+	set_control_register(addr, &FFREG);
 }
