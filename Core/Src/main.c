@@ -558,12 +558,14 @@ static void MX_GPIO_Init(void) {
 //}
 
 static void onboot_commands(void){
+		init_ina209(CURRENTSENSE_5V);
 		flood_cam_spi();
 		init_temp_sensors();
 //		sensor_togglepower(1);
 //		uart_reset_sensors();
 		NAND_SPI_Init(&hspi2);
 		init_nand_flash();
+
 
 	#ifdef UART_DEBUG
 		DBG_PUT("-----------------------------------\r\n");
