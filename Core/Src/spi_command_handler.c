@@ -7,8 +7,10 @@
 extern SPI_HandleTypeDef hspi1;
 //		spi_receive(&rx_data, 1);
 static uint8_t cmd;
-
-uint8_t * get_image_buffer();
+uint8_t ack = 0xAA;
+uint8_t nack = 0x0F;
+uint8_t transmit_ack;
+uint8_t *get_image_buffer();
 
 void spi_transmit(uint8_t *tx_data, uint16_t data_length) {
 	HAL_SPI_Transmit(&hspi1, tx_data, data_length, HAL_MAX_DELAY);
@@ -22,53 +24,59 @@ void spi_receive(uint8_t *rx_data, uint16_t data_length) {
  * @brief SPI command verifier
  */
 int spi_verify_command() {
-	uint8_t ack = 0xAA;
-	uint8_t nack = 0x0F;
-
+	transmit_ack = 0;
 	spi_receive(&cmd, 1);
 
 	switch (cmd) {
-	case IRIS_SEND_HOUSEKEEPING: {
+		case IRIS_SEND_HOUSEKEEPING: {
+			transmit_ack = 1;
+			break;
+		}
+		case IRIS_TAKE_PIC: {
+			transmit_ack = 1;
+			break;
+		}
+		case IRIS_GET_IMAGE_COUNT: {
+			transmit_ack = 1;
+
+			break;
+		}
+		case IRIS_TRANSFER_IMAGE: {
+			transmit_ack = 1;
+			break;
+		}
+		case IRIS_OFF_SENSOR_IDLE: {
+			transmit_ack = 1;
+			break;
+		}
+		case IRIS_ON_SENSOR_IDLE: {
+			transmit_ack = 1;
+			break;
+		}
+		case IRIS_GET_IMAGE_LENGTH: {
+			transmit_ack = 1;
+			break;
+		}
+		case IRIS_UPDATE_SENSOR_I2C_REG: {
+			transmit_ack = 1;
+			break;
+		}
+		case IRIS_UPDATE_CURRENT_LIMIT: {
+			transmit_ack = 1;
+			break;
+		}
+	}
+
+	if (transmit_ack){
 		spi_transmit(&ack, 1);
 		return 0;
 	}
-	case IRIS_TAKE_PIC: {
-		spi_transmit(&ack, 1);
-		return 0;
-	}
-	case IRIS_GET_IMAGE_COUNT: {
-		spi_transmit(&ack, 1);
-		return 0;
-	}
-	case IRIS_TRANSFER_IMAGE: {
-		spi_transmit(&ack, 1);
-		return 0;
-	}
-	case IRIS_OFF_SENSOR_IDLE: {
-		spi_transmit(&ack, 1);
-		return 0;
-	}
-	case IRIS_ON_SENSOR_IDLE: {
-		spi_transmit(&ack, 1);
-		return 0;
-	}
-	case IRIS_GET_IMAGE_LENGTH: {
-		spi_transmit(&ack, 1);
-		return 0;
-	}
-	case IRIS_UPDATE_SENSOR_I2C_REG: {
-		spi_transmit(&ack, 1);
-		return 0;
-	}
-	case IRIS_UPDATE_CURRENT_LIMIT: {
-		spi_transmit(&ack, 1);
-		return 0;
-	}
-	default: {
+	else{
 		spi_transmit(&nack, 1);
 		return -1;
 	}
-	}
+
+
 }
 
 /**
@@ -77,69 +85,67 @@ int spi_verify_command() {
 int spi_handle_command() {
 	uint8_t rx_data;
 	uint8_t tx_data = 0x69;
-
-	uint8_t ack = 0xAA;
-	uint8_t nack = 0x0F;
-
 	spi_receive(&rx_data, 1);
 
 	switch (cmd) {
-	case IRIS_SEND_HOUSEKEEPING:
-	{
-		housekeeping_packet_t hk;
-		get_housekeeping(&hk);
+		case IRIS_SEND_HOUSEKEEPING:
+		{
+			housekeeping_packet_t hk;
+			get_housekeeping(&hk);
 
-		uint8_t buffer[sizeof(hk)];
-		memcpy(buffer, &hk, sizeof(hk));
-		spi_transmit(buffer, sizeof(buffer));
+			uint8_t buffer[sizeof(hk)];
+			memcpy(buffer, &hk, sizeof(hk));
+			spi_transmit(buffer, sizeof(buffer));
 
-		return 0;
-	}
-	case IRIS_TAKE_PIC:
-//        take_image(cmd);
-//        iterate_image_num();
-		spi_transmit(&tx_data, 1);
-		return 0;
-	case IRIS_GET_IMAGE_COUNT:
-//        get_image_num(0); // 0 for spi return
-		spi_transmit(&tx_data, 1);
-		return 0;
-	case IRIS_TRANSFER_IMAGE:
-	{
-		uint8_t image_length[2];
-		spi_receive(image_length, 2);
-		uint16_t length = (uint8_t) image_length[1] << 8 || (uint8_t) image_length[0];
+			return 0;
+		}
+		case IRIS_TAKE_PIC:
+			// needs dedicated thought put towards implement
+	//        take_image(cmd);
+	//        iterate_image_num();
+			spi_transmit(&tx_data, 1);
+			return 0;
+		case IRIS_GET_IMAGE_COUNT:
+			get_image_num_spi(&tx_data);
+			spi_transmit(&tx_data, 1);
+			return 0;
 
-//		uint8_t *buffer = get_image_buffer();
-//		for (int i = 0; i < rx_data; i++) {
-//			spi_transmit(buffer, 512);
-//		}
+		case IRIS_TRANSFER_IMAGE:
+		{
+			// also needs dedicated thought
+			uint8_t image_length[2];
+			spi_receive(image_length, 2);
+			uint16_t length = (uint8_t) image_length[1] << 8 || (uint8_t) image_length[0];
 
-//		spi_receive(&rx_data, 1);
-		return 0;
-	}
-	case IRIS_OFF_SENSOR_IDLE:
-//        sensor_active();
-		spi_transmit(&tx_data, 1);
-		return 0;
-	case IRIS_ON_SENSOR_IDLE:
-//        sensor_idle();
-		spi_transmit(&tx_data, 1);
-		return 0;
-	case IRIS_GET_IMAGE_LENGTH:
-//		get_image_length();
-		spi_transmit(&tx_data, 1);
-		return 0;
-	case IRIS_UPDATE_SENSOR_I2C_REG:
-//    	update_sensor_I2C_regs();
-		spi_transmit(&tx_data, 1);
-		return 0;
-	case IRIS_UPDATE_CURRENT_LIMIT:
-//    	update_current_limits();
-		spi_transmit(&tx_data, 1);
-		return 0;
-	default:
-		return -1;
+	//		uint8_t *buffer = get_image_buffer();
+	//		for (int i = 0; i < rx_data; i++) {
+	//			spi_transmit(buffer, 512);
+	//		}
+
+	//		spi_receive(&rx_data, 1);
+			return 0;
+		}
+		case IRIS_OFF_SENSOR_IDLE:
+	        sensor_idle();
+			return 0;
+		case IRIS_ON_SENSOR_IDLE:
+	        sensor_active();
+			return 0;
+		case IRIS_GET_IMAGE_LENGTH:
+			get_image_length(&tx_data);
+			spi_transmit(&tx_data, 1);
+			return 0;
+		case IRIS_UPDATE_SENSOR_I2C_REG:
+			// t h o n k
+	//    	update_sensor_I2C_regs();
+			spi_transmit(&tx_data, 1);
+			return 0;
+		case IRIS_UPDATE_CURRENT_LIMIT:
+	//    	update_current_limits();
+			spi_transmit(&tx_data, 1);
+			return 0;
+		default:
+			return -1;
 	}
 }
 
