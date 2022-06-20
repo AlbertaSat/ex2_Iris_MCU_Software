@@ -78,3 +78,5 @@ host/exifpls.zip
 **/**/*.orig
 *.zip
 **/*zip
+.settings
+*.ignore
