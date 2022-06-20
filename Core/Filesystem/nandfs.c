@@ -30,6 +30,7 @@ extern "C" {
 int nand_errno = 0;
 
 FileHandle_t handles[FILEHANDLE_COUNT];
+DirHandle_t dir_handles[DIRHANDLE_COUNT];
 
 /*
  * Private function. Returns pointer to unopened file handle
@@ -40,6 +41,20 @@ static FileHandle_t *_get_handle() {
             continue;
         } else {
             return &(handles[i]);
+        }
+    }
+    return -1;
+}
+
+/*
+ * Private function. Returns pointer to unopened directory handle
+ */
+static DirHandle_t *_get_dir_handle() {
+    for (int i = 0; i < DIRHANDLE_COUNT; i++) {
+        if (dir_handles[i].open) {
+            continue;
+        } else {
+            return &(dir_handles[i]);
         }
     }
     return -1;
@@ -81,25 +96,41 @@ int NANDfs_close(NAND_FILE *file) {
  */
 NAND_FILE *NANDfs_open(int fileid) {
     FileHandle_t *handle = _get_handle();
+    if (handle = -1) {
+        nand_errno = NAND_EMFILE;
+        return (NAND_FILE *)-1;
+    }
     if (NANDfs_core_open(fileid, handle) == -1) {
         return (NAND_FILE *)-1;
     }
     return handle;
 }
 
-int NANDfs_opendir() {
-    nand_errno = NAND_ENOSYS;
-    return -1;
+NAND_DIR *NANDfs_opendir() {
+    DirHandle_t *dir = _get_dir_handle();
+    if (dir == -1) {
+        nand_errno = NAND_EMFILE;
+        return (NAND_DIR *)-1;
+    }
+    if (NANDfs_Core_opendir(dir) == -1) {
+        return (NAND_DIR *)-1;
+    }
+    return (NAND_DIR *)dir;
 }
 
-DIRENT NANDfs_readdir(int dd) {
-    nand_errno = NAND_ENOSYS;
-    return (DIRENT)-1;
+// Returns the current inode the dir is pointing to and increments the dir pointer
+// If it is at the end of the dir, the returned entry's node id will be 0, an illegal value
+// If an error occurs, node id will be 0 and nand_errno will be set
+DIRENT NANDfs_readdir(NAND_DIR *dir) {
+    DirHandle_t *thisdir = (DirHandle_t *)dir;
+    inode_t node;
+    NANDfs_Core_readdir(thisdir, &node);
+    return (DIRENT)node;
 }
 
-int NANDfs_closedir(DIRENT dir) {
-    nand_errno = NAND_ENOSYS;
-    return -1;
+int NANDfs_closedir(NAND_DIR *dir) {
+    memset(dir, 0, sizeof(NAND_DIR));
+    return 0;
 }
 
 int NANDfs_read(NAND_FILE *fd, int size, void *buf) {

@@ -28,7 +28,7 @@
 static int lowest_inode = 0;
 static int highest_inode = 0;
 
-#define UINT32_MAX 0xFFFFFFFF;
+void _increment_seek(PhysicalAddrs *addr, int size);
 
 /*
  * Finds the first unformatted block
@@ -333,11 +333,11 @@ int NANDfs_core_open(int fileid, FileHandle_t *file) {
 
 int NANDfs_core_close_rdonly(FileHandle_t *file) {
     if (file->open == 0) {
-        nand_errno = NAND_EINVAL;
+        nand_errno = NAND_EBADF;
         return -1;
     }
     if (file->readonly == 0) { // This function is not meant to close a writeable file
-        nand_errno = NAND_EINVAL;
+        nand_errno = NAND_EBADF;
         return -1;
     }
     memset(file, 0, sizeof(FileHandle_t));
@@ -350,16 +350,89 @@ int NANDfs_core_close_wronly(FileHandle_t *file) {
         return -1;
     }
     if (file->readonly == 1) {
-        nand_errno = NAND_EINVAL;
+        nand_errno = NAND_EBADF;
         return -1;
     }
     PhysicalAddrs addr = {0};
     // We are closing a file that was just created. Update its first inode with the information.
     int ret = _find_inode(&addr, file->node.id);
+    if (ret == -1) {
+        nand_errno = NAND_ENOENT;
+        return -1;
+    }
     inode_t newnode = {0};
     NAND_ReturnType status = NAND_Page_Read(&addr, sizeof(newnode), (uint8_t *)&newnode);
     newnode.file_size = file->node.file_size;
     status = NAND_Page_Program(&addr, sizeof(newnode), (uint8_t *)&newnode);
     memset(file, 0, sizeof(FileHandle_t));
+    return 0;
+}
+
+int NANDfs_Core_opendir(DirHandle_t *dir) {
+    // Loop through blocks on flash chip
+    // Find the first inode that's defined
+    // If looped to NUM_BLOCKS blocks and no inode, error
+    if (dir->open) {
+        nand_errno = NAND_EBADF;
+        return -1;
+    }
+    PhysicalAddrs addr = {0};
+    inode_t node = {0};
+    for (int i = 0; i < NUM_BLOCKS; i++) {
+        addr.block = i;
+        NAND_ReturnType status = NAND_Page_Read(&addr, sizeof(node), (uint8_t *)&node);
+        if (status != Ret_Success) {
+            continue; // Might have hit a bad block
+        }
+        if (node.magic == MAGIC && node.isfirst) { // Find the first node in the flash. Don't care about order
+            memcpy(&(dir->first), &node, sizeof(node));
+            memcpy(&(dir->current), &node, sizeof(node));
+            memcpy(&(dir->seek), &addr, sizeof(addr));
+            dir->open = 1;
+            return 0;
+        }
+    }
+    nand_errno = NAND_ENOENT;
+    return -1;
+}
+
+int NANDfs_Core_readdir(DirHandle_t *dir, inode_t *node) {
+    // If the inode is the first inode we read, write 0 in to the node
+    // else copy the inode at the current seek to the output node
+    // Set the seek to the next inode in the flash
+    if (dir->open) {
+        nand_errno = NAND_EBADF;
+        return -1;
+    }
+    NAND_ReturnType status = NAND_Page_Read(&(dir->seek), sizeof(node), (uint8_t *)node);
+    if (status != Ret_Success) {
+        nand_errno = NAND_EIO;
+        node->id = 0;
+        return -1;
+    }
+    if (node->magic != MAGIC) {
+        nand_errno = NAND_EFUBAR;
+        return -1;
+    }
+    if (node->id == dir->first.id) {
+        node->id = 0;
+        return 0;
+    }
+    // find the next inode, if we can.
+    inode_t search;
+    int num_checked;
+    while (num_checked++ < NUM_BLOCKS) { // Prevent infinite loop
+        dir->seek.block++;
+        if (dir->seek.block >= NUM_BLOCKS) {
+            dir->seek.block = 0;
+        }
+        NAND_ReturnType status = NAND_Page_Read(&(dir->seek), sizeof(inode_t), (uint8_t *)&search);
+        if (status != Ret_Success) {
+            continue; // Might have hit a bad block, not sure
+        }
+        if (search.magic == MAGIC && search.isfirst) {
+            return 0; // Stop when we find the next node, we'll leave checking it for the next call
+        }
+    }
     return 0;
 }

@@ -39,6 +39,7 @@ extern "C" {
 #include "nand_types.h"
 
 #define FILEHANDLE_COUNT 2
+#define DIRHANDLE_COUNT 2
 
 extern int nand_errno;
 
@@ -53,11 +54,11 @@ NAND_FILE *NANDfs_open(int fileid);
 int NANDfs_close(NAND_FILE *file);
 
 // Only one directory exists, but the name is used for familliarity
-int NANDfs_opendir();
+NAND_DIR *NANDfs_opendir();
 
-DIRENT NANDfs_readdir(int dd);
+DIRENT NANDfs_readdir(NAND_DIR *dir);
 
-int NANDfs_closedir(DIRENT dir);
+int NANDfs_closedir(NAND_DIR *dir);
 
 int NANDfs_read(NAND_FILE *fd, int size, void *buf);
 

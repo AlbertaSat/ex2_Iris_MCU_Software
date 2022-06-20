@@ -32,5 +32,7 @@ int NANDfs_core_write(FileHandle_t *file, int size, void *buf);
 int NANDfs_core_read(FileHandle_t *file, int size, void *buf);
 int NANDfs_core_close_rdonly(FileHandle_t *file);
 int NANDfs_core_close_wronly(FileHandle_t *file);
+int NANDfs_Core_opendir(DirHandle_t *dir);
+int NANDfs_Core_readdir(DirHandle_t *dir, inode_t *node);
 
 #endif /* NAND_CORE_H_ */

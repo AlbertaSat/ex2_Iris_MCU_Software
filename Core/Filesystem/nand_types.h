@@ -29,9 +29,12 @@ typedef struct {
 typedef FileHandle_t NAND_FILE;
 
 typedef struct {
+    uint8_t open; // 0 is not open
     inode_t current;
     inode_t first;
-    DIRENT dirent;
+    PhysicalAddrs seek;
 } DirHandle_t;
+
+typedef DirHandle_t NAND_DIR;
 
 #endif /* NAND_TYPES_H_ */
