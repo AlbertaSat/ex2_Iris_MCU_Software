@@ -27,7 +27,6 @@ extern const struct sensor_reg OV5642_QVGA_Preview[];
  *		  	work with Ron's NAND Flash stuff.
  *
  */
-uint8_t ack = 0xAA;
 uint8_t total_image_num = 0; // This will cause issues with total num of images once board resets. todo: fix
 housekeeping_packet_t hk;
 char buf[128];
@@ -69,9 +68,6 @@ void take_image() {
     DBG_PUT("Loop broke!\r\n");
     ;
 
-    // ack over SPI
-    SPI1_IT_Transmit(&ack);
-
     // todo:
     //  keep track of how many images we have captured. This could come after transferring
     //  to flash
@@ -89,11 +85,8 @@ void take_image() {
  * Untested
  *
  */
-void get_image_length() {
-    // todo:	@RON:   Need a way to get image length from NAND flash
-    //  				- Expecting a 32 bit integer for image size
-    uint32_t image_length = 0x000000;
-    SPI1_IT_Transmit(&image_length);
+void get_image_length(uint32_t *pdata) {
+    *pdata = 0x069420;
     return;
 }
 
@@ -121,8 +114,6 @@ void sensor_idle() {
      */
     // pull mosfet driver pin low, cutting power to sensors
     HAL_GPIO_WritePin(CAM_EN_GPIO_Port, CAM_EN_Pin, GPIO_PIN_RESET);
-    SPI1_IT_Transmit(&ack);
-
     return;
 }
 
@@ -228,6 +219,17 @@ uint8_t get_image_num(uint8_t hk) {
 }
 
 /**
+ * @brief Get the total image number
+ *
+ * @param hk 1 for integer return (what's used for hk); 0 for spi return
+ * @return uint8_t
+ */
+uint8_t get_image_num_spi(uint8_t *num) {
+    *num = total_image_num;
+    return 1;
+}
+
+/**
  * @brief Initializes sensor
  *
  * @param sensor VIS_SENSOR or NIR_SENSOR
@@ -269,7 +271,7 @@ void _initalize_sensor(uint8_t sensor) {
     }
 }
 
-void handle_wdt() { SPI1_IT_Transmit(&ack); }
+void handle_wdt() { return; }
 
 static inline const char *next_token(const char *ptr) {
     /* move to the next space */

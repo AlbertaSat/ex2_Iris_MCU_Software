@@ -92,13 +92,18 @@ static void onboot_commands(void);
 /* USER CODE BEGIN 0 */
 uint8_t state = receiving;
 uint8_t RX_Data = 0xFF;
+
+enum iris_states iris_state;
+//
+// void spiSlaveReStart(SPI_HandleTypeDef *hspi);
+// void rcc_spi_force_reset(SPI_HandleTypeDef *hspi);
+// void rcc_spi_release_reset(SPI_HandleTypeDef *hspi);
 /* USER CODE END 0 */
 
 void init_filesystem() {
-	NAND_SPI_Init(&hspi2);
-	NANDfs_init();
+    NAND_SPI_Init(&hspi2);
+    NANDfs_init();
 }
-
 
 /**
  * @brief  The application entry point.
@@ -142,25 +147,20 @@ int main(void) {
     /* USER CODE END 2 */
 
     /* Infinite loop */
-    /* USER CODE BEGIN WHILE */
+//    /* USER CODE BEGIN WHILE */
 #ifdef SPI_DEBUG
     while (1) {
         /* USER CODE END WHILE */
+
         /* USER CODE BEGIN 3 */
-        switch (ss_state) {
-        case LISTENING:
-            if (spi_verify_command() != -1) {
-                ss_state = HANDLE_COMMAND;
-            } else {
-                ss_state = FINISH;
-            }
+        switch (iris_state) {
+        case IDLE:
             break;
-        case HANDLE_COMMAND:
-            spi_handle_command();
-            ss_state = FINISH;
+        case LISTENING:
+            spi_listen();
             break;
         case FINISH:
-            ss_state = LISTENING;
+            iris_state = LISTENING;
             break;
         }
     }
@@ -523,9 +523,9 @@ static void MX_GPIO_Init(void) {
 //
 //{
 //    state = handling_command;
-//		char buf[64];
-//		sprintf(buf, "Received 0x%x\r\n", RX_Data);
-//		DBG_PUT(buf);
+//    char buf[64];
+//    sprintf(buf, "Received 0x%x\r\n", RX_Data);
+//    DBG_PUT(buf);
 //}
 // void HAL_SPI_TxRxCpltCallback(SPI_HandleTypeDef *hspi) {
 //    state = receiving;
@@ -564,6 +564,7 @@ static void onboot_commands(void) {
     init_temp_sensors();
     //		sensor_togglepower(1);
     //		uart_reset_sensors();
+    NAND_SPI_Init(&hspi2);
 
 #ifdef UART_DEBUG
     DBG_PUT("-----------------------------------\r\n");
