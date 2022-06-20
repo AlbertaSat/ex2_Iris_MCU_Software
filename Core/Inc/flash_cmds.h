@@ -24,6 +24,6 @@ int transfer_image(uint8_t sensor, int32_t name, int media);
 
 int transfer_file(int which, int media);
 
-int list_files(int howmany);
+int list_files();
 
 #endif // INC_TRANSFER_H_

@@ -403,7 +403,7 @@ int NANDfs_Core_readdir(DirHandle_t *dir, inode_t *node) {
     // If the inode is the first inode we read, write 0 in to the node
     // else copy the inode at the current seek to the output node
     // Set the seek to the next inode in the flash
-    if (dir->open) {
+    if (!dir->open) {
         nand_errno = NAND_EBADF;
         return -1;
     }

@@ -214,8 +214,21 @@ static inline void char_name(uint32_t name, char *str) {
     *str = 0;
 }
 
-int list_files(int how_many) {
-    // TODO: This
+int list_files() {
+	// TODO: This
+    char msg[64];
 
+	NAND_DIR *dir = NANDfs_opendir();
+	if (dir == (NAND_DIR *)-1) {
+		sprintf(msg, "Error opening dir, nand_errno: %d\n", nand_errno);
+		DBG_PUT(msg);
+		return -1;
+	}
+	DIRENT entry;
+	do {
+		entry = NANDfs_readdir(dir);
+		sprintf(msg, "%d\n", entry.id);
+		DBG_PUT(msg);
+	} while (entry.id != 0);
     return 0;
 }

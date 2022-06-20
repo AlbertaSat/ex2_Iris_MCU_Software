@@ -377,13 +377,8 @@ void uart_handle_read_file_cmd(const char *cmd) {
 void uart_handle_list_files_cmd(const char *cmd) {
     const char *wptr = next_token(cmd);
 
-    int how_many;
-    if (sscanf(wptr, "%d", &how_many) != 1) {
-        DBG_PUT("Can't parse list count\r\n");
-        return;
-    }
 
-    list_files(how_many);
+    list_files();
 }
 
 void uart_reset_sensors(void) {
