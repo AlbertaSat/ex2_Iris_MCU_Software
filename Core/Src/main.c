@@ -69,11 +69,6 @@ SPI_HandleTypeDef hspi2;
 UART_HandleTypeDef huart1;
 
 /* USER CODE BEGIN PV */
-enum {
-    LISTENING,
-    HANDLE_COMMAND,
-    FINISH,
-} ss_state;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
