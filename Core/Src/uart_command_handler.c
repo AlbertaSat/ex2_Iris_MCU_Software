@@ -5,7 +5,6 @@
 #include "arducam.h"
 #include "debug.h"
 #include "main.h"
-#include "nand_m79a.h"
 #include "IEB_TESTS.h"
 #include "flash_cmds.h"
 #include "housekeeping.h"
@@ -13,7 +12,6 @@ extern int format;
 extern I2C_HandleTypeDef hi2c2;
 // extern struct housekeeping_packet hk;
 
-FileHandle_t *file;
 static inline const char *next_token(const char *ptr) {
     /* move to the next space */
     while (*ptr && *ptr != ' ')

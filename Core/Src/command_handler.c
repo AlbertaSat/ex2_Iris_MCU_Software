@@ -7,7 +7,6 @@
 #include "command_handler.h"
 #include "string.h"
 #include "debug.h"
-#include "nand_m79a.h"
 #include "arducam.h"
 #include "SPI_IT.h"
 #include "IEB_TESTS.h"
@@ -149,9 +148,7 @@ void sensor_active() {
  * @brief Get the housekeeping object and transmits it over SPI
  *
  */
-void get_housekeeping(housekeeping_packet_t *hk) {
-    *(hk) = _get_housekeeping();
-}
+void get_housekeeping(housekeeping_packet_t *hk) { *(hk) = _get_housekeeping(); }
 
 /**
  * @brief   Updates sensor I2C regs based on input struct. Untested, and unknown if
@@ -272,9 +269,7 @@ void _initalize_sensor(uint8_t sensor) {
     }
 }
 
-void handle_wdt(){
-	SPI1_IT_Transmit(&ack);
-}
+void handle_wdt() { SPI1_IT_Transmit(&ack); }
 
 static inline const char *next_token(const char *ptr) {
     /* move to the next space */

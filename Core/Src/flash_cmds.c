@@ -1,7 +1,7 @@
 #include "arducam.h"
 #include "flash_cmds.h"
-#include "nand_m79a.h"
 #include "debug.h"
+#include "nandfs.h"
 
 #define DUMP_ASCII 1
 
@@ -17,32 +17,6 @@ static void uart_dump_buf(uint8_t *data, uint16_t len) {
     }
 }
 #endif
-
-void init_nand_flash(void) {
-    NAND_ReturnType res = NAND_Init();
-    if (res == Ret_Success) {
-        DBG_PUT("NAND Flash Initialized Successfully\r\n");
-    } else if (res == Ret_ResetFailed) {
-        DBG_PUT("NAND Reset Failed\r\n");
-    } else if (res == Ret_WrongID) {
-        DBG_PUT("NAND ID is wrong\r\n");
-    } else {
-        DBG_PUT("Something else is wrong wit the NAND Flash\r\n");
-    }
-
-    res = Ret_Failed;
-    // format super block
-    res = NAND_File_Format(0);
-    if (res == Ret_Success) {
-        DBG_PUT("NAND Flash File Format Success\r\n");
-    } else if (res == Ret_WriteFailed) {
-        DBG_PUT("NAND Write Failed\r\n");
-    } else if (res == Ret_Failed) {
-        DBG_PUT("Reset failed\r\n");
-    } else {
-        DBG_PUT("Something else went wrong\r\n");
-    }
-}
 
 static int uart_open(io_funcs_t *iofuncs, uint32_t name) {
     iofuncs->handle = &huart1;
@@ -241,21 +215,7 @@ static inline void char_name(uint32_t name, char *str) {
 }
 
 int list_files(int how_many) {
-    struct inode inode;
-    int cnt, index;
-    char name[10];
-    char msg[64];
-
-    index = NAND_File_List_First(0, &inode);
-    cnt = how_many;
-    while (cnt > 0 && index > 0) {
-        char_name(inode.id, name);
-        sprintf(msg, "name %s len %ld\n", name, inode.length);
-        DBG_PUT(msg);
-
-        index = NAND_File_List_Next(index, &inode);
-        --cnt;
-    }
+    // TODO: This
 
     return 0;
 }
