@@ -94,6 +94,12 @@ uint8_t state = receiving;
 uint8_t RX_Data = 0xFF;
 /* USER CODE END 0 */
 
+void init_filesystem() {
+	NAND_SPI_Init(&hspi2);
+	NANDfs_init();
+}
+
+
 /**
  * @brief  The application entry point.
  * @retval int
@@ -132,6 +138,7 @@ int main(void) {
     char buf[64];
     char *ptr = cmd;
     onboot_commands();
+    init_filesystem();
     /* USER CODE END 2 */
 
     /* Infinite loop */
@@ -557,8 +564,6 @@ static void onboot_commands(void) {
     init_temp_sensors();
     //		sensor_togglepower(1);
     //		uart_reset_sensors();
-    NAND_SPI_Init(&hspi2);
-    NANDfs_init();
 
 #ifdef UART_DEBUG
     DBG_PUT("-----------------------------------\r\n");
