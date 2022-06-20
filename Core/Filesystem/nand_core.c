@@ -220,7 +220,6 @@ int NANDfs_core_delete(uint32_t inodeid) {
  * Writes happen in sizes of PAGE_DATA_SIZE unless it's the last partial page
  */
 int NANDfs_core_write(FileHandle_t *file, int size, void *buf) {
-    // TODO: make sure we don't hit our tail if the file is too big
     if (file->open == 0) {
         nand_errno = NAND_EINVAL;
         return -1;
@@ -245,7 +244,11 @@ int NANDfs_core_write(FileHandle_t *file, int size, void *buf) {
         if (seek->page == 0) {
             inode_t node;
             NAND_ReturnType status = NAND_Page_Read(seek, sizeof(node), (uint8_t *)&node);
-            if (node.magic == MAGIC) { // This is a valid inode
+            if (node.magic == MAGIC) {         // This is a valid inode
+                if (node.id = file->node.id) { // Oh no, we hit our tail
+                    nand_errno = NAND_EFBIG;
+                    return -1;
+                }
                 NANDfs_core_delete(node.id);
             } else {
                 status = NAND_Block_Erase(seek); // Erase for good measure
@@ -346,7 +349,7 @@ int NANDfs_core_close_rdonly(FileHandle_t *file) {
 
 int NANDfs_core_close_wronly(FileHandle_t *file) {
     if (file->open == 0) {
-        nand_errno = NAND_EINVAL;
+        nand_errno = NAND_EBADF;
         return -1;
     }
     if (file->readonly == 1) {
