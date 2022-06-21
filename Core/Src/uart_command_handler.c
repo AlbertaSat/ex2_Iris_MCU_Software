@@ -5,7 +5,6 @@
 #include "arducam.h"
 #include "debug.h"
 #include "main.h"
-#include "nand_m79a.h"
 #include "IEB_TESTS.h"
 #include "flash_cmds.h"
 #include "housekeeping.h"
@@ -13,7 +12,6 @@ extern int format;
 extern I2C_HandleTypeDef hi2c2;
 // extern struct housekeeping_packet hk;
 
-FileHandle_t *file;
 static inline const char *next_token(const char *ptr) {
     /* move to the next space */
     while (*ptr && *ptr != ' ')
@@ -379,13 +377,8 @@ void uart_handle_read_file_cmd(const char *cmd) {
 void uart_handle_list_files_cmd(const char *cmd) {
     const char *wptr = next_token(cmd);
 
-    int how_many;
-    if (sscanf(wptr, "%d", &how_many) != 1) {
-        DBG_PUT("Can't parse list count\r\n");
-        return;
-    }
 
-    list_files(how_many);
+    list_files();
 }
 
 void uart_reset_sensors(void) {

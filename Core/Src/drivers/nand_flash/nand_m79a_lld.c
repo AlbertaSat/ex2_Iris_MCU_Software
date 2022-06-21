@@ -25,6 +25,42 @@
 
 #include "nand_m79a_lld.h"
 
+/**
+ * @brief Initializes the NAND. Steps: Reset device and check for correct device IDs.
+ * @note  This function must be called first when powered on.
+ *
+ * @param[in] None
+ * @return NAND_ReturnType
+ */
+NAND_ReturnType NAND_Init(void) {
+    NAND_ID dev_ID;
+
+    NAND_Wait(T_POR);       /* Wait for T_POR = 1.25ms after power on */
+    NAND_Send_Dummy_Byte(); /* Initializes SPI clock settings */
+
+    /* Reset NAND flash after power on. May not be necessary though (page 50) */
+    if (NAND_Reset() != Ret_Success) {
+        return Ret_ResetFailed;
+    }
+
+    /* check if device ID is same as expected */
+    NAND_Read_ID(&dev_ID);
+    if (dev_ID.manufacturer_ID != NAND_ID_MANUFACTURER || dev_ID.device_ID != NAND_ID_DEVICE) {
+        return Ret_WrongID;
+    }
+
+    /* Unlock the block locks (page 38) */
+    if (NAND_Set_Features(SPI_NAND_BLKLOCK_REG_ADDR, 0) != Ret_Success) {
+        return Ret_Failed;
+    }
+
+    // TODO:
+    // build bad block table
+    // finally, run power on self test (POST)
+
+    return Ret_Success;
+}
+
 /******************************************************************************
  *                              Status Operations
  *****************************************************************************/
@@ -300,7 +336,10 @@ NAND_ReturnType NAND_Page_Read(PhysicalAddrs *addr, uint16_t length, uint8_t *bu
     }
 
     /* Command 1: PAGE READ. See datasheet page 16 for details */
-    if ((status = NAND_Page_Load(addr->rowAddr)) != Ret_Success) {
+    uint32_t paddr = 0;
+    paddr = 0x7ff & addr->block;
+    paddr |= (0x3f & addr->page) << 11;
+    if ((status = NAND_Page_Load(paddr)) != Ret_Success) {
         return status;
     }
     /* Command 3: READ FROM CACHE. See datasheet page 18 for details */
@@ -343,7 +382,7 @@ NAND_ReturnType NAND_Page_Program(PhysicalAddrs *addr, uint16_t length, uint8_t 
     uint8_t command_load[3] = {SPI_NAND_PROGRAM_LOAD_X1, BYTE_1(col), BYTE_0(col)};
 
     SPI_Params tx_cmd = {.buffer = command_load, .length = 3};
-    SPI_Params tx_data = {.buffer = buffer, .length = PAGE_DATA_SIZE};
+    SPI_Params tx_data = {.buffer = buffer, .length = length};
     // TODO: Check if we can write just 2048 data bits per page. Datasheet shows 2176 bytes including the spare
     // locations.
 
@@ -352,7 +391,9 @@ NAND_ReturnType NAND_Page_Program(PhysicalAddrs *addr, uint16_t length, uint8_t 
     }
 
     /* Command 3: PROGRAM EXECUTE. See datasheet page 31 for details */
-    uint32_t row = addr->rowAddr;
+    uint32_t row = 0;
+    row = 0x7ff & addr->block;
+    row |= (0x3f & addr->page) << 11;
     uint8_t command_exec[4] = {SPI_NAND_PROGRAM_EXEC, BYTE_2(row), BYTE_1(row), BYTE_0(row)};
     SPI_Params exec_cmd = {.buffer = command_exec, .length = 4};
 
@@ -393,8 +434,10 @@ NAND_ReturnType NAND_Block_Erase(PhysicalAddrs *addr) {
     __write_enable();
 
     /* Command 2: BLOCK ERASE. See datasheet page 35 for details */
-    uint32_t block = addr->block; // TODO: datasheet simply specifies block address. assuming that's the 11-bit
-                                  // block number padded with dummy bits. check.
+    uint32_t block = 0;
+    block = 0x7ff & addr->block;
+    // TODO: datasheet simply specifies block address. assuming that's the 11-bit
+    // block number padded with dummy bits. check.
     uint8_t command[4] = {SPI_NAND_BLOCK_ERASE, BYTE_2(block), BYTE_1(block), BYTE_0(block)};
 
     SPI_Params tx_cmd = {.buffer = command, .length = 4};

@@ -23,6 +23,9 @@
  * to M79a NAND Flash via SPI.
  */
 
+#ifndef nand_m79a_lld_h
+#define nand_m79a_lld_h
+
 #include "nand_spi.h"
 
 /* Functions Return Codes */
@@ -289,6 +292,8 @@ NAND_SPI_ReturnType __write_disable(void);
  *                            List of APIs
  *****************************************************************************/
 
+NAND_ReturnType NAND_Init(void);
+
 /* status operations */
 NAND_ReturnType NAND_Reset(void);
 NAND_ReturnType NAND_Wait_Until_Ready(void);
@@ -324,3 +329,5 @@ NAND_ReturnType NAND_Block_Erase(PhysicalAddrs *addr);
 // NAND_ReturnType NAND_Lock(void);
 // NAND_ReturnType NAND_Unlock(NAND_Addr start_block, NAND_Addr end_block);
 // NAND_ReturnType NAND_Read_Lock_Status(NAND_Addr block_addr);
+
+#endif

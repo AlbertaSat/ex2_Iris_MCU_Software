@@ -7,7 +7,6 @@
 #include "IEB_TESTS.h"
 #include "main.h"
 #include "tmp421.h"
-#include "nand_m79a.h"
 #include "command_handler.h"
 
 extern I2C_HandleTypeDef hi2c2;
@@ -58,13 +57,8 @@ void CHECK_LED_I2C_SPI_TS(void) {
     DBG_PUT("--------------------\r\n");
     DBG_PUT("Testing NAND Flash\r\n");
 
-    NAND_ReturnType res = NAND_Init();
-    if (res == Ret_Success) {
-        DBG_PUT("TEST PASSED: NAND Flash Initialized\r\n");
-    } else {
-        DBG_PUT("TEST FAILED: NAND Flash Error\r\n");
-    }
-    DBG_PUT("--------------------\r\n\n");
+    // TODO: Test nand
+    DBG_PUT("jk no tests here!\t\n");
 
     HAL_Delay(1000);
 }
