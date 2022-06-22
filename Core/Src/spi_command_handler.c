@@ -8,7 +8,7 @@ extern SPI_HandleTypeDef hspi1;
 extern enum iris_states iris_state;
 extern uint8_t cam_to_nand_transfer_flag;
 
-uint32_t image_length = 0x5F3;
+uint32_t image_length = 0x5F3; // Only here for testing purposes
 static uint32_t count = 0x0FFF0000;
 
 uint8_t ack = 0xAA;
