@@ -5,6 +5,8 @@
 
 #define DUMP_ASCII 1
 
+extern UART_HandleTypeDef huart1;
+
 #ifdef DUMP_ASCII
 static void uart_dump_buf(uint8_t *data, uint16_t len) {
     char digit[4];
