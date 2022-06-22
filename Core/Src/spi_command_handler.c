@@ -101,7 +101,7 @@ int spi_handle_command(uint8_t obc_cmd) {
         spi_transmit(&tx_data, 1);
         return 0;
     case IRIS_GET_IMAGE_COUNT:
-        get_image_num_spi(&tx_data);
+        get_image_num_spi(0);
         spi_transmit(&tx_data, 1);
         return 0;
     case IRIS_TRANSFER_IMAGE: {
@@ -115,14 +115,13 @@ int spi_handle_command(uint8_t obc_cmd) {
         sensor_active();
         return 0;
     case IRIS_GET_IMAGE_LENGTH: {
-        uint32_t image_length;
         get_image_length(&image_length);
         uint8_t packet[3];
         packet[0] = (image_length >> (8 * 2)) & 0xff;
         packet[1] = (image_length >> (8 * 1)) & 0xff;
         packet[2] = (image_length >> (8 * 0)) & 0xff;
 
-        spi_transmit(packet, 3);
+        spi_transmit(packet, IRIS_IMAGE_SIZE_WIDTH);
         return 0;
     }
     case IRIS_UPDATE_SENSOR_I2C_REG:
