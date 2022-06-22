@@ -7,7 +7,7 @@
 
 #ifndef INC_INA209_H_
 #define INC_INA209_H_
-#include "main.h"
+#include <iris_system.h>
 
 
 void get_configuration(uint8_t addr, uint16_t *retval);
