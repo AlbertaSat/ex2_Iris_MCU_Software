@@ -21,11 +21,15 @@
 #define IRIS_UPDATE_SENSOR_I2C_REG 0x60
 #define IRIS_UPDATE_CURRENT_LIMIT 0x70
 
+#define IRIS_IMAGE_TRANSFER_BLOCK_SIZE 512 // Will change once NAND flash is implemented
+
 void spi_transmit(uint8_t *tx_data, uint16_t data_length);
 void spi_receive(uint8_t *rx_data, uint16_t data_length);
 
 int spi_listen();
-int spi_verify_command();
-int spi_handle_command();
+int spi_verify_command(uint8_t cmd);
+int spi_handle_command(uint8_t cmd);
+int step_transfer();
+void spi_transfer_image();
 
 #endif /* INC_SPI_COMMAND_HANDLER_H_ */
