@@ -50,12 +50,6 @@ extern "C" {
 //#define UART_DEBUG
 #define SPI_DEBUG
 
-typedef enum iris_states {
-    IDLE,
-    LISTENING,
-    HANDLE_COMMAND,
-    FINISH,
-};
 /* USER CODE END EM */
 
 /* Exported functions prototypes ---------------------------------------------*/

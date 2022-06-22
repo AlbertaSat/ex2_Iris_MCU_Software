@@ -88,7 +88,13 @@ static void onboot_commands(void);
 uint8_t state = receiving;
 uint8_t spi_int_flag = 0;
 uint8_t cam_to_nand_transfer_flag = 0;
-enum iris_states iris_state;
+
+enum {
+    IDLE,
+    LISTENING,
+    HANDLE_COMMAND,
+    FINISH,
+} iris_state;
 
 /* For future failure recovery mode */
 uint8_t can_bus_receive_flag = 0; // Needs to be set in can RX callback

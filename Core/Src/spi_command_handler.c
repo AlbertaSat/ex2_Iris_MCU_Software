@@ -5,7 +5,6 @@
 #include <string.h>
 
 extern SPI_HandleTypeDef hspi1;
-extern enum iris_states iris_state;
 extern uint8_t cam_to_nand_transfer_flag;
 
 uint32_t image_length = 0x5F3; // Only here for testing purposes
@@ -153,16 +152,17 @@ int step_transfer() {
 }
 
 void spi_transfer_image() {
-    uint8_t image_data[512];
+    uint8_t image_data[IRIS_IMAGE_TRANSFER_BLOCK_SIZE];
     uint16_t num_transfers;
 
-    for (int i = 0; i < 512; i++) {
+    for (int i = 0; i < IRIS_IMAGE_TRANSFER_BLOCK_SIZE; i++) {
         image_data[i] = i;
     }
 
-    num_transfers = (uint16_t)((image_length + (512 - 1)) / 512);
+    num_transfers =
+        (uint16_t)((image_length + (IRIS_IMAGE_TRANSFER_BLOCK_SIZE - 1)) / IRIS_IMAGE_TRANSFER_BLOCK_SIZE);
     for (int j = 0; j < num_transfers; j++) {
-        spi_transmit(image_data, 512);
-        memset(image_data, 0, 512);
+        spi_transmit(image_data, IRIS_IMAGE_TRANSFER_BLOCK_SIZE);
+        memset(image_data, 0, IRIS_IMAGE_TRANSFER_BLOCK_SIZE);
     }
 }
