@@ -14,14 +14,34 @@ uint8_t ack = 0xAA;
 uint8_t nack = 0x0F;
 uint8_t transmit_ack;
 
+/**
+ * @brief
+ * 		Transmit data of given size over SPI bus in blocking mode
+ *
+ * @param
+ * 		*tx_data: pointer to transmit data
+ * 		data_length: numbers of bytes to be sent
+ */
 void spi_transmit(uint8_t *tx_data, uint16_t data_length) {
     HAL_SPI_Transmit(&hspi1, tx_data, data_length, HAL_MAX_DELAY);
 }
 
+/**
+ * @brief
+ * 		Receive data of given size over SPI bus in interrupt mode
+ * @param
+ * 		*rx_data: pointer to receive data
+ * 		data_length: numbers of bytes to be receive
+ */
 void spi_receive(uint8_t *rx_data, uint16_t data_length) { HAL_SPI_Receive_IT(&hspi1, rx_data, data_length); }
 
 /**
- * @brief SPI command verifier
+ * @brief
+ * 		Verifies if command from OBC is valid or not
+ * @param
+ * 		obc_cmd: Command from OBC
+ * @return
+ * 		1 if valid command, 0 if not
  */
 int spi_verify_command(uint8_t obc_cmd) {
     transmit_ack = 0;
@@ -75,7 +95,12 @@ int spi_verify_command(uint8_t obc_cmd) {
 }
 
 /**
- * @brief SPI command handler
+ * @brief
+ * 		Handles command from OBC
+ * @param
+ * 		obc_cmd: Command from OBC
+ * @return
+ * 		1 if valid command, 0 if not
  */
 int spi_handle_command(uint8_t obc_cmd) {
     uint8_t rx_data;
@@ -138,6 +163,13 @@ int spi_handle_command(uint8_t obc_cmd) {
     }
 }
 
+/**
+ * @brief
+ * 		Dummy function to represent task of transferring
+ * 		image data from camera to NAND flash
+ * @return
+ * 		1 if loop completed, 0 if not
+ */
 int step_transfer() {
 
     while (count != 0) {
@@ -150,6 +182,10 @@ int step_transfer() {
     return 1;
 }
 
+/**
+ * @brief
+ * 		Dummy function to dump image data to OBC
+ */
 void spi_transfer_image() {
     uint8_t image_data[IRIS_IMAGE_TRANSFER_BLOCK_SIZE];
     uint16_t num_transfers;

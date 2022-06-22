@@ -22,6 +22,7 @@
 #define IRIS_UPDATE_CURRENT_LIMIT 0x70
 
 #define IRIS_IMAGE_TRANSFER_BLOCK_SIZE 512 // Will change once NAND flash is implemented
+#define IRIS_IMAGE_SIZE_WIDTH 3            // Image size represented in 3 bytes
 
 void spi_transmit(uint8_t *tx_data, uint16_t data_length);
 void spi_receive(uint8_t *rx_data, uint16_t data_length);
