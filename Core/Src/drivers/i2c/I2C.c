@@ -1,9 +1,9 @@
+#include <iris_system.h>
 #include <I2C.h>
 #include <stdio.h>
 #include "stm32l0xx_hal.h"
 #include "arducam.h"
 #include "debug.h"
-#include "main.h"
 extern I2C_HandleTypeDef hi2c2;
 
 #define SCCB_READ 1

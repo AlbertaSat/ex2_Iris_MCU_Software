@@ -1,8 +1,8 @@
 #include <spi_command_handler.h>
 #include <command_handler.h>
+#include <iris_system.h>
 #include <stdio.h>
 #include <string.h>
-#include "main.h"
 
 extern SPI_HandleTypeDef hspi1;
 //		spi_receive(&rx_data, 1);

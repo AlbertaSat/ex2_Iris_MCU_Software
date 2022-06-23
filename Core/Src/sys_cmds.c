@@ -1,5 +1,5 @@
+#include <iris_system.h>
 #include <stdio.h>
-#include "main.h"
 #include "command_handler.h"
 #include "debug.h"
 
