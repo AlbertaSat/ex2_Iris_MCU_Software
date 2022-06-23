@@ -4,7 +4,7 @@
  *  Created on: Mar. 29, 2022
  *      Author: Liam Droog
  */
-#include "main.h"
+#include <iris_system.h>
 #include "tmp421.h"
 #include "debug.h"
 #include "housekeeping.h"

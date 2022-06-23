@@ -19,7 +19,7 @@
 /* USER CODE END Header */
 
 /* Includes ------------------------------------------------------------------*/
-#include "main.h"
+#include <iris_system.h>
 /* USER CODE BEGIN Includes */
 
 /* USER CODE END Includes */

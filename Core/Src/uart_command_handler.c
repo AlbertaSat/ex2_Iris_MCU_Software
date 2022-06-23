@@ -1,10 +1,10 @@
 #include <stdio.h>
 #include <ctype.h>
 #include <command_handler.h>
+#include <iris_system.h>
 #include "stm32l0xx_hal.h"
 #include "arducam.h"
 #include "debug.h"
-#include "main.h"
 #include "IEB_TESTS.h"
 #include "flash_cmds.h"
 #include "housekeeping.h"
