@@ -58,7 +58,7 @@ void CHECK_LED_I2C_SPI_TS(void) {
     DBG_PUT("Testing NAND Flash\r\n");
 
     // TODO: Test nand
-    DBG_PUT("jk no tests here!\t\n");
+
 
     HAL_Delay(1000);
 }

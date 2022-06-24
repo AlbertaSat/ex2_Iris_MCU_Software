@@ -127,11 +127,10 @@ typedef uint32_t NAND_Addr; // logical address type. Max FLASH_SIZE_BYTES
 #define ROW_ADDRESS_BITS 24
 #define COL_ADDRESS_BITS 12
 typedef struct {
-    uint16_t plane : 1;                      // 1 bit to specify plane number
-    uint16_t block : ROW_ADDRESS_BLOCK_BITS; // block number
-    uint16_t page : ROW_ADDRESS_PAGE_BITS;   // page number
-    uint32_t rowAddr : ROW_ADDRESS_BITS;     // block/page address
-    uint32_t colAddr : COL_ADDRESS_BITS;     // starting address within a page for writes
+    uint16_t plane;                      // 1 bit to specify plane number
+    uint16_t block; // block number
+    uint16_t page;   // page number
+    uint32_t colAddr;     // starting address within a page for writes
 } PhysicalAddrs;
 
 /* physical address macros; Input address must be of type NAND_Addr */
