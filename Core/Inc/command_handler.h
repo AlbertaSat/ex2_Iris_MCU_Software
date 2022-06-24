@@ -7,7 +7,7 @@
 
 #ifndef INC_COMMAND_HANDLER_H_
 #define INC_COMMAND_HANDLER_H_
-#include "main.h"
+#include "iris_system.h"
 #include "arducam.h"
 #include "SPI_IT.h"
 #include "I2C.h"
