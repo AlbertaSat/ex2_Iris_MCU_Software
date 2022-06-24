@@ -19,8 +19,8 @@
 /* USER CODE END Header */
 
 /* Define to prevent recursive inclusion -------------------------------------*/
-#ifndef __MAIN_H
-#define __MAIN_H
+#ifndef IRIS_SYSTEM_H
+#define IRIS_SYSTEM_H
 
 #ifdef __cplusplus
 extern "C" {
