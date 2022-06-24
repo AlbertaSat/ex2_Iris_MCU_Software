@@ -96,7 +96,7 @@ int NANDfs_close(NAND_FILE *file) {
  */
 NAND_FILE *NANDfs_open(int fileid) {
     FileHandle_t *handle = _get_handle();
-    if (handle = -1) {
+    if (handle == -1) {
         nand_errno = NAND_EMFILE;
         return (NAND_FILE *)-1;
     }
