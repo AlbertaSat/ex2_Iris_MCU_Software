@@ -338,8 +338,8 @@ NAND_ReturnType NAND_Page_Read(PhysicalAddrs *addr, uint16_t length, uint8_t *bu
 
     /* Command 1: PAGE READ. See datasheet page 16 for details */
     uint32_t paddr = 0;
-    paddr = 0x7ff & addr->block;
-    paddr |= (0x3f & addr->page) << 11;
+    paddr = (0x7ff & addr->block) << 6;
+    paddr |= (0x3f & addr->page);
     paddr |= (1 & addr->plane) << 20;
 
     if ((status = NAND_Page_Load(paddr)) != Ret_Success) {
@@ -397,8 +397,8 @@ NAND_ReturnType NAND_Page_Program(PhysicalAddrs *addr, uint16_t length, uint8_t 
     addr->plane = addr->block & 1;
 
     uint32_t row = 0;
-    row = 0x7ff & addr->block;
-    row |= (0x3f & addr->page) << 11;
+    row = 0x7ff & addr->block << 6;
+    row |= (0x3f & addr->page);
     row |= (1 & addr->plane) << 20;
 
     uint8_t command_exec[4] = {SPI_NAND_PROGRAM_EXEC, BYTE_2(row), BYTE_1(row), BYTE_0(row)};
