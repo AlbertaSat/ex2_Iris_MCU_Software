@@ -21,10 +21,14 @@ case "${1}" in
     ;;
   * )
     for file in $(git diff --cached --name-only); do
-      if [[ $file == *.c || $file == *.h ]]; then
-        echo "Formatting: $file"
-        clang-format -i ${STYLEARG} ${file}
-        git add ${file}
+      if [[ $(dirname "$file") != Drivers/* && $(dirname "$file") != host/* ]]; then
+        if [[ $file == *.c || $file == *.h ]]; then
+          if [[ $file != */sys* && $file != */stm32* ]]; then
+            echo "Formatting: $file"
+            clang-format -i ${STYLEARG} ${file}
+            git add ${file}
+          fi
+        fi
       fi
     done
     ;;
