@@ -54,6 +54,7 @@
 									<listOptionValue builtIn="false" value="../Drivers/CMSIS/Include"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/ex2_Iris_MCU_Software/Core/Filesystem/inc}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/ex2_Iris_MCU_Software/Core/Filesystem/inc/core}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/ex2_Iris_MCU_Software/Core/Filesystem/test}&quot;"/>
 								</option>
 								<inputType id="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.c.compiler.input.c.918462986" superClass="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.c.compiler.input.c"/>
 							</tool>
