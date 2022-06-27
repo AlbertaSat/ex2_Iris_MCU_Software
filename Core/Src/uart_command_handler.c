@@ -10,7 +10,10 @@
 #include "housekeeping.h"
 extern int format;
 extern I2C_HandleTypeDef hi2c2;
-// extern struct housekeeping_packet hk;
+
+// prototypes
+uint8_t onboot_sensors(uint8_t sensor);
+
 
 static inline const char *next_token(const char *ptr) {
     /* move to the next space */
@@ -99,7 +102,7 @@ void uart_handle_format_cmd(const char *cmd) {
     }
 
     if (format != old_format) {
-        Arduino_init(format, target_sensor);
+        program_sensor(format, target_sensor);
     }
     DBG_PUT("current format: ");
     DBG_PUT(format_names[format]);
@@ -381,85 +384,69 @@ void uart_handle_list_files_cmd(const char *cmd) {
     list_files();
 }
 
+
+uint8_t onboot_sensors(uint8_t sensor){
+	// Reset the CPLD
+
+	// Make sure camera is listening over SPI
+	arducam_wait_for_ready(sensor);
+	//reset I2C regs
+	write_reg(AC_REG_RESET, 1, sensor);
+	write_reg(AC_REG_RESET, 1, sensor);
+	HAL_Delay(100);
+	write_reg(AC_REG_RESET, 0, sensor);
+	HAL_Delay(100);
+
+	if (!arducam_wait_for_ready(sensor)) {
+		DBG_PUT("Camera %x: SPI Unavailable\r\n", sensor);
+	} else {
+		DBG_PUT("Camera %x: SPI Initialized\r\n", sensor);
+	}
+
+	// Change MCU mode
+	write_reg(ARDUCHIP_MODE, 0x0, sensor);
+	wrSensorReg16_8(0xff, 0x01, sensor);
+
+	uint8_t vid = 0, pid = 0;
+	// checks sensor id to ensure proper i2c performance
+	rdSensorReg16_8(OV5642_CHIPID_HIGH, &vid, sensor);
+	rdSensorReg16_8(OV5642_CHIPID_LOW, &pid, sensor);
+
+	if (vid != 0x56 || pid != 0x42) {
+		DBG_PUT("Camera %x I2C Address: Unknown\r\nVIS not available\r\n\n", sensor);
+		return -1;
+
+	} else {
+		return 1;
+	}
+}
+
 void uart_init_sensors(void) {
-    char buf[64];
-    // Reset the CPLD
+	format = JPEG;
 
-    arducam_wait_for_ready(VIS_SENSOR);
-    write_reg(AC_REG_RESET, 1, VIS_SENSOR);
-    write_reg(AC_REG_RESET, 1, VIS_SENSOR);
-    HAL_Delay(100);
-    write_reg(AC_REG_RESET, 0, VIS_SENSOR);
-    HAL_Delay(100);
+    uint8_t res = onboot_sensors(VIS_SENSOR);
+	if (res == 1){
+		program_sensor(format, VIS_SENSOR);
+	DBG_PUT("VIS Camera Mode: JPEG\r\nI2C address: 0x3C\r\n\n");
+	}
 
-    if (!arducam_wait_for_ready(VIS_SENSOR)) {
-        DBG_PUT("VIS Camera: SPI Unavailable\r\n");
-    } else {
-        DBG_PUT("VIS Camera: SPI Initialized\r\n");
-    }
+	if (res == -1){
+		// need some error handling eh
+		DBG_PUT("VIS init failed./r/n");
+		return;
+	}
 
-    // Change MCU mode
-    write_reg(ARDUCHIP_MODE, 0x0, VIS_SENSOR);
-    wrSensorReg16_8(0xff, 0x01, VIS_SENSOR);
-
-    uint8_t vid = 0, pid = 0;
-    rdSensorReg16_8(OV5642_CHIPID_HIGH, &vid, VIS_SENSOR);
-    rdSensorReg16_8(OV5642_CHIPID_LOW, &pid, VIS_SENSOR);
-
-    if (vid != 0x56 || pid != 0x42) {
-        sprintf(buf, "VIS Camera I2C Address: Unknown\r\nVIS not available\r\n\n");
-        DBG_PUT(buf);
-        VIS_DETECTED = 0;
-
-    } else {
-        DBG_PUT("VIS Camera I2C Address: 0x3C\r\n");
-        VIS_DETECTED = 1;
-    }
-    if (VIS_DETECTED == 1) {
-        format = JPEG;
-        Arduino_init(format, VIS_SENSOR);
-        sprintf(buf, "VIS Camera Mode: JPEG\r\n\n");
-        DBG_PUT(buf);
-    }
-    // Test NIR Sensor
-    arducam_wait_for_ready(NIR_SENSOR);
-
-    // Reset the CPLD
-    write_reg(AC_REG_RESET, 1, NIR_SENSOR);
-    HAL_Delay(100);
-    write_reg(AC_REG_RESET, 0, NIR_SENSOR);
-    HAL_Delay(100);
-
-    if (!arducam_wait_for_ready(NIR_SENSOR)) {
-        DBG_PUT("NIR Camera: SPI Unavailable\r\n");
-    } else {
-        DBG_PUT("NIR Camera: SPI Initialized\r\n");
-    }
-
-    // Change MCU mode
-    write_reg(ARDUCHIP_MODE, 0x0, NIR_SENSOR);
-    wrSensorReg16_8(0xff, 0x01, NIR_SENSOR);
-
-    vid = 0;
-    pid = 0;
-    rdSensorReg16_8(OV5642_CHIPID_HIGH, &vid, NIR_SENSOR);
-    rdSensorReg16_8(OV5642_CHIPID_LOW, &pid, NIR_SENSOR);
-
-    if (vid != 0x56 || pid != 0x42) {
-        sprintf(buf, "NIR Camera I2C Address: Unknown\r\nCamera not available\r\n\n");
-        DBG_PUT(buf);
-        NIR_DETECTED = 0;
-
-    } else {
-        DBG_PUT("NIR Camera I2C Address: 0x3E\r\n");
-        NIR_DETECTED = 1;
-    }
-    if (NIR_DETECTED == 1) {
-        format = JPEG;
-        Arduino_init(format, NIR_SENSOR);
-        sprintf(buf, "NIR Camera Mode: JPEG\r\n\n");
-        DBG_PUT(buf);
-    }
+	res = 0;
+    res = onboot_sensors(NIR_SENSOR);
+	if (res == 1){
+		program_sensor(format, NIR_SENSOR);
+	DBG_PUT("NIR Camera Mode: JPEG\r\nI2C address: 0x3D\r\n\n");
+	}
+	if (res == -1){
+		// need some error handling eh
+		DBG_PUT("NIR init failed.\r\n");
+		return;
+	}
     HAL_Delay(1000);
 }
 
