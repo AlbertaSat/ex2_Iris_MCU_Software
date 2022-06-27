@@ -423,13 +423,11 @@ uint8_t onboot_sensors(uint8_t sensor){
 
 void uart_init_sensors(void) {
 	format = JPEG;
-
     uint8_t res = onboot_sensors(VIS_SENSOR);
 	if (res == 1){
 		program_sensor(format, VIS_SENSOR);
 	DBG_PUT("VIS Camera Mode: JPEG\r\nI2C address: 0x3C\r\n\n");
 	}
-
 	if (res == -1){
 		// need some error handling eh
 		DBG_PUT("VIS init failed./r/n");
