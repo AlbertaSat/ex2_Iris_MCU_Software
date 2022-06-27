@@ -8,7 +8,7 @@
 uint8_t image_number = 0;
 void arducam_delay_ms(int ms) { HAL_Delay(ms); }
 
-void Arduino_init(int m_fmt, int sensor) {
+void program_sensor(int m_fmt, int sensor) {
     if (m_fmt == RAW) {
         arducam_raw_init(1280, 960, sensor);
     } else {

@@ -264,7 +264,7 @@ void _initalize_sensor(uint8_t sensor) {
     }
     if (DETECTED == 1) {
         format = JPEG;
-        Arduino_init(format, sensor);
+        program_sensor(format, sensor);
         DBG_PUT(buf);
     }
 }

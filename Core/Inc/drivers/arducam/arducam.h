@@ -55,7 +55,7 @@ struct sensor_reg {
 
 #define FAKE_CAM 1
 
-void Arduino_init(int m_fmt, int sensor);
+void program_sensor(int m_fmt, int sensor);
 bool arducam_wait_for_ready(uint8_t sensor);
 void arducam_raw_init(int width, int depth, uint8_t sensor);
 void arducam_get_resolution(int *width, int *depth, uint8_t sensor);
