@@ -141,9 +141,6 @@ int main(void) {
 
     /* USER CODE BEGIN 2 */
     NAND_SPI_Init(&hspi2);
-    char cmd[64];
-    char buf[64];
-    char *ptr = cmd;
     onboot_commands();
     init_filesystem();
     uint8_t obc_cmd;

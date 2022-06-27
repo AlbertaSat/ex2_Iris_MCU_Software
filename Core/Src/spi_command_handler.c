@@ -83,6 +83,13 @@ int spi_verify_command(uint8_t obc_cmd) {
         transmit_ack = 1;
         break;
     }
+    case IRIS_WDT_CHECK: {
+        transmit_ack = 1;
+        break;
+    }
+    default: {
+        transmit_ack = 0;
+    }
     }
 
     if (transmit_ack) {
@@ -118,27 +125,31 @@ int spi_handle_command(uint8_t obc_cmd) {
 
         return 0;
     }
-    case IRIS_TAKE_PIC:
+    case IRIS_TAKE_PIC: {
         // needs dedicated thought put towards implement
         //        take_image(cmd);
         //        iterate_image_num();
         cam_to_nand_transfer_flag = 1;
         spi_transmit(&tx_data, 1);
         return 0;
-    case IRIS_GET_IMAGE_COUNT:
+    }
+    case IRIS_GET_IMAGE_COUNT: {
         get_image_num_spi(0);
         spi_transmit(&tx_data, 1);
         return 0;
+    }
     case IRIS_TRANSFER_IMAGE: {
         spi_transfer_image();
         return 0;
     }
-    case IRIS_OFF_SENSOR_IDLE:
+    case IRIS_OFF_SENSOR_IDLE: {
         sensor_idle();
         return 0;
-    case IRIS_ON_SENSOR_IDLE:
+    }
+    case IRIS_ON_SENSOR_IDLE: {
         sensor_active();
         return 0;
+    }
     case IRIS_GET_IMAGE_LENGTH: {
         get_image_length(&image_length);
         uint8_t packet[3];
@@ -149,15 +160,20 @@ int spi_handle_command(uint8_t obc_cmd) {
         spi_transmit(packet, IRIS_IMAGE_SIZE_WIDTH);
         return 0;
     }
-    case IRIS_UPDATE_SENSOR_I2C_REG:
+    case IRIS_UPDATE_SENSOR_I2C_REG: {
         // t h o n k
         //    	update_sensor_I2C_regs();
         spi_transmit(&tx_data, 1);
         return 0;
-    case IRIS_UPDATE_CURRENT_LIMIT:
+    }
+    case IRIS_UPDATE_CURRENT_LIMIT: {
         //    	update_current_limits();
         spi_transmit(&tx_data, 1);
         return 0;
+    }
+    case IRIS_WDT_CHECK: {
+        return 0;
+    }
     default:
         return -1;
     }
@@ -165,7 +181,7 @@ int spi_handle_command(uint8_t obc_cmd) {
 
 /**
  * @brief
- * 		Dummy function to represent task of transferring
+ * 		Dummy function to represent task for transferring
  * 		image data from camera to NAND flash
  * @return
  * 		1 if loop completed, 0 if not
