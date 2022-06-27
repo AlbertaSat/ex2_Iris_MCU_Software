@@ -65,6 +65,11 @@ enum {
     HANDLE_COMMAND,
     FINISH,
 } ss_state;
+
+enum {
+	IDLE,
+	RECEIVING,
+} state;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -147,14 +152,13 @@ int main(void)
 #endif // SPI_DEBUG
 //       // //////////////////////////////////////////////////////////////////////////////////////////
 #ifdef UART_DEBUG
-    state = idle;
     while (1) {
         switch (state) {
-        case idle:
+        case IDLE:
             DBG_PUT("\r:>> ");
-            state = receiving;
+            state = RECEIVING;
             break;
-        case receiving:;
+        case RECEIVING:;
             HAL_StatusTypeDef rc = HAL_UART_Receive(&huart1, (uint8_t *)ptr, 1, 20000);
 
             /* Build up the command one byte at a time */
@@ -171,7 +175,7 @@ int main(void)
                 DBG_PUT("\r\n");
                 uart_handle_command(cmd);
                 ptr = cmd;
-                state = idle;
+                state = IDLE;
 
             } else {
                 *(ptr + 1) = 0;
@@ -186,7 +190,7 @@ int main(void)
             break;
         }
 #endif UART_DEBUG
-
+    }
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
