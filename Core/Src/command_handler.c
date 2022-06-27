@@ -20,7 +20,7 @@ extern const struct sensor_reg OV5642_QVGA_Preview[];
  * 		- 	TEST THESE FUNCTIONS EH
  *
  * 		- 	Determine if the  SPI CltCallback in main.c are called from interrupt SPI
- * 			functions in here, or if they're needed in here / in SPI_IT.c
+ * 			functions in here, or if they're needed in here / in SPI_IT.c [SOLVED]
  * 		- 	Find a way to send sensors into idle mode without erasing regs
  * 		  	otherwise save sensor regs somewhere in a struct.
  *		- 	Write functions to interface with sensor currently, but need to adapt to
@@ -270,8 +270,6 @@ void _initalize_sensor(uint8_t sensor) {
         DBG_PUT(buf);
     }
 }
-
-void handle_wdt() { return; }
 
 static inline const char *next_token(const char *ptr) {
     /* move to the next space */

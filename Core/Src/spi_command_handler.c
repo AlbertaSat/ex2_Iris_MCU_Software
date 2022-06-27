@@ -1,7 +1,6 @@
 #include <spi_command_handler.h>
 #include <command_handler.h>
 #include <iris_system.h>
-#include <stdio.h>
 #include <string.h>
 
 extern SPI_HandleTypeDef hspi1;
@@ -92,7 +91,7 @@ int spi_verify_command(uint8_t obc_cmd) {
     }
     }
 
-    if (transmit_ack) {
+    if (transmit_ack != 0) {
         spi_transmit(&ack, 1);
         return 0;
     } else {
@@ -127,7 +126,7 @@ int spi_handle_command(uint8_t obc_cmd) {
     }
     case IRIS_TAKE_PIC: {
         // needs dedicated thought put towards implement
-        //        take_image(cmd);
+        //        	take_image(cmd);
         //        iterate_image_num();
         cam_to_nand_transfer_flag = 1;
         spi_transmit(&tx_data, 1);
@@ -161,7 +160,6 @@ int spi_handle_command(uint8_t obc_cmd) {
         return 0;
     }
     case IRIS_UPDATE_SENSOR_I2C_REG: {
-        // t h o n k
         //    	update_sensor_I2C_regs();
         spi_transmit(&tx_data, 1);
         return 0;
