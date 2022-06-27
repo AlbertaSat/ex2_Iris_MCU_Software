@@ -381,7 +381,7 @@ void uart_handle_list_files_cmd(const char *cmd) {
     list_files();
 }
 
-void uart_reset_sensors(void) {
+void uart_init_sensors(void) {
     char buf[64];
     // Reset the CPLD
 

@@ -345,7 +345,7 @@ void uart_handle_command(char *cmd) {
             const char *i = next_token(cmd);
             switch (*i) {
             case 's':
-                uart_reset_sensors();
+                uart_init_sensors();
                 break;
             }
         }

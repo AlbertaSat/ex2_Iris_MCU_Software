@@ -60,6 +60,6 @@ void uart_handle_capture_cmd(const char *cmd);
 void uart_handle_format_cmd(const char *cmd);
 void uart_handle_width_cmd(const char *cmd);
 void uart_handle_saturation_cmd(const char *cmd, uint8_t sensor);
-void uart_reset_sensors(void);
+void uart_init_sensors(void);
 
 #endif /* INC_COMMAND_HANDLER_H_ */
