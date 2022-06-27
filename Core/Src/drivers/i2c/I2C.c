@@ -7,10 +7,6 @@
 extern I2C_HandleTypeDef hi2c2;
 
 #define SCCB_READ 1
-
-static uint16_t VIS_ADDRESS = 0x3C;
-static uint16_t NIR_ADDRESS = 0x3E;
-
 // arducam functions
 /**
  * @brief Writes Arducam Sensor i2c register
@@ -20,11 +16,7 @@ static uint16_t NIR_ADDRESS = 0x3E;
  * @param sensor target sensor
  */
 void wrSensorReg16_8(uint16_t regID, uint8_t regDat, uint8_t sensor) {
-    if (sensor == VIS_SENSOR){
-    	i2c2_write16_8(VIS_ADDRESS, regID, regDat);
-    } else {
-    	i2c2_write16_8(NIR_ADDRESS, regID, regDat);
-    }
+	i2c2_write16_8(sensor, regID, regDat);
     HAL_Delay(1);
 }
 
@@ -50,13 +42,7 @@ void wrSensorRegs16_8(struct sensor_reg reglist[], uint8_t sensor) {
  * @param sensor target sensor
  */
 void rdSensorReg16_8(uint16_t regID, uint8_t *regDat, uint8_t sensor) {
-    if (sensor == VIS_SENSOR){
-//        rc = HAL_I2C_Mem_Read(&hi2c2, VIS_ADDRESS, regID, I2C_MEMADD_SIZE_16BIT, regDat, 1, 100);
-    	i2c2_read16_8(VIS_ADDRESS, regID, regDat);
-    } else {
-    	i2c2_read16_8(NIR_ADDRESS, regID, regDat);
-
-    }
+	i2c2_read16_8(sensor, regID, regDat);
     return;
 }
 
