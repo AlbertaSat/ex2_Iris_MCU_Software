@@ -525,50 +525,6 @@ static void MX_GPIO_Init(void)
 
 }
 
-/* USER CODE BEGIN 4 */
-// void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef *hspi) {
-//    state = receiving;
-//    RX_Data = 0x00;
-//}
-//
-// void HAL_SPI_RxCpltCallback(SPI_HandleTypeDef *hspi)
-//
-//{
-//    state = handling_command;
-//		char buf[64];
-//		sprintf(buf, "Received 0x%x\r\n", RX_Data);
-//		DBG_PUT(buf);
-//}
-// void HAL_SPI_TxRxCpltCallback(SPI_HandleTypeDef *hspi) {
-//    state = receiving;
-//    //		char buf[64];
-//    //		sprintf(buf, "Received 0x%x\r\n", RX_Data);
-//    //		DBG_PUT(buf);
-//}
-//
-//
-// void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef * hspi)
-//{
-//	state = receiving;
-//	RX_Data = 0x00;
-//}
-//
-// void HAL_SPI_RxCpltCallback(SPI_HandleTypeDef * hspi)
-//
-//{
-//	state = handling_command;
-//	char buf[64];
-//	sprintf(buf, "Received 0x%x\r\n", RX_Data);
-//	DBG_PUT(buf);
-//
-//}
-// void HAL_SPI_TxRxCpltCallback(SPI_HandleTypeDef * hspi)
-//{
-//		state = receiving;
-////		char buf[64];
-////		sprintf(buf, "Received 0x%x\r\n", RX_Data);
-////		DBG_PUT(buf);
-//}
 
 void init_filesystem() {
 	NAND_SPI_Init(&hspi2);
