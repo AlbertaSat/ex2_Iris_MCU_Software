@@ -2,16 +2,13 @@
 #include <command_handler.h>
 #include <iris_system.h>
 #include <string.h>
+#include <arducam.h>
 
 extern SPI_HandleTypeDef hspi1;
 extern uint8_t cam_to_nand_transfer_flag;
 
 uint32_t image_length = 0x5F3; // Only here for testing purposes
 static uint32_t count = 0x0FFF0000;
-
-uint8_t ack = 0xAA;
-uint8_t nack = 0x0F;
-uint8_t transmit_ack;
 
 /**
  * @brief
@@ -24,6 +21,16 @@ uint8_t transmit_ack;
 void spi_transmit(uint8_t *tx_data, uint16_t data_length) {
     HAL_SPI_Transmit(&hspi1, tx_data, data_length, HAL_MAX_DELAY);
 }
+
+/**
+ * @brief
+ * 		Transmit data of given size over SPI bus in blocking mode
+ *
+ * @param
+ * 		*tx_data: pointer to transmit data
+ * 		data_length: numbers of bytes to be sent
+ */
+void spi_transmit_it(uint8_t *tx_data, uint16_t data_length) { HAL_SPI_Transmit_IT(&hspi1, tx_data, data_length); }
 
 /**
  * @brief
@@ -43,6 +50,10 @@ void spi_receive(uint8_t *rx_data, uint16_t data_length) { HAL_SPI_Receive_IT(&h
  * 		1 if valid command, 0 if not
  */
 int spi_verify_command(uint8_t obc_cmd) {
+    uint8_t ack = 0xAA;
+    uint8_t nack = 0x0F;
+    uint8_t transmit_ack;
+
     transmit_ack = 0;
 
     switch (obc_cmd) {
@@ -92,10 +103,10 @@ int spi_verify_command(uint8_t obc_cmd) {
     }
 
     if (transmit_ack != 0) {
-        spi_transmit(&ack, 1);
+        spi_transmit(&ack, 2);
         return 0;
     } else {
-        spi_transmit(&nack, 1);
+        spi_transmit_it(&nack, 1);
         return -1;
     }
 }
@@ -109,9 +120,7 @@ int spi_verify_command(uint8_t obc_cmd) {
  * 		1 if valid command, 0 if not
  */
 int spi_handle_command(uint8_t obc_cmd) {
-    uint8_t rx_data;
     uint8_t tx_data = 0x69;
-    spi_receive(&rx_data, 1);
 
     switch (obc_cmd) {
     case IRIS_SEND_HOUSEKEEPING: {
@@ -126,10 +135,9 @@ int spi_handle_command(uint8_t obc_cmd) {
     }
     case IRIS_TAKE_PIC: {
         // needs dedicated thought put towards implement
-        //        	take_image(cmd);
+        arducam_capture_image(0);
         //        iterate_image_num();
-        cam_to_nand_transfer_flag = 1;
-        spi_transmit(&tx_data, 1);
+        // cam_to_nand_transfer_flag = 1;
         return 0;
     }
     case IRIS_GET_IMAGE_COUNT: {
@@ -147,10 +155,11 @@ int spi_handle_command(uint8_t obc_cmd) {
     }
     case IRIS_ON_SENSOR_IDLE: {
         sensor_active();
+        DBG_PUT("Sensor activated\r\n");
         return 0;
     }
     case IRIS_GET_IMAGE_LENGTH: {
-        get_image_length(&image_length);
+        uint32_t image_length = read_fifo_length(0);
         uint8_t packet[3];
         packet[0] = (image_length >> (8 * 2)) & 0xff;
         packet[1] = (image_length >> (8 * 1)) & 0xff;
@@ -204,14 +213,16 @@ void spi_transfer_image() {
     uint8_t image_data[IRIS_IMAGE_TRANSFER_BLOCK_SIZE];
     uint16_t num_transfers;
 
-    for (int i = 0; i < IRIS_IMAGE_TRANSFER_BLOCK_SIZE; i++) {
-        image_data[i] = i;
-    }
-
     num_transfers =
         (uint16_t)((image_length + (IRIS_IMAGE_TRANSFER_BLOCK_SIZE - 1)) / IRIS_IMAGE_TRANSFER_BLOCK_SIZE);
+    uint32_t count = 0;
     for (int j = 0; j < num_transfers; j++) {
+        for (int i = 0; i < IRIS_IMAGE_TRANSFER_BLOCK_SIZE; i++) {
+            image_data[i] = (uint8_t)read_reg(SINGLE_FIFO_READ, 0); // reg_addr: 0x3D, sensor: 0 -> VIS
+            // image_data[i] = (uint8_t) image_data_buffer[count];
+            count++;
+        }
+
         spi_transmit(image_data, IRIS_IMAGE_TRANSFER_BLOCK_SIZE);
-        memset(image_data, 0, IRIS_IMAGE_TRANSFER_BLOCK_SIZE);
     }
 }

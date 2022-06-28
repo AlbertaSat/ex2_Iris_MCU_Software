@@ -44,16 +44,16 @@ void take_image() {
      * (ish) Fix Arducam.h so we stop with these warnings
      */
     write_reg(ARDUCHIP_TIM, VSYNC_LEVEL_MASK, VIS_SENSOR); // VSYNC is active HIGH
-    write_reg(ARDUCHIP_TIM, VSYNC_LEVEL_MASK, NIR_SENSOR);
+    // write_reg(ARDUCHIP_TIM, VSYNC_LEVEL_MASK, NIR_SENSOR);
 
     flush_fifo(VIS_SENSOR);
-    flush_fifo(NIR_SENSOR);
+    // flush_fifo(NIR_SENSOR);
 
     clear_fifo_flag(VIS_SENSOR);
-    clear_fifo_flag(NIR_SENSOR);
+    // clear_fifo_flag(NIR_SENSOR);
 
     start_capture(VIS_SENSOR);
-    start_capture(NIR_SENSOR);
+    // start_capture(NIR_SENSOR);
 
     // todo: determine if cap_done_mask stays high for subsequent reads of arducam_trig register. Otherwise this
     // loop
@@ -62,9 +62,9 @@ void take_image() {
     while (!get_bit(ARDUCHIP_TRIG, CAP_DONE_MASK, VIS_SENSOR)) {
     }
     DBG_PUT("vis sensor complete\r\n");
-    while (!get_bit(ARDUCHIP_TRIG, CAP_DONE_MASK, NIR_SENSOR)) {
-    }
-    DBG_PUT("nir sensor complete\r\n");
+    //    while (!get_bit(ARDUCHIP_TRIG, CAP_DONE_MASK, NIR_SENSOR)) {
+    //    }
+    //    DBG_PUT("nir sensor complete\r\n");
     DBG_PUT("Loop broke!\r\n");
     ;
 
@@ -86,7 +86,7 @@ void take_image() {
  *
  */
 void get_image_length(uint32_t *pdata) {
-    *pdata = 0x069420;
+    *pdata = 1523;
     return;
 }
 

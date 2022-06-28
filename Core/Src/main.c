@@ -140,10 +140,12 @@ int main(void) {
     MX_USART1_UART_Init();
 
     /* USER CODE BEGIN 2 */
-    NAND_SPI_Init(&hspi2);
+    //    NAND_SPI_Init(&hspi2);
     onboot_commands();
-    init_filesystem();
+    //    init_filesystem();
     uint8_t obc_cmd;
+
+    iris_state = LISTENING;
     /* USER CODE END 2 */
 
     /* Infinite loop */
@@ -378,7 +380,7 @@ static void MX_SPI1_Init(void) {
     hspi1.Init.Direction = SPI_DIRECTION_2LINES;
     hspi1.Init.DataSize = SPI_DATASIZE_8BIT;
     hspi1.Init.CLKPolarity = SPI_POLARITY_LOW;
-    hspi1.Init.CLKPhase = SPI_PHASE_1EDGE;
+    hspi1.Init.CLKPhase = SPI_PHASE_2EDGE;
     hspi1.Init.NSS = SPI_NSS_HARD_INPUT;
     hspi1.Init.FirstBit = SPI_FIRSTBIT_MSB;
     hspi1.Init.TIMode = SPI_TIMODE_DISABLE;
@@ -537,12 +539,12 @@ void HAL_SPI_RxCpltCallback(SPI_HandleTypeDef *hspi) {
 }
 
 static void onboot_commands(void) {
-    init_ina209(CURRENTSENSE_5V);
+    // init_ina209(CURRENTSENSE_5V);
     flood_cam_spi();
-    init_temp_sensors();
+    // init_temp_sensors();
     //		sensor_togglepower(1);
     //		uart_reset_sensors();
-    NAND_SPI_Init(&hspi2);
+    // NAND_SPI_Init(&hspi2);
 
 #ifdef UART_DEBUG
     DBG_PUT("-----------------------------------\r\n");
