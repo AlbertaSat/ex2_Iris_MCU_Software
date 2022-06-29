@@ -53,8 +53,6 @@ struct sensor_reg {
     uint16_t val;
 };
 
-#define FAKE_CAM 1
-
 void program_sensor(int m_fmt, int sensor);
 bool arducam_wait_for_ready(uint8_t sensor);
 void arducam_raw_init(int width, int depth, uint8_t sensor);
