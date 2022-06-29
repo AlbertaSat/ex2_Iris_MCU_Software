@@ -32,7 +32,6 @@ uint8_t total_image_num = 0; // This will cause issues with total num of images 
 housekeeping_packet_t hk;
 char buf[128];
 
-int format = JPEG;
 
 /**
  * @brief prototype for taking image; for use with SPI ONLY
