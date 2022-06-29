@@ -37,7 +37,7 @@ int format = JPEG;
 /**
  * @brief prototype for taking image; for use with SPI ONLY
  *        Untested.
- *
+ *        todo: rewrite once Jenish gets image transfer working
  */
 void take_image() {
     /*
@@ -136,11 +136,6 @@ void sensor_active() {
     //	// initialize sensors
     _initalize_sensor(VIS_SENSOR);
     _initalize_sensor(NIR_SENSOR);
-
-#ifdef SPI_DEBUG
-//	SPI1_IT_Transmit(&ack);
-#endif
-
     return;
 }
 
