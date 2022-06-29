@@ -177,43 +177,18 @@ uint8_t read_reg(uint8_t addr, uint8_t sensor) {
 }
 
 void write_reg(uint8_t addr, uint8_t data, uint8_t sensor) {
-#ifndef FAKE_CAM
     write_spi_reg(addr, data, sensor);
-#endif
 }
-
-#ifdef FAKE_CAM
-static uint32_t fake_length;
-static uint32_t fake_data;
-#endif
 
 static uint8_t read_fifo(uint8_t sensor) {
     uint8_t data;
-#ifdef FAKE_CAM
-    fake_data++;
-    if (fake_data == 1) {
-        data = 0xff;
-    } else if (fake_data == 2) {
-        data = 0xd8;
-    } else if (fake_data == (fake_length - 1)) {
-        data = 0xff;
-    } else if (fake_data == fake_length) {
-        data = 0xd9;
-    } else {
-        data = fake_data;
-    }
-#else
     data = read_reg(SINGLE_FIFO_READ, sensor);
-#endif
     return data;
 }
 
 void flush_fifo(uint8_t sensor) { write_reg(ARDUCHIP_FIFO, FIFO_CLEAR_MASK, sensor); }
 
 void start_capture(uint8_t sensor) {
-#ifdef FAKE_CAM
-    fake_data = 0;
-#endif
     write_reg(ARDUCHIP_FIFO, FIFO_START_MASK, sensor);
 }
 
@@ -436,12 +411,8 @@ int arducam_dump_image(uint8_t sensor, io_funcs_t *io_driver) {
     uint32_t length;
     char msg[64];
 
-#ifndef FAKE_CAM
     length = arducam_read_fifo_length(sensor);
-#else
-    length = 2 * MAX_BLK_SZ;
-    fake_length = length;
-#endif
+
 
     if (io_driver->write_len) {
         if ((rc = io_driver->write_len(io_driver, length))) {
@@ -538,10 +509,9 @@ void arducam_capture_image(uint8_t sensor) {
     clear_fifo_flag(sensor);
     start_capture(sensor);
 
-#ifndef FAKE_CAM
     while (!get_bit(ARDUCHIP_TRIG, CAP_DONE_MASK, sensor)) {
     }
-#endif
+
     DBG_PUT("Capture complete\r\n");
 }
 
@@ -561,15 +531,10 @@ void SingleCapTransfer(int format, uint8_t sensor) {
     clear_fifo_flag(sensor);
     start_capture(sensor);
 
-#ifndef FAKE_CAM
     while (!get_bit(ARDUCHIP_TRIG, CAP_DONE_MASK, sensor)) {
     }
 
     length = read_fifo_length(sensor);
-#else
-    length = 2 * 2048;
-    fake_length = length;
-#endif
     sprintf(buf, "Capture complete! FIFO len 0x%lx\r\n", length);
     DBG_PUT(buf);
     DBG_PUT("JPG");
@@ -585,9 +550,7 @@ void SingleCapTransfer(int format, uint8_t sensor) {
         break;
     }
 
-#ifndef FAKE_CAM
     DBG_PUT("\04");
-#endif
 }
 
 void set_image_num(uint8_t num) { image_number = num; }
