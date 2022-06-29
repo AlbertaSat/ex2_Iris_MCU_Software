@@ -44,6 +44,10 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+
+int format = JPEG;
+int width = 1280;
+
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -189,7 +193,7 @@ int main(void)
             }
             break;
         }
-#endif UART_DEBUG
+#endif //UART_DEBUG
     }
     /* USER CODE END WHILE */
 
@@ -533,7 +537,9 @@ void init_filesystem() {
 
 static void onboot_commands(void) {
 	init_filesystem();
+#ifdef CURRENTSENSE_5V
     init_ina209(CURRENTSENSE_5V);
+#endif //CURRENTSENSE_5V
     flood_cam_spi();
     init_temp_sensors();
     //		sensor_togglepower(1);
