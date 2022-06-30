@@ -6,9 +6,27 @@
 #include "I2C.h"
 #include "debug.h"
 
+// probs needs to be re-evaluated
 uint8_t image_number = 0;
+
+/*
+ * Delay wrapper function
+ */
 void arducam_delay_ms(int ms) { HAL_Delay(ms); }
 
+
+/*
+ * Programs sensor based on input m_fmt and target sensor
+ * Called from init_sensors in uart_command_handler.c
+ * Params: 	m_fmt: Integer
+ * 				#define BMP 0
+ * 				#define JPEG 1
+ * 				#define RAW 2
+ * 			sensor: Integer
+ * 				VIS: 0
+ * 				NIR: 1
+ *
+ */
 void program_sensor(int m_fmt, int sensor) {
     if (m_fmt == RAW) {
         arducam_raw_init(1280, 960, sensor);
@@ -27,11 +45,7 @@ void program_sensor(int m_fmt, int sensor) {
             wrSensorReg16_8(0x3818, 0xa8, sensor);
             wrSensorReg16_8(0x3621, 0x10, sensor);
             wrSensorReg16_8(0x3801, 0xb0, sensor);
-#if (defined(OV5642_MINI_5MP_PLUS) || (defined ARDUCAM_SHIELD_V2))
             wrSensorReg16_8(0x4407, 0x08, sensor);
-#else
-            wrSensorReg16_8(0x4407, 0x0C, sensor);
-#endif
             wrSensorReg16_8(0x5888, 0x00, sensor);
             wrSensorReg16_8(0x5000, 0xFF, sensor);
         } else {
@@ -48,6 +62,7 @@ void program_sensor(int m_fmt, int sensor) {
         }
     }
 }
+
 
 void arducam_raw_init(int width, int depth, uint8_t sensor) {
     /* I don't know if you have to completely reprogram everything every time
