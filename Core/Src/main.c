@@ -542,8 +542,11 @@ static void onboot_commands(void) {
 #endif //CURRENTSENSE_5V
     flood_cam_spi();
     init_temp_sensors();
+#ifdef IRIS_PROTO
 	sensor_togglepower(1);
 	initalize_sensors();
+#endif //IRIS_PROTO
+	// end move
 #ifdef UART_DEBUG
     DBG_PUT("-----------------------------------\r\n");
     DBG_PUT("Iris Electronics Test Software\r\n"
@@ -552,6 +555,7 @@ static void onboot_commands(void) {
 #endif
     return;
 }
+
 /* USER CODE END 4 */
 
 /**
