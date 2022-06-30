@@ -170,12 +170,7 @@ int arducam_set_resolution(int format, int width, uint8_t sensor) {
         if (format == RAW)
             arducam_raw_init(2592, 1944, sensor);
         else {
-#if 0
             wrSensorRegs16_8(ov5642_2592x1944, sensor);
-#else
-            DBG_PUT("2592x1944 not supported");
-            rc = 0;
-#endif
         }
         break;
     default:
