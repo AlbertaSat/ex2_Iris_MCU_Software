@@ -262,6 +262,13 @@ void initalize_sensors(void) {
 
 }
 
+/*
+ * lower level wrapper function for stuff that needs to happen
+ * to the sensors on boot.
+ *
+ * Param:
+ * 		Sensor: Integer sensor identifier
+ */
 uint8_t onboot_sensors(uint8_t sensor){
 	// Reset the CPLD
 
@@ -298,7 +305,11 @@ uint8_t onboot_sensors(uint8_t sensor){
 	}
 }
 
+/*
+ * watchdog timer handler. probably deprecated.
+ */
 void handle_wdt() { SPI1_IT_Transmit(&ack); }
+
 
 static inline const char *next_token(const char *ptr) {
     /* move to the next space */
