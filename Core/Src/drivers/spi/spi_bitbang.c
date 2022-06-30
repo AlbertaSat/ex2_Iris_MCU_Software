@@ -150,44 +150,47 @@ bool write_spi_reg(uint8_t addr, uint8_t packet, uint8_t sensor) {
  * @param length    number of bytes to read
  * @param sensor    target sensor
  */
-void spi_read_multiple_bytes(uint8_t addr, uint32_t length, uint8_t sensor) {
+uint8_t spi_read_burst(uint8_t sensor) {
     uint8_t rec;
-    // CS Low
-    if (sensor == 0) {
-        _CS1_LOW(); // VIS sensor is CS1
-    } else {
-        _CS2_LOW(); // NIR sensor is CS2
-    }
-    // Send Phase
-    for (int i = 0; i < 8; i++) {
-        HAL_GPIO_WritePin(MOSI_Port, MOSI_Pin, bit_read(addr, i));
-        _CLK_HIGH();
-        HAL_GPIO_ReadPin(MISO_Port, MISO_Pin);
-        _CLK_LOW();
-    }
+	// Receive phase
+	HAL_GPIO_WritePin(MOSI_Port, MOSI_Pin, GPIO_PIN_RESET);
+	for (int i = 0; i < 8; i++) {
+		_CLK_HIGH();
+		if (HAL_GPIO_ReadPin(MISO_Port, MISO_Pin) == GPIO_PIN_SET) {
+			rec = rec << 1 | 0b1;
+		} else {
+			rec = rec << 1 | 0b0;
+		}
+		_CLK_LOW();
+	}
+	return rec;
+}
 
-    for (int j = 0; j < length; j++) {
-        // Recieve phase
-        for (int i = 0; i < 8; i++) {
-            HAL_GPIO_WritePin(MOSI_Port, MOSI_Pin, bit_read(0x00, i));
-            _CLK_HIGH();
-            if (HAL_GPIO_ReadPin(MISO_Port, MISO_Pin) == GPIO_PIN_SET) {
-                rec = rec << 1 | 0b1;
-            } else {
-                rec = rec << 1 | 0b0;
-            }
-            _CLK_LOW();
-            rec = 0; // remove me and figure out how to dump data
-        }
-    }
+void spi_init_burst(uint8_t sensor){
+	if (sensor == 0) {
+		_CS1_LOW(); // VIS sensor is CS1
+	} else {
+		_CS2_LOW(); // NIR sensor is CS2
+	}
+	uint8_t addr = 0x3C;
+	// Send Phase
+	    for (int i = 0; i < 8; i++) {
+	        HAL_GPIO_WritePin(MOSI_Port, MOSI_Pin, bit_read(addr, i));
+	        _CLK_HIGH();
+	        HAL_GPIO_ReadPin(MISO_Port, MISO_Pin);
+	        _CLK_LOW();
+	    }
+	return;
+}
+
+void spi_deinit_burst(uint8_t sensor){
     if (sensor == 0) {
         _CS1_HIGH();
     } else {
         _CS2_HIGH();
     }
-    HAL_GPIO_WritePin(MOSI_Port, MOSI_Pin, GPIO_PIN_RESET);
+	return;
 }
-
 /**
  * @brief Gets state of j'th bit in a byte
  *

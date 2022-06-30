@@ -58,6 +58,9 @@ uint8_t read_spi_reg(uint8_t addr, uint8_t sensor);
 bool write_spi_reg(uint8_t addr, uint8_t packet, uint8_t sensor);
 void spi_read_multiple_bytes(uint8_t addr, uint32_t length, uint8_t sensor);
 
+uint8_t spi_read_burst(uint8_t sensor);
+void spi_init_burst(uint8_t sensor);
+void spi_deinit_burst(uint8_t sensor);
 GPIO_PinState bit_read(uint8_t byte, int j);
 // void delay_us (uint32_t nus);
 #endif /* INC_SPI_BITBANG_H_ */
