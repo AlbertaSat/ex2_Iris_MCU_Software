@@ -7,8 +7,11 @@
 extern SPI_HandleTypeDef hspi1;
 extern uint8_t cam_to_nand_transfer_flag;
 
-uint32_t image_length = 0x5F3; // Only here for testing purposes
+uint32_t image_length; // Only here for testing purposes
 static uint32_t count = 0x0FFF0000;
+
+#define VIS 0
+#define NIR 1
 
 /**
  * @brief
@@ -106,7 +109,7 @@ int spi_verify_command(uint8_t obc_cmd) {
         spi_transmit(&ack, 2);
         return 0;
     } else {
-        spi_transmit_it(&nack, 1);
+        spi_transmit(&nack, 1);
         return -1;
     }
 }
@@ -130,12 +133,24 @@ int spi_handle_command(uint8_t obc_cmd) {
         uint8_t buffer[sizeof(hk)];
         memcpy(buffer, &hk, sizeof(hk));
         spi_transmit(buffer, sizeof(buffer));
-
         return 0;
     }
     case IRIS_TAKE_PIC: {
         // needs dedicated thought put towards implement
-        arducam_capture_image(0);
+        arducam_set_saturation(7, VIS);
+        arducam_set_resolution(JPEG, 640, VIS);
+        char buf[64];
+        write_reg(ARDUCHIP_TIM, VSYNC_LEVEL_MASK, VIS); // VSYNC is active HIGH
+        sprintf(buf, "Single Capture Transfer type %x\r\n", format);
+        DBG_PUT(buf);
+        flush_fifo(VIS);
+        clear_fifo_flag(VIS);
+        start_capture(VIS);
+        while (!get_bit(ARDUCHIP_TRIG, CAP_DONE_MASK, VIS)) {
+        }
+
+        DBG_PUT("JPG");
+
         //        iterate_image_num();
         // cam_to_nand_transfer_flag = 1;
         return 0;
@@ -159,7 +174,7 @@ int spi_handle_command(uint8_t obc_cmd) {
         return 0;
     }
     case IRIS_GET_IMAGE_LENGTH: {
-        uint32_t image_length = read_fifo_length(0);
+        image_length = read_fifo_length(VIS);
         uint8_t packet[3];
         packet[0] = (image_length >> (8 * 2)) & 0xff;
         packet[1] = (image_length >> (8 * 1)) & 0xff;
@@ -210,16 +225,16 @@ int step_transfer() {
  * 		Dummy function to dump image data to OBC
  */
 void spi_transfer_image() {
-    uint8_t image_data[IRIS_IMAGE_TRANSFER_BLOCK_SIZE];
-    uint16_t num_transfers;
+    static uint8_t image_data[IRIS_IMAGE_TRANSFER_BLOCK_SIZE];
+    static uint16_t num_transfers;
 
     num_transfers =
         (uint16_t)((image_length + (IRIS_IMAGE_TRANSFER_BLOCK_SIZE - 1)) / IRIS_IMAGE_TRANSFER_BLOCK_SIZE);
-    uint32_t count = 0;
+    static uint32_t count = 0;
     for (int j = 0; j < num_transfers; j++) {
         for (int i = 0; i < IRIS_IMAGE_TRANSFER_BLOCK_SIZE; i++) {
-            image_data[i] = (uint8_t)read_reg(SINGLE_FIFO_READ, 0); // reg_addr: 0x3D, sensor: 0 -> VIS
-            // image_data[i] = (uint8_t) image_data_buffer[count];
+            image_data[i] = (uint8_t)read_reg(SINGLE_FIFO_READ, VIS); // reg_addr: 0x3D, sensor: 0 -> VIS
+            // image_data[i] = (uint8_t) i;
             count++;
         }
 
