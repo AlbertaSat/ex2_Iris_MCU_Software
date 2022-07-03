@@ -20,14 +20,13 @@ extern const struct sensor_reg OV5642_QVGA_Preview[];
  * 		- 	TEST THESE FUNCTIONS EH
  *
  * 		- 	Determine if the  SPI CltCallback in main.c are called from interrupt SPI
- * 			functions in here, or if they're needed in here / in SPI_IT.c
+ * 			functions in here, or if they're needed in here / in SPI_IT.c [SOLVED]
  * 		- 	Find a way to send sensors into idle mode without erasing regs
  * 		  	otherwise save sensor regs somewhere in a struct.
  *		- 	Write functions to interface with sensor currently, but need to adapt to
  *		  	work with Ron's NAND Flash stuff.
  *
  */
-uint8_t ack = 0xAA;
 uint8_t total_image_num = 0; // This will cause issues with total num of images once board resets. todo: fix
 housekeeping_packet_t hk;
 char buf[128];
@@ -45,16 +44,16 @@ void take_image() {
      * (ish) Fix Arducam.h so we stop with these warnings
      */
     write_reg(ARDUCHIP_TIM, VSYNC_LEVEL_MASK, VIS_SENSOR); // VSYNC is active HIGH
-    write_reg(ARDUCHIP_TIM, VSYNC_LEVEL_MASK, NIR_SENSOR);
+    // write_reg(ARDUCHIP_TIM, VSYNC_LEVEL_MASK, NIR_SENSOR);
 
     flush_fifo(VIS_SENSOR);
-    flush_fifo(NIR_SENSOR);
+    // flush_fifo(NIR_SENSOR);
 
     clear_fifo_flag(VIS_SENSOR);
-    clear_fifo_flag(NIR_SENSOR);
+    // clear_fifo_flag(NIR_SENSOR);
 
     start_capture(VIS_SENSOR);
-    start_capture(NIR_SENSOR);
+    // start_capture(NIR_SENSOR);
 
     // todo: determine if cap_done_mask stays high for subsequent reads of arducam_trig register. Otherwise this
     // loop
@@ -63,14 +62,11 @@ void take_image() {
     while (!get_bit(ARDUCHIP_TRIG, CAP_DONE_MASK, VIS_SENSOR)) {
     }
     DBG_PUT("vis sensor complete\r\n");
-    while (!get_bit(ARDUCHIP_TRIG, CAP_DONE_MASK, NIR_SENSOR)) {
-    }
-    DBG_PUT("nir sensor complete\r\n");
+    //    while (!get_bit(ARDUCHIP_TRIG, CAP_DONE_MASK, NIR_SENSOR)) {
+    //    }
+    //    DBG_PUT("nir sensor complete\r\n");
     DBG_PUT("Loop broke!\r\n");
     ;
-
-    // ack over SPI
-    SPI1_IT_Transmit(&ack);
 
     // todo:
     //  keep track of how many images we have captured. This could come after transferring
@@ -89,11 +85,8 @@ void take_image() {
  * Untested
  *
  */
-void get_image_length() {
-    // todo:	@RON:   Need a way to get image length from NAND flash
-    //  				- Expecting a 32 bit integer for image size
-    uint32_t image_length = 0x000000;
-    SPI1_IT_Transmit(&image_length);
+void get_image_length(uint32_t *pdata) {
+    *pdata = 1523;
     return;
 }
 
@@ -121,8 +114,6 @@ void sensor_idle() {
      */
     // pull mosfet driver pin low, cutting power to sensors
     HAL_GPIO_WritePin(CAM_EN_GPIO_Port, CAM_EN_Pin, GPIO_PIN_RESET);
-    SPI1_IT_Transmit(&ack);
-
     return;
 }
 
@@ -228,6 +219,17 @@ uint8_t get_image_num(uint8_t hk) {
 }
 
 /**
+ * @brief Get the total image number
+ *
+ * @param hk 1 for integer return (what's used for hk); 0 for spi return
+ * @return uint8_t
+ */
+uint8_t get_image_num_spi(uint8_t *num) {
+    *num = total_image_num;
+    return 1;
+}
+
+/**
  * @brief Initializes sensor
  *
  * @param sensor VIS_SENSOR or NIR_SENSOR
@@ -268,8 +270,6 @@ void _initalize_sensor(uint8_t sensor) {
         DBG_PUT(buf);
     }
 }
-
-void handle_wdt() { SPI1_IT_Transmit(&ack); }
 
 static inline const char *next_token(const char *ptr) {
     /* move to the next space */

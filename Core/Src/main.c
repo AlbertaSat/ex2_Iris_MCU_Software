@@ -69,11 +69,6 @@ SPI_HandleTypeDef hspi2;
 UART_HandleTypeDef huart1;
 
 /* USER CODE BEGIN PV */
-enum {
-    LISTENING,
-    HANDLE_COMMAND,
-    FINISH,
-} ss_state;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -91,14 +86,26 @@ static void onboot_commands(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 uint8_t state = receiving;
-uint8_t RX_Data = 0xFF;
+uint8_t spi_int_flag = 0;
+uint8_t cam_to_nand_transfer_flag = 0;
+
+enum {
+    IDLE,
+    LISTENING,
+    HANDLE_COMMAND,
+    FINISH,
+} iris_state;
+
+/* For future failure recovery mode */
+uint8_t can_bus_receive_flag = 0; // Needs to be set in can RX callback
+uint8_t i2c_bus_receive_flag = 0; // Needs to be set in i2c RX callback
+
 /* USER CODE END 0 */
 
 void init_filesystem() {
-	NAND_SPI_Init(&hspi2);
-	NANDfs_init();
+    NAND_SPI_Init(&hspi2);
+    NANDfs_init();
 }
-
 
 /**
  * @brief  The application entry point.
@@ -133,34 +140,46 @@ int main(void) {
     MX_USART1_UART_Init();
 
     /* USER CODE BEGIN 2 */
-    NAND_SPI_Init(&hspi2);
-    char cmd[64];
-    char buf[64];
-    char *ptr = cmd;
+    //    NAND_SPI_Init(&hspi2);
     onboot_commands();
-    init_filesystem();
+    //    init_filesystem();
+    uint8_t obc_cmd;
+
+    iris_state = LISTENING;
     /* USER CODE END 2 */
 
     /* Infinite loop */
-    /* USER CODE BEGIN WHILE */
+//    /* USER CODE BEGIN WHILE */
 #ifdef SPI_DEBUG
     while (1) {
         /* USER CODE END WHILE */
+
         /* USER CODE BEGIN 3 */
-        switch (ss_state) {
-        case LISTENING:
-            if (spi_verify_command() != -1) {
-                ss_state = HANDLE_COMMAND;
-            } else {
-                ss_state = FINISH;
+        switch (iris_state) {
+        case IDLE:
+            if (spi_int_flag != 0) {
+                iris_state = HANDLE_COMMAND;
+                spi_int_flag = 0;
+            } else if (cam_to_nand_transfer_flag != 0) {
+                step_transfer();
+                // Transfer images from camera to flash task
+            } else if (can_bus_receive_flag != 0) {
+                // Placeholder for future failure mode recovery
+            } else if (i2c_bus_receive_flag != 0) {
+                // Placeholder for future failure mode recovery
             }
             break;
+        case LISTENING:
+            iris_state = IDLE;
+            spi_receive(&obc_cmd, 1);
+            break;
         case HANDLE_COMMAND:
-            spi_handle_command();
-            ss_state = FINISH;
+            spi_verify_command(obc_cmd);
+            spi_handle_command(obc_cmd);
+            iris_state = FINISH;
             break;
         case FINISH:
-            ss_state = LISTENING;
+            iris_state = LISTENING;
             break;
         }
     }
@@ -361,7 +380,7 @@ static void MX_SPI1_Init(void) {
     hspi1.Init.Direction = SPI_DIRECTION_2LINES;
     hspi1.Init.DataSize = SPI_DATASIZE_8BIT;
     hspi1.Init.CLKPolarity = SPI_POLARITY_LOW;
-    hspi1.Init.CLKPhase = SPI_PHASE_1EDGE;
+    hspi1.Init.CLKPhase = SPI_PHASE_2EDGE;
     hspi1.Init.NSS = SPI_NSS_HARD_INPUT;
     hspi1.Init.FirstBit = SPI_FIRSTBIT_MSB;
     hspi1.Init.TIMode = SPI_TIMODE_DISABLE;
@@ -514,56 +533,18 @@ static void MX_GPIO_Init(void) {
 }
 
 /* USER CODE BEGIN 4 */
-// void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef *hspi) {
-//    state = receiving;
-//    RX_Data = 0x00;
-//}
-//
-// void HAL_SPI_RxCpltCallback(SPI_HandleTypeDef *hspi)
-//
-//{
-//    state = handling_command;
-//		char buf[64];
-//		sprintf(buf, "Received 0x%x\r\n", RX_Data);
-//		DBG_PUT(buf);
-//}
-// void HAL_SPI_TxRxCpltCallback(SPI_HandleTypeDef *hspi) {
-//    state = receiving;
-//    //		char buf[64];
-//    //		sprintf(buf, "Received 0x%x\r\n", RX_Data);
-//    //		DBG_PUT(buf);
-//}
-//
-//
-// void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef * hspi)
-//{
-//	state = receiving;
-//	RX_Data = 0x00;
-//}
-//
-// void HAL_SPI_RxCpltCallback(SPI_HandleTypeDef * hspi)
-//
-//{
-//	state = handling_command;
-//	char buf[64];
-//	sprintf(buf, "Received 0x%x\r\n", RX_Data);
-//	DBG_PUT(buf);
-//
-//}
-// void HAL_SPI_TxRxCpltCallback(SPI_HandleTypeDef * hspi)
-//{
-//		state = receiving;
-////		char buf[64];
-////		sprintf(buf, "Received 0x%x\r\n", RX_Data);
-////		DBG_PUT(buf);
-//}
+void HAL_SPI_RxCpltCallback(SPI_HandleTypeDef *hspi) {
+    // Flag is set whenever OBC wants to communicate
+    spi_int_flag = 1;
+}
 
 static void onboot_commands(void) {
-    init_ina209(CURRENTSENSE_5V);
+    // init_ina209(CURRENTSENSE_5V);
     flood_cam_spi();
-    init_temp_sensors();
+    // init_temp_sensors();
     //		sensor_togglepower(1);
     //		uart_reset_sensors();
+    // NAND_SPI_Init(&hspi2);
 
 #ifdef UART_DEBUG
     DBG_PUT("-----------------------------------\r\n");
