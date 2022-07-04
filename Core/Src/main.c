@@ -657,17 +657,22 @@ static void onboot_commands(void) {
     //#endif
 
     HAL_TIM_Base_Start(&htim2);
-    //    init_filesystem();
-    //#ifdef CURRENTSENSE_5V
-    //    init_ina209(CURRENTSENSE_5V);
-    //#endif // CURRENTSENSE_5V
-    //    init_temp_sensors();
+    init_filesystem();
+#ifdef CURRENTSENSE_5V
+    init_ina209(CURRENTSENSE_5V);
+#endif //CURRENTSENSE_5V
+    // init_ina209(CURRENTSENSE_5V);
 
-    //#ifdef IRIS_PROTO
-    //    sensor_togglepower(1);
-    //    flood_cam_spi();
-    //    initalize_sensors();
-    //#endif // IRIS_PROTO
+    HAL_Delay(1000);
+
+    flood_cam_spi();
+    init_temp_sensors();
+
+#ifdef IRIS_PROTO
+    sensor_togglepower(1);
+    flood_cam_spi();
+    initalize_sensors();
+#endif // IRIS_PROTO
 
 #ifdef UART_DEBUG
     DBG_PUT("-----------------------------------\r\n");
