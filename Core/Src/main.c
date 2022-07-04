@@ -95,13 +95,13 @@ enum {
 enum {
 	idle,
 	receiving,
-} state;
+} uart_state;
 
 /* For future failure recovery mode */
 uint8_t can_bus_receive_flag = 0; // Needs to be set in can RX callback
 uint8_t i2c_bus_receive_flag = 0; // Needs to be set in i2c RX callback
 
-uint8_t state = receiving;
+uint8_t uart_state = receiving;
 /* USER CODE END 0 */
 
 /**
@@ -186,12 +186,12 @@ int main(void) {
 #endif // SPI_DEBUG
 //       // //////////////////////////////////////////////////////////////////////////////////////////
 #ifdef UART_DEBUG
-    state = idle;
+    uart_state = idle;
     while (1) {
-        switch (state) {
+        switch (uart_state) {
         case idle:
             DBG_PUT("\r:>> ");
-            state = receiving;
+            uart_state = receiving;
             break;
         case receiving:;
             HAL_StatusTypeDef rc = HAL_UART_Receive(&huart1, (uint8_t *)ptr, 1, 20000);
@@ -212,7 +212,7 @@ int main(void) {
                 DBG_PUT("\r\n");
                 uart_handle_command(cmd);
                 ptr = cmd;
-                state = idle;
+                uart_state = idle;
 
             } else {
                 *(ptr + 1) = 0;
@@ -571,7 +571,7 @@ static void onboot_commands(void) {
  */
 void Error_Handler(void) {
     /* USER CODE BEGIN Error_Handler_Debug */
-    /* User can add his own implementation to report the HAL error return state */
+    /* User can add his own implementation to report the HAL error return uart_state */
     __disable_irq();
     while (1) {
     }
