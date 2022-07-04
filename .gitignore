@@ -80,3 +80,5 @@ host/exifpls.zip
 **/*zip
 .settings
 *.ignore
+.mxproject
+
