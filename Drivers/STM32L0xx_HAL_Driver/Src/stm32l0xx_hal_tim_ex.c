@@ -35,13 +35,13 @@
 #include "stm32l0xx_hal.h"
 
 /** @addtogroup STM32L0xx_HAL_Driver
- * @{
- */
+  * @{
+  */
 
 /** @defgroup TIMEx TIMEx
- * @brief TIM Extended HAL module driver
- * @{
- */
+  * @brief TIM Extended HAL module driver
+  * @{
+  */
 
 #ifdef HAL_TIM_MODULE_ENABLED
 
@@ -53,8 +53,8 @@
 
 /* Exported functions --------------------------------------------------------*/
 /** @defgroup TIMEx_Exported_Functions TIM Extended Exported Functions
- * @{
- */
+  * @{
+  */
 /** @defgroup TIMEx_Exported_Functions_Group5 Extended Peripheral Control functions
   * @brief    Peripheral Control functions
   *
@@ -72,59 +72,61 @@
   */
 
 /**
- * @brief  Configures the TIM in master mode.
- * @param  htim TIM handle.
- * @param  sMasterConfig pointer to a TIM_MasterConfigTypeDef structure that
- *         contains the selected trigger output (TRGO) and the Master/Slave
- *         mode.
- * @retval HAL status
- */
+  * @brief  Configures the TIM in master mode.
+  * @param  htim TIM handle.
+  * @param  sMasterConfig pointer to a TIM_MasterConfigTypeDef structure that
+  *         contains the selected trigger output (TRGO) and the Master/Slave
+  *         mode.
+  * @retval HAL status
+  */
 HAL_StatusTypeDef HAL_TIMEx_MasterConfigSynchronization(TIM_HandleTypeDef *htim,
-                                                        TIM_MasterConfigTypeDef *sMasterConfig) {
-    uint32_t tmpcr2;
-    uint32_t tmpsmcr;
+                                                        TIM_MasterConfigTypeDef *sMasterConfig)
+{
+  uint32_t tmpcr2;
+  uint32_t tmpsmcr;
 
-    /* Check the parameters */
-    assert_param(IS_TIM_MASTER_INSTANCE(htim->Instance));
-    assert_param(IS_TIM_TRGO_SOURCE(sMasterConfig->MasterOutputTrigger));
-    assert_param(IS_TIM_MSM_STATE(sMasterConfig->MasterSlaveMode));
+  /* Check the parameters */
+  assert_param(IS_TIM_MASTER_INSTANCE(htim->Instance));
+  assert_param(IS_TIM_TRGO_SOURCE(sMasterConfig->MasterOutputTrigger));
+  assert_param(IS_TIM_MSM_STATE(sMasterConfig->MasterSlaveMode));
 
-    /* Check input state */
-    __HAL_LOCK(htim);
+  /* Check input state */
+  __HAL_LOCK(htim);
 
-    /* Change the handler state */
-    htim->State = HAL_TIM_STATE_BUSY;
+  /* Change the handler state */
+  htim->State = HAL_TIM_STATE_BUSY;
 
-    /* Get the TIMx CR2 register value */
-    tmpcr2 = htim->Instance->CR2;
+  /* Get the TIMx CR2 register value */
+  tmpcr2 = htim->Instance->CR2;
 
-    /* Get the TIMx SMCR register value */
-    tmpsmcr = htim->Instance->SMCR;
+  /* Get the TIMx SMCR register value */
+  tmpsmcr = htim->Instance->SMCR;
 
-    /* Reset the MMS Bits */
-    tmpcr2 &= ~TIM_CR2_MMS;
-    /* Select the TRGO source */
-    tmpcr2 |= sMasterConfig->MasterOutputTrigger;
+  /* Reset the MMS Bits */
+  tmpcr2 &= ~TIM_CR2_MMS;
+  /* Select the TRGO source */
+  tmpcr2 |=  sMasterConfig->MasterOutputTrigger;
 
-    /* Update TIMx CR2 */
-    htim->Instance->CR2 = tmpcr2;
+  /* Update TIMx CR2 */
+  htim->Instance->CR2 = tmpcr2;
 
-    if (IS_TIM_SLAVE_INSTANCE(htim->Instance)) {
-        /* Reset the MSM Bit */
-        tmpsmcr &= ~TIM_SMCR_MSM;
-        /* Set master mode */
-        tmpsmcr |= sMasterConfig->MasterSlaveMode;
+  if (IS_TIM_SLAVE_INSTANCE(htim->Instance))
+  {
+    /* Reset the MSM Bit */
+    tmpsmcr &= ~TIM_SMCR_MSM;
+    /* Set master mode */
+    tmpsmcr |= sMasterConfig->MasterSlaveMode;
 
-        /* Update TIMx SMCR */
-        htim->Instance->SMCR = tmpsmcr;
-    }
+    /* Update TIMx SMCR */
+    htim->Instance->SMCR = tmpsmcr;
+  }
 
-    /* Change the htim state */
-    htim->State = HAL_TIM_STATE_READY;
+  /* Change the htim state */
+  htim->State = HAL_TIM_STATE_READY;
 
-    __HAL_UNLOCK(htim);
+  __HAL_UNLOCK(htim);
 
-    return HAL_OK;
+  return HAL_OK;
 }
 
 /**
@@ -389,35 +391,37 @@ HAL_StatusTypeDef HAL_TIMEx_MasterConfigSynchronization(TIM_HandleTypeDef *htim,
   *
   * @retval HAL status
   */
-HAL_StatusTypeDef HAL_TIMEx_RemapConfig(TIM_HandleTypeDef *htim, uint32_t Remap) {
-    __HAL_LOCK(htim);
+HAL_StatusTypeDef HAL_TIMEx_RemapConfig(TIM_HandleTypeDef *htim, uint32_t Remap)
+{
+  __HAL_LOCK(htim);
 
-    /* Check parameters */
-    assert_param(IS_TIM_REMAP(htim->Instance, Remap));
+  /* Check parameters */
+  assert_param(IS_TIM_REMAP(htim->Instance, Remap));
 
-    /* Set the Timer remapping configuration */
-    WRITE_REG(htim->Instance->OR, Remap);
+  /* Set the Timer remapping configuration */
+  WRITE_REG(htim->Instance->OR, Remap);
 
-    __HAL_UNLOCK(htim);
+  __HAL_UNLOCK(htim);
 
-    return HAL_OK;
+  return HAL_OK;
 }
 
 /**
- * @}
- */
+  * @}
+  */
 
 /**
- * @}
- */
+  * @}
+  */
+
 
 #endif /* HAL_TIM_MODULE_ENABLED */
 /**
- * @}
- */
+  * @}
+  */
 
 /**
- * @}
- */
+  * @}
+  */
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
