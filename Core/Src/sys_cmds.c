@@ -54,7 +54,7 @@ void sensor_reset(uint8_t sensor) {
     } else {
         detected = 1;
         format = JPEG;
-        Arduino_init(format, sensor);
+        program_sensor(format, sensor);
         sprintf(buf, "Camera Mode: JPEG\r\n");
         DBG_PUT(buf);
     }

@@ -16,19 +16,9 @@
  ******************************************************************************
  */
 
-/*
- * 	TODO:
- * 		  ## pressing ##
- * 		- Finish updating command_handler.c in accordance to ICD
- *		- Long waits for stm to handle command fuck up things
- * 		  ## Not so pressing ##
- * 		- SPI Burst for image readout
- * 		- Image number iteration / handling
- * 		-
- */
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
-#include "iris_system.h"
+#include "main.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -36,6 +26,7 @@
 #include <stdbool.h>
 #include <string.h>
 #include "arducam.h"
+#include "iris_system.h"
 #include "spi_bitbang.h"
 #include "IEB_TESTS.h"
 #include "tmp421.h"
@@ -53,6 +44,10 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+
+int format = JPEG;
+int width = 1280;
+
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -69,6 +64,7 @@ SPI_HandleTypeDef hspi2;
 UART_HandleTypeDef huart1;
 
 /* USER CODE BEGIN PV */
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -85,7 +81,7 @@ static void onboot_commands(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-uint8_t state = receiving;
+
 uint8_t spi_int_flag = 0;
 uint8_t cam_to_nand_transfer_flag = 0;
 
@@ -96,16 +92,17 @@ enum {
     FINISH,
 } iris_state;
 
+enum {
+	idle,
+	receiving,
+} uart_state;
+
 /* For future failure recovery mode */
 uint8_t can_bus_receive_flag = 0; // Needs to be set in can RX callback
 uint8_t i2c_bus_receive_flag = 0; // Needs to be set in i2c RX callback
 
+uint8_t uart_state = receiving;
 /* USER CODE END 0 */
-
-void init_filesystem() {
-    NAND_SPI_Init(&hspi2);
-    NANDfs_init();
-}
 
 /**
  * @brief  The application entry point.
@@ -145,6 +142,10 @@ int main(void) {
     //    init_filesystem();
     uint8_t obc_cmd;
 
+    char cmd[64];
+    char buf[64];
+    char *ptr = cmd;
+
     iris_state = LISTENING;
     /* USER CODE END 2 */
 
@@ -153,7 +154,6 @@ int main(void) {
 #ifdef SPI_DEBUG
     while (1) {
         /* USER CODE END WHILE */
-
         /* USER CODE BEGIN 3 */
         switch (iris_state) {
         case IDLE:
@@ -186,12 +186,12 @@ int main(void) {
 #endif // SPI_DEBUG
 //       // //////////////////////////////////////////////////////////////////////////////////////////
 #ifdef UART_DEBUG
-    state = idle;
+    uart_state = idle;
     while (1) {
-        switch (state) {
+        switch (uart_state) {
         case idle:
             DBG_PUT("\r:>> ");
-            state = receiving;
+            uart_state = receiving;
             break;
         case receiving:;
             HAL_StatusTypeDef rc = HAL_UART_Receive(&huart1, (uint8_t *)ptr, 1, 20000);
@@ -212,7 +212,7 @@ int main(void) {
                 DBG_PUT("\r\n");
                 uart_handle_command(cmd);
                 ptr = cmd;
-                state = idle;
+                uart_state = idle;
 
             } else {
                 *(ptr + 1) = 0;
@@ -538,14 +538,23 @@ void HAL_SPI_RxCpltCallback(SPI_HandleTypeDef *hspi) {
     spi_int_flag = 1;
 }
 
-static void onboot_commands(void) {
-    // init_ina209(CURRENTSENSE_5V);
-    flood_cam_spi();
-    // init_temp_sensors();
-    //		sensor_togglepower(1);
-    //		uart_reset_sensors();
-    // NAND_SPI_Init(&hspi2);
+void init_filesystem() {
+	NAND_SPI_Init(&hspi2);
+	NANDfs_init();
+}
 
+static void onboot_commands(void) {
+	init_filesystem();
+#ifdef CURRENTSENSE_5V
+    init_ina209(CURRENTSENSE_5V);
+#endif //CURRENTSENSE_5V
+    flood_cam_spi();
+    init_temp_sensors();
+#ifdef IRIS_PROTO
+	sensor_togglepower(1);
+	initalize_sensors();
+#endif //IRIS_PROTO
+	// end move
 #ifdef UART_DEBUG
     DBG_PUT("-----------------------------------\r\n");
     DBG_PUT("Iris Electronics Test Software\r\n"
@@ -562,7 +571,7 @@ static void onboot_commands(void) {
  */
 void Error_Handler(void) {
     /* USER CODE BEGIN Error_Handler_Debug */
-    /* User can add his own implementation to report the HAL error return state */
+    /* User can add his own implementation to report the HAL error return uart_state */
     __disable_irq();
     while (1) {
     }

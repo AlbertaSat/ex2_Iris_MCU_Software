@@ -13,6 +13,8 @@
 extern uint8_t VIS_DETECTED;
 extern uint8_t NIR_DETECTED;
 extern SPI_HandleTypeDef hspi1;
+extern int format;
+extern int width;
 extern const struct sensor_reg OV5642_JPEG_Capture_QSXGA[];
 extern const struct sensor_reg OV5642_QVGA_Preview[];
 /*
@@ -27,16 +29,16 @@ extern const struct sensor_reg OV5642_QVGA_Preview[];
  *		  	work with Ron's NAND Flash stuff.
  *
  */
+uint8_t ack = 0xAA;
 uint8_t total_image_num = 0; // This will cause issues with total num of images once board resets. todo: fix
 housekeeping_packet_t hk;
 char buf[128];
 
-int format = JPEG;
-
 /**
  * @brief prototype for taking image; for use with SPI ONLY
- *        Untested.
+ *        UNTESTED.
  *
+ *        todo: rewrite once Jenish gets image transfer working
  */
 void take_image() {
     /*
@@ -44,16 +46,16 @@ void take_image() {
      * (ish) Fix Arducam.h so we stop with these warnings
      */
     write_reg(ARDUCHIP_TIM, VSYNC_LEVEL_MASK, VIS_SENSOR); // VSYNC is active HIGH
-    // write_reg(ARDUCHIP_TIM, VSYNC_LEVEL_MASK, NIR_SENSOR);
+    write_reg(ARDUCHIP_TIM, VSYNC_LEVEL_MASK, NIR_SENSOR);
 
     flush_fifo(VIS_SENSOR);
-    // flush_fifo(NIR_SENSOR);
+    flush_fifo(NIR_SENSOR);
 
     clear_fifo_flag(VIS_SENSOR);
-    // clear_fifo_flag(NIR_SENSOR);
+    clear_fifo_flag(NIR_SENSOR);
 
     start_capture(VIS_SENSOR);
-    // start_capture(NIR_SENSOR);
+    start_capture(NIR_SENSOR);
 
     // todo: determine if cap_done_mask stays high for subsequent reads of arducam_trig register. Otherwise this
     // loop
@@ -62,9 +64,9 @@ void take_image() {
     while (!get_bit(ARDUCHIP_TRIG, CAP_DONE_MASK, VIS_SENSOR)) {
     }
     DBG_PUT("vis sensor complete\r\n");
-    //    while (!get_bit(ARDUCHIP_TRIG, CAP_DONE_MASK, NIR_SENSOR)) {
-    //    }
-    //    DBG_PUT("nir sensor complete\r\n");
+    while (!get_bit(ARDUCHIP_TRIG, CAP_DONE_MASK, NIR_SENSOR)) {
+    }
+    DBG_PUT("nir sensor complete\r\n");
     DBG_PUT("Loop broke!\r\n");
     ;
 
@@ -114,6 +116,8 @@ void sensor_idle() {
      */
     // pull mosfet driver pin low, cutting power to sensors
     HAL_GPIO_WritePin(CAM_EN_GPIO_Port, CAM_EN_Pin, GPIO_PIN_RESET);
+    SPI1_IT_Transmit(&ack);
+
     return;
 }
 
@@ -125,13 +129,7 @@ void sensor_active() {
     // pull mosfet driver pin high, powering sensors
     HAL_GPIO_WritePin(CAM_EN_GPIO_Port, CAM_EN_Pin, GPIO_PIN_SET);
     //	// initialize sensors
-    _initalize_sensor(VIS_SENSOR);
-    _initalize_sensor(NIR_SENSOR);
-
-#ifdef SPI_DEBUG
-//	SPI1_IT_Transmit(&ack);
-#endif
-
+    initalize_sensors();
     return;
 }
 
@@ -229,47 +227,89 @@ uint8_t get_image_num_spi(uint8_t *num) {
     return 1;
 }
 
-/**
- * @brief Initializes sensor
- *
- * @param sensor VIS_SENSOR or NIR_SENSOR
+/*
+ * Initializes sensors to our chosen defaults as defined in main.c
+ * 	line 48/49
  */
-void _initalize_sensor(uint8_t sensor) {
+void initalize_sensors(void) {
+    uint8_t res = onboot_sensors(VIS_SENSOR);
+	if (res == 1){
+		program_sensor(format, VIS_SENSOR);
+	DBG_PUT("VIS Camera Mode: JPEG\r\nI2C address: 0x3C\r\n\n");
+	}
+	if (res == -1){
+		// need some error handling eh
+		DBG_PUT("VIS init failed./r/n");
+		return;
+	}
 
-    char buf[64];
-    uint8_t DETECTED = 0;
-    arducam_wait_for_ready(sensor);
-    write_reg(AC_REG_RESET, 1, sensor);
-    write_reg(AC_REG_RESET, 1, sensor);
+	res = 0;
+    res = onboot_sensors(NIR_SENSOR);
+	if (res == 1){
+		program_sensor(format, NIR_SENSOR);
+	DBG_PUT("NIR Camera Mode: JPEG\r\nI2C address: 0x3D\r\n\n");
+	}
+	if (res == -1){
+		// need some error handling eh
+		DBG_PUT("NIR init failed.\r\n");
+		return;
+	}
     HAL_Delay(100);
-    write_reg(AC_REG_RESET, 0, sensor);
-    HAL_Delay(100);
 
-    if (!arducam_wait_for_ready(sensor)) {
-        DBG_PUT("Sensor: SPI Unavailable\r\n");
-    }
+    // change resolution of sensors
+    arducam_set_resolution(format, width, VIS_SENSOR);
+    arducam_set_resolution(format, width, NIR_SENSOR);
+    HAL_Delay(500);
 
-    // Change MCU mode
-    write_reg(ARDUCHIP_MODE, 0x0, sensor);
-    wrSensorReg16_8(0xff, 0x01, sensor);
-
-    uint8_t vid = 0, pid = 0;
-    rdSensorReg16_8(OV5642_CHIPID_HIGH, &vid, sensor);
-    rdSensorReg16_8(OV5642_CHIPID_LOW, &pid, sensor);
-
-    if (vid != 0x56 || pid != 0x42) {
-        sprintf(buf, "Sensor not available\r\n\n");
-        DBG_PUT(buf);
-
-    } else {
-        DETECTED = 1;
-    }
-    if (DETECTED == 1) {
-        format = JPEG;
-        Arduino_init(format, sensor);
-        DBG_PUT(buf);
-    }
 }
+
+/*
+ * lower level wrapper function for stuff that needs to happen
+ * to the sensors on boot.
+ *
+ * Param:
+ * 		Sensor: Integer sensor identifier
+ */
+uint8_t onboot_sensors(uint8_t sensor){
+	// Reset the CPLD
+
+	// Make sure camera is listening over SPI
+	arducam_wait_for_ready(sensor);
+	//reset I2C regs
+	write_reg(AC_REG_RESET, 1, sensor);
+	write_reg(AC_REG_RESET, 1, sensor);
+	HAL_Delay(100);
+	write_reg(AC_REG_RESET, 0, sensor);
+	HAL_Delay(100);
+
+	if (!arducam_wait_for_ready(sensor)) {
+		DBG_PUT("Camera %x: SPI Unavailable\r\n", sensor);
+	} else {
+		DBG_PUT("Camera %x: SPI Initialized\r\n", sensor);
+	}
+
+	// Change MCU mode
+	write_reg(ARDUCHIP_MODE, 0x0, sensor);
+	wrSensorReg16_8(0xff, 0x01, sensor);
+
+	uint8_t vid = 0, pid = 0;
+	// checks sensor id to ensure proper i2c performance
+	rdSensorReg16_8(OV5642_CHIPID_HIGH, &vid, sensor);
+	rdSensorReg16_8(OV5642_CHIPID_LOW, &pid, sensor);
+
+	if (vid != 0x56 || pid != 0x42) {
+		DBG_PUT("Camera %x I2C Address: Unknown\r\nVIS not available\r\n\n", sensor);
+		return -1;
+
+	} else {
+		return 1;
+	}
+}
+
+/*
+ * watchdog timer handler. probably deprecated.
+ */
+void handle_wdt() { SPI1_IT_Transmit(&ack); }
 
 static inline const char *next_token(const char *ptr) {
     /* move to the next space */
@@ -345,7 +385,7 @@ void uart_handle_command(char *cmd) {
             const char *i = next_token(cmd);
             switch (*i) {
             case 's':
-                uart_reset_sensors();
+                initalize_sensors();
                 break;
             }
         }
