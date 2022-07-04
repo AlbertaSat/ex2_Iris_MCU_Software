@@ -22,7 +22,7 @@ extern const struct sensor_reg OV5642_QVGA_Preview[];
  * 		- 	TEST THESE FUNCTIONS EH
  *
  * 		- 	Determine if the  SPI CltCallback in main.c are called from interrupt SPI
- * 			functions in here, or if they're needed in here / in SPI_IT.c
+ * 			functions in here, or if they're needed in here / in SPI_IT.c [SOLVED]
  * 		- 	Find a way to send sensors into idle mode without erasing regs
  * 		  	otherwise save sensor regs somewhere in a struct.
  *		- 	Write functions to interface with sensor currently, but need to adapt to
@@ -36,7 +36,6 @@ char buf[128];
 
 /**
  * @brief prototype for taking image; for use with SPI ONLY
- *
  *        UNTESTED.
  *
  *        todo: rewrite once Jenish gets image transfer working
@@ -71,9 +70,6 @@ void take_image() {
     DBG_PUT("Loop broke!\r\n");
     ;
 
-    // ack over SPI
-    SPI1_IT_Transmit(&ack);
-
     // todo:
     //  keep track of how many images we have captured. This could come after transferring
     //  to flash
@@ -91,11 +87,8 @@ void take_image() {
  * Untested
  *
  */
-void get_image_length() {
-    // todo:	@RON:   Need a way to get image length from NAND flash
-    //  				- Expecting a 32 bit integer for image size
-    uint32_t image_length = 0x000000;
-    SPI1_IT_Transmit(&image_length);
+void get_image_length(uint32_t *pdata) {
+    *pdata = 1523;
     return;
 }
 
@@ -127,7 +120,6 @@ void sensor_idle() {
 
     return;
 }
-
 
 /**
  * @brief Activates sensors by enabling FET driver pin and programming to basic functionality
@@ -189,14 +181,13 @@ void flood_cam_spi() {
     }
 }
 
-
 /**
  * @brief Transfers images from arducams to nand flash. This will occur in an idle state
  *
  */
 void _transfer_images_to_flash() {
     /*
-     * todo: 	this is called at the end of take_image() after acking over spi.
+     * todo: 	@RON, this is called at the end of take_image() after acking over spi.
      * 			This needs to transfer images from the flash buffer on the Arducam chip
      * 			from each of the VIS and NIR sensors to appropriate locations on the NAND
      * 			flash.
@@ -225,6 +216,16 @@ uint8_t get_image_num(uint8_t hk) {
     return 1;
 }
 
+/**
+ * @brief Get the total image number
+ *
+ * @param hk 1 for integer return (what's used for hk); 0 for spi return
+ * @return uint8_t
+ */
+uint8_t get_image_num_spi(uint8_t *num) {
+    *num = total_image_num;
+    return 1;
+}
 
 /*
  * Initializes sensors to our chosen defaults as defined in main.c
@@ -309,7 +310,6 @@ uint8_t onboot_sensors(uint8_t sensor){
  * watchdog timer handler. probably deprecated.
  */
 void handle_wdt() { SPI1_IT_Transmit(&ack); }
-
 
 static inline const char *next_token(const char *ptr) {
     /* move to the next space */
