@@ -81,7 +81,7 @@ static void onboot_commands(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-uint8_t state = receiving;
+
 uint8_t spi_int_flag = 0;
 uint8_t cam_to_nand_transfer_flag = 0;
 
@@ -93,14 +93,15 @@ enum {
 } iris_state;
 
 enum {
-	IDLE,
-	RECEIVING,
+	idle,
+	receiving,
 } state;
 
 /* For future failure recovery mode */
 uint8_t can_bus_receive_flag = 0; // Needs to be set in can RX callback
 uint8_t i2c_bus_receive_flag = 0; // Needs to be set in i2c RX callback
 
+uint8_t state = receiving;
 /* USER CODE END 0 */
 
 /**
@@ -140,6 +141,10 @@ int main(void) {
     onboot_commands();
     //    init_filesystem();
     uint8_t obc_cmd;
+
+    char cmd[64];
+    char buf[64];
+    char *ptr = cmd;
 
     iris_state = LISTENING;
     /* USER CODE END 2 */
@@ -184,11 +189,11 @@ int main(void) {
     state = idle;
     while (1) {
         switch (state) {
-        case IDLE:
+        case idle:
             DBG_PUT("\r:>> ");
-            state = RECEIVING;
+            state = receiving;
             break;
-        case RECEIVING:;
+        case receiving:;
             HAL_StatusTypeDef rc = HAL_UART_Receive(&huart1, (uint8_t *)ptr, 1, 20000);
             /* USER CODE END WHILE */
 
@@ -207,7 +212,7 @@ int main(void) {
                 DBG_PUT("\r\n");
                 uart_handle_command(cmd);
                 ptr = cmd;
-                state = IDLE;
+                state = idle;
 
             } else {
                 *(ptr + 1) = 0;
