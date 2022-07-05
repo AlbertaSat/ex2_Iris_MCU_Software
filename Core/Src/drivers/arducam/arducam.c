@@ -428,7 +428,7 @@ static inline uint32_t min(uint32_t a, uint32_t b) { return (a <= b) ? a : b; }
 //
 static void dump_uart_jpg_burst(uint32_t length, uint8_t sensor) {
 
-	uint32_t BUF_LEN = 512;
+    uint32_t BUF_LEN = 512;
     uint8_t prev = 0, curr = 0;
     bool found_header = false;
     uint32_t i, x = 0;
