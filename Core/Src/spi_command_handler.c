@@ -3,6 +3,7 @@
 #include <iris_system.h>
 #include <string.h>
 #include <arducam.h>
+#include <spi_bitbang.h>
 
 extern SPI_HandleTypeDef hspi1;
 extern uint8_t cam_to_nand_transfer_flag;
@@ -488,14 +489,17 @@ void spi_transfer_image() {
 
     num_transfers =
         (uint16_t)((image_length + (IRIS_IMAGE_TRANSFER_BLOCK_SIZE - 1)) / IRIS_IMAGE_TRANSFER_BLOCK_SIZE);
-    static uint32_t count = 0;
+    uint32_t count = 0;
+
+    spi_init_burst(VIS);
     for (int j = 0; j < num_transfers; j++) {
         for (int i = 0; i < IRIS_IMAGE_TRANSFER_BLOCK_SIZE; i++) {
-            image_data[i] = (uint8_t)read_reg(SINGLE_FIFO_READ, VIS); // reg_addr: 0x3D, sensor: 0 -> VIS
+            image_data[i] = (uint8_t)spi_read_burst(VIS); // reg_addr: 0x3D, sensor: 0 -> VIS
             // image_data[i] = (uint8_t) image_data_buffer[count];
             count++;
         }
 
         spi_transmit(image_data, IRIS_IMAGE_TRANSFER_BLOCK_SIZE);
     }
+    spi_deinit_burst(VIS);
 }
