@@ -160,3 +160,17 @@ void printTemp(uint16_t temp, uint8_t sensor) {
     sprintf(buf, "Sensor 0x%x Temperature: %d.%04d C\r\n", sensor, (temp >> 8) - 64, ((temp & 0xFF) >> 4) * 625);
     DBG_PUT(buf);
 }
+
+
+void test_clocksignal(){
+	for(;;){
+//	HAL_GPIO_WritePin(CLK_Port, CLK_Pin, GPIO_PIN_SET);
+	CLK_Port->BSRR = CLK_Pin; // high
+	MOSI_Port->BSRR = MOSI_Pin; // high
+	CLK_Port->BRR = CLK_Pin; // low
+	MOSI_Port->BRR = MOSI_Pin; // high
+	}
+}
+
+
+
