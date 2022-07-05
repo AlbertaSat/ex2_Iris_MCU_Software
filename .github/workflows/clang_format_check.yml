@@ -11,6 +11,6 @@ jobs:
     - uses: DoozyX/clang-format-lint-action@v0.13
       with:
         source: '.'
-        exclude: './Drivers ./host ./Core/Src/stm32* ./Core/Inc/stm32* ./Core/Src/sys*'
+        exclude: './Drivers ./host ./Core/Src/stm32* ./Core/Inc/stm32* ./Core/Src/sys* ./.metadata'
         extensions: 'c,h'
         clangFormatVersion: 10
