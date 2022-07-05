@@ -12,7 +12,6 @@
  * GNU General Public License for more details.
  */
 
-
 /*
  * Note on application of SPI burst readout from arducam sensor
  *
@@ -31,7 +30,6 @@
  * 		burst mode. ie: leave CS low until the entire image is read off.
  *
  */
-
 
 /**
  * @file spi_bitbang.c
@@ -171,18 +169,18 @@ bool write_spi_reg(uint8_t addr, uint8_t packet, uint8_t sensor) {
  */
 uint8_t spi_read_burst(uint8_t sensor) {
     uint8_t rec;
-	// Receive phase
-	HAL_GPIO_WritePin(MOSI_Port, MOSI_Pin, GPIO_PIN_RESET);
-	for (int i = 0; i < 8; i++) {
-		_CLK_HIGH();
-		if (HAL_GPIO_ReadPin(MISO_Port, MISO_Pin) == GPIO_PIN_SET) {
-			rec = rec << 1 | 0b1;
-		} else {
-			rec = rec << 1 | 0b0;
-		}
-		_CLK_LOW();
-	}
-	return rec;
+    // Receive phase
+    HAL_GPIO_WritePin(MOSI_Port, MOSI_Pin, GPIO_PIN_RESET);
+    for (int i = 0; i < 8; i++) {
+        _CLK_HIGH();
+        if (HAL_GPIO_ReadPin(MISO_Port, MISO_Pin) == GPIO_PIN_SET) {
+            rec = rec << 1 | 0b1;
+        } else {
+            rec = rec << 1 | 0b0;
+        }
+        _CLK_LOW();
+    }
+    return rec;
 }
 
 /*
@@ -191,33 +189,33 @@ uint8_t spi_read_burst(uint8_t sensor) {
  * param:
  * 		sensor: target sensor
  */
-void spi_init_burst(uint8_t sensor){
-	if (sensor == 0x3C) {
-		_CS1_LOW(); // VIS sensor is CS1
-	} else {
-		_CS2_LOW(); // NIR sensor is CS2
-	}
-	uint8_t addr = 0x3C; // not i2c address dummy, spi reg x3C
-	// Send Phase
-	    for (int i = 0; i < 8; i++) {
-	        HAL_GPIO_WritePin(MOSI_Port, MOSI_Pin, bit_read(addr, i));
-	        _CLK_HIGH();
-	        HAL_GPIO_ReadPin(MISO_Port, MISO_Pin);
-	        _CLK_LOW();
-	    }
-	return;
+void spi_init_burst(uint8_t sensor) {
+    if (sensor == 0x3C) {
+        _CS1_LOW(); // VIS sensor is CS1
+    } else {
+        _CS2_LOW(); // NIR sensor is CS2
+    }
+    uint8_t addr = 0x3C; // not i2c address dummy, spi reg x3C
+                         // Send Phase
+    for (int i = 0; i < 8; i++) {
+        HAL_GPIO_WritePin(MOSI_Port, MOSI_Pin, bit_read(addr, i));
+        _CLK_HIGH();
+        HAL_GPIO_ReadPin(MISO_Port, MISO_Pin);
+        _CLK_LOW();
+    }
+    return;
 }
 
 /*
  * DeInitializes burst mode on sensor
  */
-void spi_deinit_burst(uint8_t sensor){
+void spi_deinit_burst(uint8_t sensor) {
     if (sensor == 0x3C) {
         _CS1_HIGH();
     } else {
         _CS2_HIGH();
     }
-	return;
+    return;
 }
 
 /**

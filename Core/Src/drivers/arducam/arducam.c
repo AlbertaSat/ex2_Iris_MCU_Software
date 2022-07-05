@@ -16,7 +16,6 @@ uint8_t image_number = 0;
  */
 void arducam_delay_ms(int ms) { HAL_Delay(ms); }
 
-
 /*
  * Programs sensor based on input m_fmt and target sensor
  * Called from init_sensors in uart_command_handler.c
@@ -64,7 +63,6 @@ void program_sensor(int m_fmt, int sensor) {
         }
     }
 }
-
 
 /*
  * Initalizes the arducam in RAW mode. DO NOT USE.
@@ -231,9 +229,7 @@ uint8_t read_reg(uint8_t addr, uint8_t sensor) {
  * 		data: byte data to write
  * 		sensor: integer sensor identifier
  */
-void write_reg(uint8_t addr, uint8_t data, uint8_t sensor) {
-    write_spi_reg(addr, data, sensor);
-}
+void write_reg(uint8_t addr, uint8_t data, uint8_t sensor) { write_spi_reg(addr, data, sensor); }
 
 /*
  * Reads image byte from fifo buffer
@@ -255,16 +251,13 @@ static uint8_t read_fifo(uint8_t sensor) {
  */
 void flush_fifo(uint8_t sensor) { write_reg(ARDUCHIP_FIFO, FIFO_CLEAR_MASK, sensor); }
 
-
 /*
  * raises capture flag on arducam sensor
  *
  * param:
  * 		sensor: integer sensor identifier
  */
-void start_capture(uint8_t sensor) {
-    write_reg(ARDUCHIP_FIFO, FIFO_START_MASK, sensor);
-}
+void start_capture(uint8_t sensor) { write_reg(ARDUCHIP_FIFO, FIFO_START_MASK, sensor); }
 
 /*
  * flushes fifo buffer on arducam sensor
@@ -274,8 +267,7 @@ void start_capture(uint8_t sensor) {
  */
 void clear_fifo_flag(uint8_t sensor) { write_reg(ARDUCHIP_FIFO, FIFO_CLEAR_MASK, sensor); }
 
-
-//void set_test_mode(uint8_t mode, uint8_t sensor) {
+// void set_test_mode(uint8_t mode, uint8_t sensor) {
 //    write_reg(AC_REG_TEST_MODE, mode, sensor);
 //    HAL_Delay(1000);
 //}
@@ -297,14 +289,12 @@ uint32_t read_fifo_length(uint8_t sensor) {
     return len;
 }
 
-
 // Set corresponding bit
 void set_bit(uint8_t addr, uint8_t bit, uint8_t sensor) {
     uint8_t temp;
     temp = read_reg(addr, sensor);
     write_reg(addr, temp | bit, sensor);
 }
-
 
 // Clear corresponding bit
 void clear_bit(uint8_t addr, uint8_t bit, uint8_t sensor) {
@@ -313,7 +303,6 @@ void clear_bit(uint8_t addr, uint8_t bit, uint8_t sensor) {
     write_reg(addr, temp & (~bit), sensor);
 }
 
-
 // Get corresponding bit status
 uint8_t get_bit(uint8_t addr, uint8_t bit, uint8_t sensor) {
     uint8_t temp;
@@ -321,7 +310,6 @@ uint8_t get_bit(uint8_t addr, uint8_t bit, uint8_t sensor) {
     temp = temp & bit;
     return temp;
 }
-
 
 void arducam_set_saturation(int saturation, uint8_t sensor) {
     wrSensorReg16_8(0x5001, 0xff, sensor);            // enable saturation setting
@@ -362,14 +350,14 @@ static inline uint32_t min(uint32_t a, uint32_t b) { return (a <= b) ? a : b; }
 //
 //#define pgm_read_byte(x) (*((char *)x))
 //
-//char bmp_header[BMPIMAGEOFFSET] = {
+// char bmp_header[BMPIMAGEOFFSET] = {
 //    'B',          'M',  0x36, 0x58, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, BMPIMAGEOFFSET, 0x00, 0x00, 0x00,
 //    INFO_HDR_LEN, 0x00, 0x00, 0x00, 0x40, 0x01, 0x00, 0x00, 0xF0, 0x00, 0x00,           0x00, 0x01, 0x00,
 //    0x10,         0x00, 0x03, 0x00, 0x00, 0x00, 0x00, 0x58, 0x02, 0x00, 0xC4,           0x0E, 0x00, 0x00,
 //    0xC4,         0x0E, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,           0x00, 0x00, 0xF8,
 //    0x00,         0x00, 0xE0, 0x07, 0x00, 0x00, 0x1F, 0x00, 0x00, 0x00};
 //
-//static void dump_uart_bmp(uint8_t sensor) {
+// static void dump_uart_bmp(uint8_t sensor) {
 //    uint32_t width = 320;
 //    uint32_t depth = 240;
 //    uint32_t length = width * depth;
@@ -440,7 +428,7 @@ static inline uint32_t min(uint32_t a, uint32_t b) { return (a <= b) ? a : b; }
 //
 static void dump_uart_jpg_burst(uint32_t length, uint8_t sensor) {
 
-	uint8_t BUF_LEN = 64;
+    uint8_t BUF_LEN = 64;
     uint8_t prev = 0, curr = 0;
     bool found_header = false;
     uint32_t i, x = 0;
@@ -448,10 +436,10 @@ static void dump_uart_jpg_burst(uint32_t length, uint8_t sensor) {
 
     // Note: we're assuming the ARM is BE
     memcpy(buf, &length, sizeof(length));
-    HAL_UART_Transmit(&huart1, (uint8_t *) buf, sizeof(length), 100);
+    HAL_UART_Transmit(&huart1, (uint8_t *)buf, sizeof(length), 100);
 
     spi_init_burst(sensor);
-    for (i=0; i<length; i++) {
+    for (i = 0; i < length; i++) {
         prev = curr;
         curr = spi_read_burst(sensor);
         if ((curr == 0xd9) && (prev == 0xff)) {
@@ -471,14 +459,12 @@ static void dump_uart_jpg_burst(uint32_t length, uint8_t sensor) {
                 HAL_UART_Transmit(&huart1, buf, BUF_LEN, 100);
                 x = 0;
             }
-        }
-        else if ((curr == 0xd8) && (prev = 0xff)) {
+        } else if ((curr == 0xd8) && (prev = 0xff)) {
             found_header = true;
             buf[0] = prev;
             buf[1] = curr;
-            HAL_UART_Transmit(&huart1, (uint8_t *) buf, 2, 100);
+            HAL_UART_Transmit(&huart1, (uint8_t *)buf, 2, 100);
             x = 0;
-
         }
     }
     spi_deinit_burst(sensor);
@@ -491,19 +477,18 @@ static void dump_uart_jpg_burst(uint32_t length, uint8_t sensor) {
         // We found the header but not the footer :-(
         buf[0] = 0xff;
         buf[1] = 0xd9;
-        HAL_UART_Transmit(&huart1, (uint8_t *) buf, 2, 100);
-    }
-    else {
+        HAL_UART_Transmit(&huart1, (uint8_t *)buf, 2, 100);
+    } else {
         memset(buf, 0, BUF_LEN);
         while (i < length) {
             int cnt = min(length - i, BUF_LEN);
-            HAL_UART_Transmit(&huart1, (uint8_t *) buf, cnt, 100);
+            HAL_UART_Transmit(&huart1, (uint8_t *)buf, cnt, 100);
             i += cnt;
         }
     }
 }
 //
-//static void uart_dump_buf(uint8_t *data, uint16_t len) {
+// static void uart_dump_buf(uint8_t *data, uint16_t len) {
 //    char digit[4];
 //    digit[2] = ' ';
 //    digit[3] = 0;
@@ -515,9 +500,9 @@ static void dump_uart_jpg_burst(uint32_t length, uint8_t sensor) {
 //}
 //
 //#define MAX_BLK_SZ 2048
-//static uint8_t buf[MAX_BLK_SZ];
+// static uint8_t buf[MAX_BLK_SZ];
 //
-//int arducam_dump_image(uint8_t sensor, io_funcs_t *io_driver) {
+// int arducam_dump_image(uint8_t sensor, io_funcs_t *io_driver) {
 //    int rc;
 //    uint8_t prev = 0, curr = 0;
 //    bool found_header = false;
@@ -599,7 +584,7 @@ static void dump_uart_jpg_burst(uint32_t length, uint8_t sensor) {
 //    return 0;
 //}
 //
-//static void dump_uart_raw(uint32_t length, uint8_t sensor) {
+// static void dump_uart_raw(uint32_t length, uint8_t sensor) {
 //    char buf[4];
 //    buf[2] = ' ';
 //    buf[3] = '\0';

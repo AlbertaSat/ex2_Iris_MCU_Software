@@ -9,7 +9,6 @@
 #define INC_INA209_H_
 #include <iris_system.h>
 
-
 void get_configuration(uint8_t addr, uint16_t *retval);
 void set_configuration(uint8_t addr, uint16_t *val);
 void get_status_flags(uint8_t addr, uint16_t *retval);
