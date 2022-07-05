@@ -156,7 +156,7 @@ bool write_spi_reg(uint8_t addr, uint8_t packet, uint8_t sensor) {
 	// preallocate for teh z o o m
 	uint8_t address[8];
 	uint8_t to_send[8];
-	set_bits(address, addr);
+	set_bits(address, (addr|0x80));
 	set_bits(to_send, packet);
 
     // CS Low
