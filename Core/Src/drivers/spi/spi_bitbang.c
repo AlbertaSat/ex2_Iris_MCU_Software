@@ -44,6 +44,7 @@
 
 #include <stdbool.h>
 #include "spi_bitbang.h"
+extern TIM_HandleTypeDef htim2;
 
 // Pin config
 //  /*Configure GPIO pins : SPI_B_MOSI_Pin SPI_B_CLK_Pin */
@@ -72,7 +73,6 @@
 //  /*Configure GPIO pin Output Level */
 //  HAL_GPIO_WritePin(GPIOB, SPI_B_MOSI_Pin|SPI_B_NSS_Pin|SPI_B_CLK_Pin, GPIO_PIN_RESET);
 
-// todo burst mode!
 
 /**
  * @brief reads spi register from target sensor
@@ -83,7 +83,11 @@
  * todo: consider switching to pointers (will require a decent amount of refactor)
  */
 uint8_t read_spi_reg(uint8_t addr, uint8_t sensor) {
-    uint8_t rec;
+	uint8_t rec[8];
+    // preallocate for teh z o o m
+	uint8_t address[8];
+	set_bits(address, addr);
+
     // CS Low
     if (sensor == 0x3C) {
         _CS1_LOW(); // VIS sensor is CS1
@@ -91,23 +95,40 @@ uint8_t read_spi_reg(uint8_t addr, uint8_t sensor) {
         _CS2_LOW(); // NIR sensor is CS2
     }
     // Send Phase
-    for (int i = 0; i < 8; i++) {
-        HAL_GPIO_WritePin(MOSI_Port, MOSI_Pin, bit_read(addr, i));
-        _CLK_HIGH();
-        HAL_GPIO_ReadPin(MISO_Port, MISO_Pin);
-        _CLK_LOW();
-    }
+	for (int i = 0; i < 8; i++) {
+		if (address[i] == 1){
+			MOSI_Port->BSRR = MOSI_Pin;
+		}else{
+			MOSI_Port->BRR = MOSI_Pin;
+		}
+		delay_us(SPI_DELAY);
+		CLK_Port->BSRR = CLK_Pin;  // high
+		if ((MISO_Port->IDR & MISO_Pin) != (uint32_t)GPIO_PIN_RESET)
+		        {}
+		delay_us(SPI_DELAY);
+		CLK_Port->BRR = CLK_Pin;  // low
+	}
 
-    // Recieve phase
+    // Receive phase
     for (int i = 0; i < 8; i++) {
-        HAL_GPIO_WritePin(MOSI_Port, MOSI_Pin, bit_read(0x00, i));
-        _CLK_HIGH();
-        if (HAL_GPIO_ReadPin(MISO_Port, MISO_Pin) == GPIO_PIN_SET) {
-            rec = rec << 1 | 0b1;
-        } else {
-            rec = rec << 1 | 0b0;
+    	// write low regardless for dummy byte, this logic keeps the duty cycle for the clock
+    	// at around 50% without having to mess with the delay_us();
+    	if (address[i] == 1){
+			MOSI_Port->BRR = MOSI_Pin;
+		}else{
+			MOSI_Port->BRR = MOSI_Pin;
+		}
+    	delay_us(SPI_DELAY);
+        CLK_Port->BSRR = CLK_Pin;  // high
+        if ((MISO_Port->IDR & MISO_Pin) != (uint32_t)GPIO_PIN_RESET)
+        {
+          rec[i] = 1;
+        }else
+        {
+        	rec[i] = 0;
         }
-        _CLK_LOW();
+        delay_us(SPI_DELAY);
+        CLK_Port->BRR = CLK_Pin;  // low
     }
 
     if (sensor == 0x3C) {
@@ -115,8 +136,9 @@ uint8_t read_spi_reg(uint8_t addr, uint8_t sensor) {
     } else {
         _CS2_HIGH();
     }
-    HAL_GPIO_WritePin(MOSI_Port, MOSI_Pin, GPIO_PIN_RESET);
-    return rec;
+	MOSI_Port->BRR = MOSI_Pin; // ensure mosi stays low
+
+    return parse_bits(rec);
 }
 
 /**
@@ -127,9 +149,14 @@ uint8_t read_spi_reg(uint8_t addr, uint8_t sensor) {
  * @param sensor    target sensor
  * @return true
  * @return false
- * todo: switch to pointers; stop using bools
  */
 bool write_spi_reg(uint8_t addr, uint8_t packet, uint8_t sensor) {
+	// preallocate for teh z o o m
+	uint8_t address[8];
+	uint8_t to_send[8];
+	set_bits(address, (addr|0x80));
+	set_bits(to_send, packet);
+
     // CS Low
     if (sensor == 0x3C) {
         _CS1_LOW(); // VIS sensor is CS1
@@ -138,18 +165,33 @@ bool write_spi_reg(uint8_t addr, uint8_t packet, uint8_t sensor) {
     }
     // Send Phase
     for (int i = 0; i < 8; i++) {
-        HAL_GPIO_WritePin(MOSI_Port, MOSI_Pin, bit_read((addr | 0x80), i));
-        _CLK_HIGH();
-        HAL_GPIO_ReadPin(MISO_Port, MISO_Pin);
-        _CLK_LOW();
+        if (address[i] == 1){
+        	MOSI_Port->BSRR = MOSI_Pin;
+        }else{
+        	MOSI_Port->BRR = MOSI_Pin;
+        }
+        delay_us(SPI_DELAY);
+        CLK_Port->BSRR = CLK_Pin;  // high
+        // keep this here for timing sync? I think.
+        if ((MISO_Port->IDR & MISO_Pin) != (uint32_t)GPIO_PIN_RESET)
+                {}
+        delay_us(SPI_DELAY);
+        CLK_Port->BRR = CLK_Pin;  // low
     }
 
     // Write phase
     for (int i = 0; i < 8; i++) {
-        HAL_GPIO_WritePin(MOSI_Port, MOSI_Pin, bit_read(packet, i));
-        _CLK_HIGH();
-        HAL_GPIO_ReadPin(MISO_Port, MISO_Pin);
-        _CLK_LOW();
+    	if (to_send[i] == 1){
+			MOSI_Port->BSRR = MOSI_Pin;
+		}else{
+			MOSI_Port->BRR = MOSI_Pin;
+		}
+    	delay_us(SPI_DELAY);
+    	CLK_Port->BSRR = CLK_Pin;  // high
+        if ((MISO_Port->IDR & MISO_Pin) != (uint32_t)GPIO_PIN_RESET)
+                {}
+        delay_us(SPI_DELAY);
+        CLK_Port->BRR = CLK_Pin;  // low
     }
 
     if (sensor == 0x3C) {
@@ -157,7 +199,7 @@ bool write_spi_reg(uint8_t addr, uint8_t packet, uint8_t sensor) {
     } else {
         _CS2_HIGH();
     }
-    HAL_GPIO_WritePin(MOSI_Port, MOSI_Pin, GPIO_PIN_RESET);
+	MOSI_Port->BRR = MOSI_Pin; // ensure mosi stays low
 
     return true;
 }
@@ -168,19 +210,28 @@ bool write_spi_reg(uint8_t addr, uint8_t packet, uint8_t sensor) {
  * @param sensor    target sensor
  */
 uint8_t spi_read_burst(uint8_t sensor) {
-    uint8_t rec;
-    // Receive phase
-    HAL_GPIO_WritePin(MOSI_Port, MOSI_Pin, GPIO_PIN_RESET);
-    for (int i = 0; i < 8; i++) {
-        _CLK_HIGH();
-        if (HAL_GPIO_ReadPin(MISO_Port, MISO_Pin) == GPIO_PIN_SET) {
-            rec = rec << 1 | 0b1;
-        } else {
-            rec = rec << 1 | 0b0;
-        }
-        _CLK_LOW();
-    }
-    return rec;
+  uint8_t rec[8];
+	// Receive phase
+	 for (int i = 0; i < 8; i++) {
+		 // keeps clock duty cycle at roughly 50%
+		if (rec[i] == 1){
+			MOSI_Port->BRR = MOSI_Pin;
+		}else{
+			MOSI_Port->BRR = MOSI_Pin;
+		}
+		delay_us(SPI_DELAY);
+		CLK_Port->BSRR = CLK_Pin;  // high
+		if ((MISO_Port->IDR & MISO_Pin) != (uint32_t)GPIO_PIN_RESET)
+		{
+		  rec[i] = 1;
+		}else
+		{
+			rec[i] = 0;
+		}
+		delay_us(SPI_DELAY);
+		CLK_Port->BRR = CLK_Pin;  // low
+	}
+	return parse_bits(rec);
 }
 
 /*
@@ -189,21 +240,31 @@ uint8_t spi_read_burst(uint8_t sensor) {
  * param:
  * 		sensor: target sensor
  */
-void spi_init_burst(uint8_t sensor) {
-    if (sensor == 0x3C) {
-        _CS1_LOW(); // VIS sensor is CS1
-    } else {
-        _CS2_LOW(); // NIR sensor is CS2
-    }
-    uint8_t addr = 0x3C; // not i2c address dummy, spi reg x3C
-                         // Send Phase
-    for (int i = 0; i < 8; i++) {
-        HAL_GPIO_WritePin(MOSI_Port, MOSI_Pin, bit_read(addr, i));
-        _CLK_HIGH();
-        HAL_GPIO_ReadPin(MISO_Port, MISO_Pin);
-        _CLK_LOW();
-    }
-    return;
+void spi_init_burst(uint8_t sensor){
+	uint8_t addr = 0x3C; // not i2c address dummy, spi reg x3C
+	uint8_t address[8];
+	set_bits(address, addr);
+
+	if (sensor == 0x3C) {
+		_CS1_LOW(); // VIS sensor is CS1
+	} else {
+		_CS2_LOW(); // NIR sensor is CS2
+	}
+	// Send Phase
+	for (int i = 0; i < 8; i++) {
+		if (address[i] == 1){
+			MOSI_Port->BSRR = MOSI_Pin;
+		}else{
+			MOSI_Port->BRR = MOSI_Pin;
+		}
+		delay_us(SPI_DELAY);
+		CLK_Port->BSRR = CLK_Pin;  // high
+		if ((MISO_Port->IDR & MISO_Pin) != (uint32_t)GPIO_PIN_RESET)
+		                {}
+		delay_us(SPI_DELAY);
+		CLK_Port->BRR = CLK_Pin;  // low
+	}
+	return;
 }
 
 /*
@@ -225,12 +286,35 @@ void spi_deinit_burst(uint8_t sensor) {
  * @param j     position of bit
  * @return      GPIO_PinState
  */
-GPIO_PinState bit_read(uint8_t byte, int j) {
+uint8_t bit_read(uint8_t byte, int j) {
     byte = byte << j;
     if (byte & 0x80) {
-        return GPIO_PIN_SET;
+        return 1;
     }
-    return GPIO_PIN_RESET;
+    return 0;
+}
+
+void set_bits(uint8_t *addr, uint8_t byte){
+    for (int i=0; i<8; i++){
+        addr[i] = bit_read(byte, i);
+    }
+}
+
+uint8_t parse_bits(uint8_t *array){
+    uint8_t ret = 0x00;
+    for (int i=0; i<8; i++){
+        if (array[i] == 1) {
+            ret = ret << 0x01 | 0b1;
+        } else {
+            ret = ret << 0x01 | 0b0;
+        }
+	}
+	return ret;
+}
+void delay_us (uint16_t us)
+{
+	__HAL_TIM_SET_COUNTER(&htim2, 0);  // set the counter value a 0
+	while (__HAL_TIM_GET_COUNTER(&htim2) < us);  // wait for the counter to reach the us input in the parameter
 }
 
 void _CS1_LOW() { HAL_GPIO_WritePin(NSS1_Port, NSS1_Pin, GPIO_PIN_RESET); }
@@ -239,5 +323,3 @@ void _CS1_HIGH() { HAL_GPIO_WritePin(NSS1_Port, NSS1_Pin, GPIO_PIN_SET); }
 void _CS2_LOW() { HAL_GPIO_WritePin(NSS2_Port, NSS2_Pin, GPIO_PIN_RESET); }
 void _CS2_HIGH() { HAL_GPIO_WritePin(NSS2_Port, NSS2_Pin, GPIO_PIN_SET); }
 
-void _CLK_LOW() { HAL_GPIO_WritePin(CLK_Port, CLK_Pin, GPIO_PIN_RESET); }
-void _CLK_HIGH() { HAL_GPIO_WritePin(CLK_Port, CLK_Pin, GPIO_PIN_SET); }

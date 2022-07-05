@@ -17,5 +17,5 @@ void _toggleLED(void);
 void _testArducamSensor(uint8_t sensor);
 void _testScanI2C();
 void printTemp(uint16_t temp, uint8_t sensor);
-
+void test_clocksignal();
 #endif /* INC_IEB_TESTS_H_ */
