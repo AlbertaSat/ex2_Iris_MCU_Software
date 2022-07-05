@@ -16,7 +16,7 @@ extern I2C_HandleTypeDef hi2c2;
  * @param sensor target sensor
  */
 void wrSensorReg16_8(uint16_t regID, uint8_t regDat, uint8_t sensor) {
-	i2c2_write16_8(sensor, regID, regDat);
+    i2c2_write16_8(sensor, regID, regDat);
     HAL_Delay(1);
 }
 
@@ -28,7 +28,7 @@ void wrSensorReg16_8(uint16_t regID, uint8_t regDat, uint8_t sensor) {
  */
 void wrSensorRegs16_8(struct sensor_reg reglist[], uint8_t sensor) {
     struct sensor_reg *curr = reglist;
-    for (curr=reglist; curr->reg != 0xffff; curr++) {
+    for (curr = reglist; curr->reg != 0xffff; curr++) {
         wrSensorReg16_8(curr->reg, curr->val, sensor);
     }
     return;
@@ -42,7 +42,7 @@ void wrSensorRegs16_8(struct sensor_reg reglist[], uint8_t sensor) {
  * @param sensor target sensor
  */
 void rdSensorReg16_8(uint16_t regID, uint8_t *regDat, uint8_t sensor) {
-	i2c2_read16_8(sensor, regID, regDat);
+    i2c2_read16_8(sensor, regID, regDat);
     return;
 }
 
@@ -54,9 +54,9 @@ void rdSensorReg16_8(uint16_t regID, uint8_t *regDat, uint8_t sensor) {
  * @param register_pointer  pointer to 16 bit register value
  * @param reg_data          pointer to where to write the register data
  */
-void i2c2_read16_8(uint8_t addr, uint16_t register_pointer, uint8_t *reg_data){
-	hi2c_read16_8(hi2c2, addr, register_pointer, reg_data);
-	return;
+void i2c2_read16_8(uint8_t addr, uint16_t register_pointer, uint8_t *reg_data) {
+    hi2c_read16_8(hi2c2, addr, register_pointer, reg_data);
+    return;
 }
 
 /**
@@ -66,9 +66,9 @@ void i2c2_read16_8(uint8_t addr, uint16_t register_pointer, uint8_t *reg_data){
  * @param register_pointer  pointer to 16 bit register value
  * @param register_value    8 bit value to write to register
  */
-void i2c2_write16_8(uint8_t addr, uint16_t register_pointer, uint8_t register_value){
-	hi2c_write16_8(hi2c2, addr, register_pointer, register_value);
-	return;
+void i2c2_write16_8(uint8_t addr, uint16_t register_pointer, uint8_t register_value) {
+    hi2c_write16_8(hi2c2, addr, register_pointer, register_value);
+    return;
 }
 
 /**
@@ -78,9 +78,9 @@ void i2c2_write16_8(uint8_t addr, uint16_t register_pointer, uint8_t register_va
  * @param register_pointer  pointer to 8 bit register value
  * @param reg_data          pointer to where to write the register data
  */
-void i2c2_read8_8(uint8_t addr, uint8_t register_pointer, uint8_t *reg_data){
-	hi2c_read8_8(hi2c2, addr, register_pointer, reg_data);
-	return;
+void i2c2_read8_8(uint8_t addr, uint8_t register_pointer, uint8_t *reg_data) {
+    hi2c_read8_8(hi2c2, addr, register_pointer, reg_data);
+    return;
 }
 
 /**
@@ -90,9 +90,9 @@ void i2c2_read8_8(uint8_t addr, uint8_t register_pointer, uint8_t *reg_data){
  * @param register_pointer  pointer to 8 bit register value
  * @param register_value    8 bit value to write to register
  */
-void i2c2_write8_8(uint8_t addr, uint8_t register_pointer, uint8_t register_value){
-	hi2c_write8_8(hi2c2, addr, register_pointer, register_value);
-	return;
+void i2c2_write8_8(uint8_t addr, uint8_t register_pointer, uint8_t register_value) {
+    hi2c_write8_8(hi2c2, addr, register_pointer, register_value);
+    return;
 }
 
 /**
@@ -114,9 +114,9 @@ void i2c2_read8_16(uint8_t addr, uint8_t register_pointer, uint16_t *reg_data) {
  * @param register_pointer  pointer to 8 bit register value
  * @param register_value    16 bit value to write to register
  */
-void i2c2_write8_16(uint8_t addr, uint8_t register_pointer, uint16_t register_value){
-	hi2c_write8_16(hi2c2, addr, register_pointer, register_value);
-	return;
+void i2c2_write8_16(uint8_t addr, uint8_t register_pointer, uint16_t register_value) {
+    hi2c_write8_16(hi2c2, addr, register_pointer, register_value);
+    return;
 }
 
 /**
@@ -128,12 +128,12 @@ void i2c2_write8_16(uint8_t addr, uint8_t register_pointer, uint16_t register_va
  * @param reg_data          pointer to 8 bit register value
  */
 void hi2c_read16_8(I2C_HandleTypeDef hi2c, uint8_t addr, uint16_t register_pointer, uint8_t *reg_data) {
-    	HAL_StatusTypeDef rc;
-    	rc = HAL_I2C_Mem_Read(&hi2c, addr<<1, (uint16_t)register_pointer, I2C_MEMADD_SIZE_16BIT, reg_data, 1, 100);
-        if (rc != HAL_OK) {
-            char buf[64];
-            sprintf(buf, "I2C read xmit to 0x%x failed: 0x%x\r\n", register_pointer, rc);
-        }
+    HAL_StatusTypeDef rc;
+    rc = HAL_I2C_Mem_Read(&hi2c, addr << 1, (uint16_t)register_pointer, I2C_MEMADD_SIZE_16BIT, reg_data, 1, 100);
+    if (rc != HAL_OK) {
+        char buf[64];
+        sprintf(buf, "I2C read xmit to 0x%x failed: 0x%x\r\n", register_pointer, rc);
+    }
     return;
 }
 
@@ -149,12 +149,13 @@ void hi2c_write16_8(I2C_HandleTypeDef hi2c, uint8_t addr, uint16_t register_poin
     uint8_t dataBuffer[1];
     HAL_StatusTypeDef status;
     dataBuffer[0] = register_value;
-    status = HAL_I2C_Mem_Write(&hi2c, addr << 1, (uint16_t)register_pointer, I2C_MEMADD_SIZE_16BIT, dataBuffer, 1, 100);
+    status =
+        HAL_I2C_Mem_Write(&hi2c, addr << 1, (uint16_t)register_pointer, I2C_MEMADD_SIZE_16BIT, dataBuffer, 1, 100);
     if (status != HAL_OK) {
-            char buf[64];
-            sprintf(buf, "I2C16_8 write to 0x%x register 0x%x failed\r\n", addr, register_pointer);
-            DBG_PUT(buf);
-        }
+        char buf[64];
+        sprintf(buf, "I2C16_8 write to 0x%x register 0x%x failed\r\n", addr, register_pointer);
+        DBG_PUT(buf);
+    }
 }
 
 /**
@@ -166,13 +167,13 @@ void hi2c_write16_8(I2C_HandleTypeDef hi2c, uint8_t addr, uint16_t register_poin
  * @param reg_data          pointer to 8 bit register value
  */
 void hi2c_read8_8(I2C_HandleTypeDef hi2c, uint8_t addr, uint8_t register_pointer, uint8_t *reg_data) {
-	HAL_StatusTypeDef status = HAL_OK;
+    HAL_StatusTypeDef status = HAL_OK;
     status = HAL_I2C_Mem_Read(&hi2c, addr << 1, (uint8_t)register_pointer, I2C_MEMADD_SIZE_8BIT, reg_data, 1, 100);
     if (status != HAL_OK) {
-            char buf[64];
-            sprintf(buf, "I2C8_8 read from 0x%x register 0x%x failed\r\n", addr, register_pointer);
-            DBG_PUT(buf);
-        }
+        char buf[64];
+        sprintf(buf, "I2C8_8 read from 0x%x register 0x%x failed\r\n", addr, register_pointer);
+        DBG_PUT(buf);
+    }
 }
 
 /**
@@ -185,14 +186,15 @@ void hi2c_read8_8(I2C_HandleTypeDef hi2c, uint8_t addr, uint8_t register_pointer
  */
 void hi2c_write8_8(I2C_HandleTypeDef hi2c, uint8_t addr, uint8_t register_pointer, uint8_t register_value) {
     uint8_t dataBuffer[1];
-	HAL_StatusTypeDef status;
+    HAL_StatusTypeDef status;
     dataBuffer[0] = register_value;
-    status = HAL_I2C_Mem_Write(&hi2c, addr << 1, (uint8_t)register_pointer, I2C_MEMADD_SIZE_8BIT, dataBuffer, 1, 100);
+    status =
+        HAL_I2C_Mem_Write(&hi2c, addr << 1, (uint8_t)register_pointer, I2C_MEMADD_SIZE_8BIT, dataBuffer, 1, 100);
     if (status != HAL_OK) {
-            char buf[64];
-            sprintf(buf, "I2C8_8 write to 0x%x failed: 0x%x\r\n", addr, register_pointer);
-            DBG_PUT(buf);
-        }
+        char buf[64];
+        sprintf(buf, "I2C8_8 write to 0x%x failed: 0x%x\r\n", addr, register_pointer);
+        DBG_PUT(buf);
+    }
 }
 
 /**
@@ -207,10 +209,10 @@ void hi2c_read8_16(I2C_HandleTypeDef hi2c, uint8_t addr, uint8_t register_pointe
     HAL_StatusTypeDef status = HAL_OK;
     status = HAL_I2C_Mem_Read(&hi2c, addr << 1, (uint8_t)register_pointer, I2C_MEMADD_SIZE_8BIT, reg_data, 2, 100);
     if (status != HAL_OK) {
-            char buf[64];
-            sprintf(buf, "I2C8_16 read from 0x%x register 0x%x failed\r\n", addr, register_pointer);
-            DBG_PUT(buf);
-        }
+        char buf[64];
+        sprintf(buf, "I2C8_16 read from 0x%x register 0x%x failed\r\n", addr, register_pointer);
+        DBG_PUT(buf);
+    }
     return;
 }
 
@@ -224,12 +226,13 @@ void hi2c_read8_16(I2C_HandleTypeDef hi2c, uint8_t addr, uint8_t register_pointe
  */
 void hi2c_write8_16(I2C_HandleTypeDef hi2c, uint8_t addr, uint8_t register_pointer, uint16_t register_value) {
     uint16_t dataBuffer[1];
-	HAL_StatusTypeDef status;
+    HAL_StatusTypeDef status;
     dataBuffer[0] = register_value;
-    status = HAL_I2C_Mem_Write(&hi2c, addr << 1, (uint8_t)register_pointer, I2C_MEMADD_SIZE_8BIT, dataBuffer, 2, 100);
+    status =
+        HAL_I2C_Mem_Write(&hi2c, addr << 1, (uint8_t)register_pointer, I2C_MEMADD_SIZE_8BIT, dataBuffer, 2, 100);
     if (status != HAL_OK) {
-            char buf[64];
-            sprintf(buf, "I2C8_16 write to 0x%x failed: 0x%x\r\n", addr, register_pointer);
-            DBG_PUT(buf);
-        }
+        char buf[64];
+        sprintf(buf, "I2C8_16 write to 0x%x failed: 0x%x\r\n", addr, register_pointer);
+        DBG_PUT(buf);
+    }
 }

@@ -12,7 +12,6 @@
  * GNU General Public License for more details.
  */
 
-
 /*
  * Note on application of SPI burst readout from arducam sensor
  *
@@ -31,7 +30,6 @@
  * 		burst mode. ie: leave CS low until the entire image is read off.
  *
  */
-
 
 /**
  * @file spi_bitbang.c
@@ -212,7 +210,7 @@ bool write_spi_reg(uint8_t addr, uint8_t packet, uint8_t sensor) {
  * @param sensor    target sensor
  */
 uint8_t spi_read_burst(uint8_t sensor) {
-    uint8_t rec[8];
+  uint8_t rec[8];
 	// Receive phase
 	 for (int i = 0; i < 8; i++) {
 		 // keeps clock duty cycle at roughly 50%
@@ -272,13 +270,13 @@ void spi_init_burst(uint8_t sensor){
 /*
  * DeInitializes burst mode on sensor
  */
-void spi_deinit_burst(uint8_t sensor){
+void spi_deinit_burst(uint8_t sensor) {
     if (sensor == 0x3C) {
         _CS1_HIGH();
     } else {
         _CS2_HIGH();
     }
-	return;
+    return;
 }
 
 /**

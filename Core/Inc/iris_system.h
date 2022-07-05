@@ -71,7 +71,6 @@ void Error_Handler(void);
 //#define IRIS_FM
 #define IRIS_PROTO
 
-
 #ifdef IRIS_FM
 #define CURRENTSENSE_5V 0x40
 #define CURRENTSENSE_3V3 0x45
@@ -85,11 +84,9 @@ void Error_Handler(void);
 // defines for iris proto
 #endif
 
-
 /* Iris Spec Defines --------------------------------------------------------*/
 //#define format JPEG
 //#define width 1280
-
 
 /* USER CODE END Private defines */
 
