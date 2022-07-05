@@ -12,7 +12,6 @@ extern int format;
 extern I2C_HandleTypeDef hi2c2;
 extern UART_HandleTypeDef huart1;
 
-
 static inline const char *next_token(const char *ptr) {
     /* move to the next space */
     while (*ptr && *ptr != ' ')
@@ -280,7 +279,7 @@ void uart_handle_capture_cmd(const char *cmd) {
         return;
     }
 
-//    arducam_capture_image(target_sensor);
+    //    arducam_capture_image(target_sensor);
     SingleCapTransfer(format, target_sensor);
 }
 
@@ -377,11 +376,8 @@ void uart_handle_read_file_cmd(const char *cmd) {
 void uart_handle_list_files_cmd(const char *cmd) {
     const char *wptr = next_token(cmd);
 
-
     list_files();
 }
-
-
 
 void sensor_togglepower(int i) {
     if (i == 1) {
@@ -495,5 +491,3 @@ void print_progress(uint8_t count, uint8_t max) {
         DBG_PUT("\r\n");
     }
 }
-
-
