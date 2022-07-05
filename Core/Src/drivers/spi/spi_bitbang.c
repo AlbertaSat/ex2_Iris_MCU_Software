@@ -114,7 +114,7 @@ uint8_t read_spi_reg(uint8_t addr, uint8_t sensor) {
     // Receive phase
     for (int i = 0; i < 8; i++) {
     	// write low regardless for dummy byte, this logic keeps the duty cycle for the clock
-    	// at around 50%
+    	// at around 50% without having to mess with the delay_us();
     	if (address[i] == 1){
 			MOSI_Port->BRR = MOSI_Pin;
 		}else{
