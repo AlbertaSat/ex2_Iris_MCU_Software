@@ -161,16 +161,12 @@ void printTemp(uint16_t temp, uint8_t sensor) {
     DBG_PUT(buf);
 }
 
-
-void test_clocksignal(){
-	for(;;){
-//	HAL_GPIO_WritePin(CLK_Port, CLK_Pin, GPIO_PIN_SET);
-	CLK_Port->BSRR = CLK_Pin; // high
-	MOSI_Port->BSRR = MOSI_Pin; // high
-	CLK_Port->BRR = CLK_Pin; // low
-	MOSI_Port->BRR = MOSI_Pin; // high
-	}
+void test_clocksignal() {
+    for (;;) {
+        //	HAL_GPIO_WritePin(CLK_Port, CLK_Pin, GPIO_PIN_SET);
+        CLK_Port->BSRR = CLK_Pin;   // high
+        MOSI_Port->BSRR = MOSI_Pin; // high
+        CLK_Port->BRR = CLK_Pin;    // low
+        MOSI_Port->BRR = MOSI_Pin;  // high
+    }
 }
-
-
-
