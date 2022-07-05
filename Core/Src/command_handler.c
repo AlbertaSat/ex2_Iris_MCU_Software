@@ -119,8 +119,7 @@ void sensor_idle() {
      * 		 cut power to it and require reprogramming.
      */
     // pull mosfet driver pin low, cutting power to sensors
-    HAL_GPIO_WritePin(CAM_EN_GPIO_Port, CAM_EN_Pin, GPIO_PIN_RESET);
-    SPI1_IT_Transmit(&ack);
+    sensor_togglepower(0);
 
     return;
 }
@@ -131,7 +130,7 @@ void sensor_idle() {
  */
 void sensor_active() {
     // pull mosfet driver pin high, powering sensors
-    HAL_GPIO_WritePin(CAM_EN_GPIO_Port, CAM_EN_Pin, GPIO_PIN_SET);
+    sensor_togglepower(1);
     //	// initialize sensors
     initalize_sensors();
     return;

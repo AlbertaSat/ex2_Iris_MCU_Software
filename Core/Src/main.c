@@ -660,7 +660,7 @@ static void onboot_commands(void) {
     init_filesystem();
 #ifdef CURRENTSENSE_5V
     init_ina209(CURRENTSENSE_5V);
-#endif //CURRENTSENSE_5V
+#endif // CURRENTSENSE_5V
     // init_ina209(CURRENTSENSE_5V);
 
     HAL_Delay(1000);

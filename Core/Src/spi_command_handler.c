@@ -10,8 +10,8 @@ extern uint8_t cam_to_nand_transfer_flag;
 uint32_t image_length; // Only here for testing purposes
 static uint32_t count = 0x0FFF0000;
 
-#define VIS 0
-#define NIR 1
+#define VIS 0x3C
+#define NIR 0x3E
 
 /**
  * @brief
