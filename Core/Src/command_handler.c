@@ -17,6 +17,11 @@ extern int format;
 extern int width;
 extern const struct sensor_reg OV5642_JPEG_Capture_QSXGA[];
 extern const struct sensor_reg OV5642_QVGA_Preview[];
+
+uint8_t VIS_DETECTED = 0;
+uint8_t NIR_DETECTED = 0;
+
+
 /*
  * todo:
  * 		- 	TEST THESE FUNCTIONS EH
@@ -235,7 +240,8 @@ void initalize_sensors(void) {
     uint8_t res = onboot_sensors(VIS_SENSOR);
 	if (res == 1){
 		program_sensor(format, VIS_SENSOR);
-	DBG_PUT("VIS Camera Mode: JPEG\r\nI2C address: 0x3C\r\n\n");
+		DBG_PUT("VIS Camera Mode: JPEG\r\nI2C address: 0x3C\r\n\n");
+		VIS_DETECTED = 1;
 	}
 	if (res == -1){
 		// need some error handling eh
@@ -247,7 +253,8 @@ void initalize_sensors(void) {
     res = onboot_sensors(NIR_SENSOR);
 	if (res == 1){
 		program_sensor(format, NIR_SENSOR);
-	DBG_PUT("NIR Camera Mode: JPEG\r\nI2C address: 0x3D\r\n\n");
+		DBG_PUT("NIR Camera Mode: JPEG\r\nI2C address: 0x3D\r\n\n");
+		NIR_DETECTED = 1;
 	}
 	if (res == -1){
 		// need some error handling eh

@@ -10,6 +10,7 @@
 #include "housekeeping.h"
 extern int format;
 extern I2C_HandleTypeDef hi2c2;
+extern UART_HandleTypeDef huart1;
 
 
 static inline const char *next_token(const char *ptr) {
@@ -260,12 +261,10 @@ void uart_handle_capture_cmd(const char *cmd) {
     int target_sensor;
     switch (*wptr) {
     case 'v':
-#ifndef FAKE_CAM
         if (VIS_DETECTED == 0) {
             DBG_PUT("VIS Unavailable.\r\n");
             return;
         }
-#endif
         target_sensor = VIS_SENSOR; // vis = 0
         break;
 
@@ -281,7 +280,8 @@ void uart_handle_capture_cmd(const char *cmd) {
         return;
     }
 
-    arducam_capture_image(target_sensor);
+//    arducam_capture_image(target_sensor);
+    SingleCapTransfer(format, target_sensor);
 }
 
 void uart_handle_xfer_cmd(const char *cmd) {
@@ -495,3 +495,5 @@ void print_progress(uint8_t count, uint8_t max) {
         DBG_PUT("\r\n");
     }
 }
+
+

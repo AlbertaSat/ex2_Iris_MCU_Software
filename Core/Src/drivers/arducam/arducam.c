@@ -5,6 +5,8 @@
 #include "flash_cmds.h"
 #include "I2C.h"
 #include "debug.h"
+#include "spi_bitbang.h"
+extern UART_HandleTypeDef huart1;
 
 // probs needs to be re-evaluated
 uint8_t image_number = 0;
@@ -168,12 +170,7 @@ int arducam_set_resolution(int format, int width, uint8_t sensor) {
         if (format == RAW)
             arducam_raw_init(2592, 1944, sensor);
         else {
-#if 0
             wrSensorRegs16_8(ov5642_2592x1944, sensor);
-#else
-            DBG_PUT("2592x1944 not supported");
-            rc = 0;
-#endif
         }
         break;
     default:
@@ -441,65 +438,70 @@ static inline uint32_t min(uint32_t a, uint32_t b) { return (a <= b) ? a : b; }
 //
 //#define BUF_LEN 64
 //
-//static void dump_uart_jpg(uint32_t length, uint8_t sensor) {
-//    uint8_t prev = 0, curr = 0;
-//    bool found_header = false;
-//    uint32_t i, x = 0;
-//    uint8_t buf[BUF_LEN];
-//
-//    // Note: we're assuming the ARM is BE
-//    memcpy(buf, &length, sizeof(length));
-//    HAL_UART_Transmit(&huart1, (uint8_t *) buf, sizeof(length), 100);
-//
-//    for (i=0; i<length; i++) {
-//        prev = curr;
-//        curr = read_fifo(sensor);
-//        if ((curr == 0xd9) && (prev == 0xff)) {
-//            // found the footer - break
-//            buf[x++] = curr;
-//            HAL_UART_Transmit(&huart1, buf, x, 100);
-//            x = 0;
-//            i++;
-//            found_header = false;
-//            break;
-//        }
-//
-//        if (found_header) {
-//            buf[x] = curr;
-//            x++;
-//            if (x >= BUF_LEN) {
-//                HAL_UART_Transmit(&huart1, buf, BUF_LEN, 100);
-//                x = 0;
-//            }
-//        }
-//        else if ((curr == 0xd8) && (prev = 0xff)) {
-//            found_header = true;
-//            buf[0] = prev;
-//            buf[1] = curr;
-//            HAL_UART_Transmit(&huart1, (uint8_t *) buf, 2, 100);
-//            x = 0;
-//        }
-//    }
-//
-//    if (x) {
-//        HAL_UART_Transmit(&huart1, buf, x, 100);
-//    }
-//
-//    if (found_header) {
-//        // We found the header but not the footer :-(
-//        buf[0] = 0xff;
-//        buf[1] = 0xd9;
-//        HAL_UART_Transmit(&huart1, (uint8_t *) buf, 2, 100);
-//    }
-//    else {
-//        memset(buf, 0, BUF_LEN);
-//        while (i < length) {
-//            int cnt = min(length - i, BUF_LEN);
-//            HAL_UART_Transmit(&huart1, (uint8_t *) buf, cnt, 100);
-//            i += cnt;
-//        }
-//    }
-//}
+static void dump_uart_jpg_burst(uint32_t length, uint8_t sensor) {
+
+	uint8_t BUF_LEN = 64;
+    uint8_t prev = 0, curr = 0;
+    bool found_header = false;
+    uint32_t i, x = 0;
+    uint8_t buf[BUF_LEN];
+
+    // Note: we're assuming the ARM is BE
+    memcpy(buf, &length, sizeof(length));
+    HAL_UART_Transmit(&huart1, (uint8_t *) buf, sizeof(length), 100);
+
+    spi_init_burst(sensor);
+    for (i=0; i<length; i++) {
+        prev = curr;
+        curr = spi_read_burst(sensor);
+        if ((curr == 0xd9) && (prev == 0xff)) {
+            // found the footer - break
+            buf[x++] = curr;
+            HAL_UART_Transmit(&huart1, buf, x, 100);
+            x = 0;
+            i++;
+            found_header = false;
+            break;
+        }
+
+        if (found_header) {
+            buf[x] = curr;
+            x++;
+            if (x >= BUF_LEN) {
+                HAL_UART_Transmit(&huart1, buf, BUF_LEN, 100);
+                x = 0;
+            }
+        }
+        else if ((curr == 0xd8) && (prev = 0xff)) {
+            found_header = true;
+            buf[0] = prev;
+            buf[1] = curr;
+            HAL_UART_Transmit(&huart1, (uint8_t *) buf, 2, 100);
+            x = 0;
+
+        }
+    }
+    spi_deinit_burst(sensor);
+
+    if (x) {
+        HAL_UART_Transmit(&huart1, buf, x, 100);
+    }
+
+    if (found_header) {
+        // We found the header but not the footer :-(
+        buf[0] = 0xff;
+        buf[1] = 0xd9;
+        HAL_UART_Transmit(&huart1, (uint8_t *) buf, 2, 100);
+    }
+    else {
+        memset(buf, 0, BUF_LEN);
+        while (i < length) {
+            int cnt = min(length - i, BUF_LEN);
+            HAL_UART_Transmit(&huart1, (uint8_t *) buf, cnt, 100);
+            i += cnt;
+        }
+    }
+}
 //
 //static void uart_dump_buf(uint8_t *data, uint16_t len) {
 //    char digit[4];
@@ -613,42 +615,31 @@ static inline uint32_t min(uint32_t a, uint32_t b) { return (a <= b) ? a : b; }
 
 //
 //
-//void SingleCapTransfer(int format, uint8_t sensor) {
-//    char buf[64];
-//    uint32_t length;
-//
-//    sprintf(buf, "Single Capture Transfer type %x\r\n", format);
-//    DBG_PUT(buf);
-//    write_reg(ARDUCHIP_TIM, VSYNC_LEVEL_MASK, sensor); // VSYNC is active HIGH
-//    uint8_t val;
-//    rdSensorReg16_8(REG_FORMAT_CTL, &val, sensor);
-//    sprintf(buf, "format reg: 0x%02x\r\n", val);
-//    DBG_PUT(buf);
-//
-//    flush_fifo(sensor);
-//    clear_fifo_flag(sensor);
-//    start_capture(sensor);
-//
-//    while (!get_bit(ARDUCHIP_TRIG, CAP_DONE_MASK, sensor)) {
-//    }
-//
-//    length = read_fifo_length(sensor);
-//    sprintf(buf, "Capture complete! FIFO len 0x%lx\r\n", length);
-//    DBG_PUT(buf);
-//    DBG_PUT("JPG");
-//
-//    switch (format) {
-//    case BMP:
-//        dump_uart_bmp(sensor);
-//        break;
-//    case RAW:
-//        dump_uart_raw(length * 2, sensor);
-//        break;
-//    default:
-//        break;
-//    }
-//
-//    DBG_PUT("\04");
-//}
+void SingleCapTransfer(int format, uint8_t sensor) {
+    char buf[64];
+    uint32_t length;
+
+    sprintf(buf, "Single Capture Transfer type %x\r\n", format);
+    DBG_PUT(buf);
+    write_reg(ARDUCHIP_TIM, VSYNC_LEVEL_MASK, sensor); // VSYNC is active HIGH
+    uint8_t val;
+    rdSensorReg16_8(REG_FORMAT_CTL, &val, sensor);
+    sprintf(buf, "format reg: 0x%02x\r\n", val);
+    DBG_PUT(buf);
+
+    flush_fifo(sensor);
+    clear_fifo_flag(sensor);
+    start_capture(sensor);
+
+    while (!get_bit(ARDUCHIP_TRIG, CAP_DONE_MASK, sensor)) {
+    }
+
+    length = read_fifo_length(sensor);
+    sprintf(buf, "Capture complete! FIFO len 0x%lx\r\n", length);
+    DBG_PUT(buf);
+    DBG_PUT("JPG");
+    dump_uart_jpg_burst(length, sensor);
+    DBG_PUT("\04");
+}
 
 void set_image_num(uint8_t num) { image_number = num; }

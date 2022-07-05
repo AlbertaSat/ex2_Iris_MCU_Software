@@ -12,6 +12,27 @@
  * GNU General Public License for more details.
  */
 
+
+/*
+ * Note on application of SPI burst readout from arducam sensor
+ *
+ * 		General flow consists of:
+ *
+ * 		spi_init_burst(sensor);
+ * 		for (j=0; j<num_of_chunks; j++){
+ *  		for (i=0; i<chunk_length; i++) {
+ *      		imagebyte = spi_read_burst(sensor);
+ *      	}
+ *  	}
+ * 		spi_deinit_burst(sensor);
+ *
+ * 		Important to make sure that deinit_burst gets called otherwise the CS will stay low.
+ * 		Also don't toggle CS while doing a burst read - I think it will muck it up and you'll have to re-init
+ * 		burst mode. ie: leave CS low until the entire image is read off.
+ *
+ */
+
+
 /**
  * @file spi_bitbang.c
  * @author Liam Droog
@@ -66,7 +87,7 @@
 uint8_t read_spi_reg(uint8_t addr, uint8_t sensor) {
     uint8_t rec;
     // CS Low
-    if (sensor == 0) {
+    if (sensor == 0x3C) {
         _CS1_LOW(); // VIS sensor is CS1
     } else {
         _CS2_LOW(); // NIR sensor is CS2
@@ -91,7 +112,7 @@ uint8_t read_spi_reg(uint8_t addr, uint8_t sensor) {
         _CLK_LOW();
     }
 
-    if (sensor == 0) {
+    if (sensor == 0x3C) {
         _CS1_HIGH();
     } else {
         _CS2_HIGH();
@@ -112,7 +133,7 @@ uint8_t read_spi_reg(uint8_t addr, uint8_t sensor) {
  */
 bool write_spi_reg(uint8_t addr, uint8_t packet, uint8_t sensor) {
     // CS Low
-    if (sensor == 0) {
+    if (sensor == 0x3C) {
         _CS1_LOW(); // VIS sensor is CS1
     } else {
         _CS2_LOW(); // NIR sensor is CS2
@@ -133,7 +154,7 @@ bool write_spi_reg(uint8_t addr, uint8_t packet, uint8_t sensor) {
         _CLK_LOW();
     }
 
-    if (sensor == 0) {
+    if (sensor == 0x3C) {
         _CS1_HIGH();
     } else {
         _CS2_HIGH();
@@ -144,48 +165,59 @@ bool write_spi_reg(uint8_t addr, uint8_t packet, uint8_t sensor) {
 }
 
 /**
- * @brief Reads multiple bytes from target spi register
+ * @brief Reads byte in burst mode from target spi register
  *
- * @param addr      target register address
- * @param length    number of bytes to read
  * @param sensor    target sensor
  */
-void spi_read_multiple_bytes(uint8_t addr, uint32_t length, uint8_t sensor) {
+uint8_t spi_read_burst(uint8_t sensor) {
     uint8_t rec;
-    // CS Low
-    if (sensor == 0) {
-        _CS1_LOW(); // VIS sensor is CS1
-    } else {
-        _CS2_LOW(); // NIR sensor is CS2
-    }
-    // Send Phase
-    for (int i = 0; i < 8; i++) {
-        HAL_GPIO_WritePin(MOSI_Port, MOSI_Pin, bit_read(addr, i));
-        _CLK_HIGH();
-        HAL_GPIO_ReadPin(MISO_Port, MISO_Pin);
-        _CLK_LOW();
-    }
+	// Receive phase
+	HAL_GPIO_WritePin(MOSI_Port, MOSI_Pin, GPIO_PIN_RESET);
+	for (int i = 0; i < 8; i++) {
+		_CLK_HIGH();
+		if (HAL_GPIO_ReadPin(MISO_Port, MISO_Pin) == GPIO_PIN_SET) {
+			rec = rec << 1 | 0b1;
+		} else {
+			rec = rec << 1 | 0b0;
+		}
+		_CLK_LOW();
+	}
+	return rec;
+}
 
-    for (int j = 0; j < length; j++) {
-        // Recieve phase
-        for (int i = 0; i < 8; i++) {
-            HAL_GPIO_WritePin(MOSI_Port, MOSI_Pin, bit_read(0x00, i));
-            _CLK_HIGH();
-            if (HAL_GPIO_ReadPin(MISO_Port, MISO_Pin) == GPIO_PIN_SET) {
-                rec = rec << 1 | 0b1;
-            } else {
-                rec = rec << 1 | 0b0;
-            }
-            _CLK_LOW();
-            rec = 0; // remove me and figure out how to dump data
-        }
-    }
-    if (sensor == 0) {
+/*
+ * Initializes burst mode on image sensor
+ *
+ * param:
+ * 		sensor: target sensor
+ */
+void spi_init_burst(uint8_t sensor){
+	if (sensor == 0x3C) {
+		_CS1_LOW(); // VIS sensor is CS1
+	} else {
+		_CS2_LOW(); // NIR sensor is CS2
+	}
+	uint8_t addr = 0x3C; // not i2c address dummy, spi reg x3C
+	// Send Phase
+	    for (int i = 0; i < 8; i++) {
+	        HAL_GPIO_WritePin(MOSI_Port, MOSI_Pin, bit_read(addr, i));
+	        _CLK_HIGH();
+	        HAL_GPIO_ReadPin(MISO_Port, MISO_Pin);
+	        _CLK_LOW();
+	    }
+	return;
+}
+
+/*
+ * DeInitializes burst mode on sensor
+ */
+void spi_deinit_burst(uint8_t sensor){
+    if (sensor == 0x3C) {
         _CS1_HIGH();
     } else {
         _CS2_HIGH();
     }
-    HAL_GPIO_WritePin(MOSI_Port, MOSI_Pin, GPIO_PIN_RESET);
+	return;
 }
 
 /**
