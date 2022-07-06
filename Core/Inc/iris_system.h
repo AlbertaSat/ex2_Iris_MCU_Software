@@ -69,7 +69,7 @@ void Error_Handler(void);
 /* Iris Model Defines --------------------------------------------------------*/
 //#define IRIS_EM
 //#define IRIS_FM
-#define IRIS_PROTO
+// #define IRIS_PROTO
 
 #ifdef IRIS_FM
 #define CURRENTSENSE_5V 0x40

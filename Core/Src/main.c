@@ -459,7 +459,7 @@ static void MX_SPI2_Init(void) {
     hspi2.Init.Direction = SPI_DIRECTION_2LINES;
     hspi2.Init.DataSize = SPI_DATASIZE_8BIT;
     hspi2.Init.CLKPolarity = SPI_POLARITY_LOW;
-    hspi2.Init.CLKPhase = SPI_PHASE_1EDGE;
+    hspi2.Init.CLKPhase = SPI_PHASE_2EDGE;
     hspi2.Init.NSS = SPI_NSS_SOFT;
     hspi2.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_32;
     hspi2.Init.FirstBit = SPI_FIRSTBIT_MSB;
@@ -657,7 +657,7 @@ static void onboot_commands(void) {
     //#endif
 
     HAL_TIM_Base_Start(&htim2);
-    init_filesystem();
+    // init_filesystem();
 #ifdef CURRENTSENSE_5V
     init_ina209(CURRENTSENSE_5V);
 #endif // CURRENTSENSE_5V
@@ -665,14 +665,13 @@ static void onboot_commands(void) {
 
     HAL_Delay(1000);
 
-    flood_cam_spi();
-    init_temp_sensors();
-
-#ifdef IRIS_PROTO
+    //#ifdef IRIS_PROTO
     sensor_togglepower(1);
     flood_cam_spi();
     initalize_sensors();
-#endif // IRIS_PROTO
+    //#else
+    //    flood_cam_spi();
+    //#endif // IRIS_PROTO
 
 #ifdef UART_DEBUG
     DBG_PUT("-----------------------------------\r\n");
