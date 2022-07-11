@@ -25,6 +25,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <string.h>
+
 #include "arducam.h"
 #include "iris_system.h"
 #include "spi_bitbang.h"
@@ -35,6 +36,7 @@
 #include "spi_command_handler.h"
 #include "flash_cmds.h"
 #include "nandfs.h"
+#include "can.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -507,8 +509,6 @@ static void MX_USART1_UART_Init(void) {
     /* USER CODE BEGIN USART1_Init 2 */
 
     /* USER CODE END USART1_Init 2 */
-
-    /* USER CODE END USART1_Init 2 */
 }
 
 /**
@@ -532,7 +532,7 @@ static void MX_GPIO_Init(void) {
                       GPIO_PIN_RESET);
 
     /*Configure GPIO pin Output Level */
-    HAL_GPIO_WritePin(GPIOB, TEST_OUT1_Pin | NAND_CS1_Pin, GPIO_PIN_RESET);
+    HAL_GPIO_WritePin(GPIOB, TEST_OUT1_Pin | NAND_CS1_Pin | CAN_TX_Pin | CAN_S_Pin, GPIO_PIN_RESET);
 
     /*Configure GPIO pins : USART2_CS1_Pin USART2_CS2_Pin WP__Pin */
     GPIO_InitStruct.Pin = USART2_CS1_Pin | USART2_CS2_Pin | WP__Pin;
@@ -554,12 +554,12 @@ static void MX_GPIO_Init(void) {
     GPIO_InitStruct.Pull = GPIO_NOPULL;
     HAL_GPIO_Init(USART2_MISO_GPIO_Port, &GPIO_InitStruct);
 
-    /*Configure GPIO pin : TEST_OUT1_Pin */
-    GPIO_InitStruct.Pin = TEST_OUT1_Pin;
+    /*Configure GPIO pins : TEST_OUT1_Pin CAN_TX_Pin CAN_S_Pin */
+    GPIO_InitStruct.Pin = TEST_OUT1_Pin | CAN_TX_Pin | CAN_S_Pin;
     GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
     GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-    HAL_GPIO_Init(TEST_OUT1_GPIO_Port, &GPIO_InitStruct);
+    HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
     /*Configure GPIO pin : NAND_CS1_Pin */
     GPIO_InitStruct.Pin = NAND_CS1_Pin;
@@ -581,6 +581,12 @@ static void MX_GPIO_Init(void) {
     GPIO_InitStruct.Pull = GPIO_PULLUP;
     GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
     HAL_GPIO_Init(NAND_CS2_GPIO_Port, &GPIO_InitStruct);
+
+    /*Configure GPIO pin : CAN_RX_Pin */
+    GPIO_InitStruct.Pin = CAN_RX_Pin;
+    GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+    GPIO_InitStruct.Pull = GPIO_NOPULL;
+    HAL_GPIO_Init(CAN_RX_GPIO_Port, &GPIO_InitStruct);
 }
 
 /* USER CODE BEGIN 4 */
