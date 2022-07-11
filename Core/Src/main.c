@@ -507,8 +507,6 @@ static void MX_USART1_UART_Init(void) {
     /* USER CODE BEGIN USART1_Init 2 */
 
     /* USER CODE END USART1_Init 2 */
-
-    /* USER CODE END USART1_Init 2 */
 }
 
 /**
@@ -595,6 +593,17 @@ void init_filesystem() {
 }
 
 static void onboot_commands(void) {
+
+#ifdef SPI_DEBUG
+    GPIO_InitTypeDef GPIO_InitStruct = {0};
+    /*Configure GPIO pin */
+    GPIO_InitStruct.Pin = ERR_Pin;
+    GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+    GPIO_InitStruct.Pull = GPIO_PULLUP;
+    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+    HAL_GPIO_Init(ERR_GPIO_Port, &GPIO_InitStruct);
+#endif
+
     HAL_TIM_Base_Start(&htim2);
     init_filesystem();
 #ifdef CURRENTSENSE_5V

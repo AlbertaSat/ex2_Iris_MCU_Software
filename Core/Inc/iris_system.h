@@ -47,8 +47,8 @@ extern "C" {
 /* Exported macro ------------------------------------------------------------*/
 /* USER CODE BEGIN EM */
 
-#define UART_DEBUG
-//#define SPI_DEBUG
+//#define UART_DEBUG
+#define SPI_DEBUG
 
 /* USER CODE END EM */
 
@@ -85,8 +85,8 @@ void Error_Handler(void);
 #endif
 
 /* Iris Spec Defines --------------------------------------------------------*/
-//#define format JPEG
-//#define width 1280
+#define ERR_Pin GPIO_PIN_9
+#define ERR_GPIO_Port GPIOA
 
 /* USER CODE END Private defines */
 
