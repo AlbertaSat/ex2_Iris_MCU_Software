@@ -665,13 +665,13 @@ static void onboot_commands(void) {
 
     HAL_Delay(1000);
 
-    //#ifdef IRIS_PROTO
+#ifdef IRIS_PROTO
     sensor_togglepower(1);
     flood_cam_spi();
     initalize_sensors();
-    //#else
-    //    flood_cam_spi();
-    //#endif // IRIS_PROTO
+#else
+    flood_cam_spi();
+#endif // IRIS_PROTO
 
 #ifdef UART_DEBUG
     DBG_PUT("-----------------------------------\r\n");
