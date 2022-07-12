@@ -155,6 +155,7 @@ int main(void) {
 
     /* Infinite loop */
     /* USER CODE BEGIN WHILE */
+
 #ifdef SPI_DEBUG
     while (1) {
         /* USER CODE END WHILE */
@@ -602,6 +603,8 @@ static void onboot_commands(void) {
     GPIO_InitStruct.Pull = GPIO_PULLUP;
     GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
     HAL_GPIO_Init(ERR_GPIO_Port, &GPIO_InitStruct);
+    ERR_GPIO_Port->BSRR = ERR_Pin;
+
 #endif
 
     HAL_TIM_Base_Start(&htim2);
@@ -635,6 +638,7 @@ void Error_Handler(void) {
     /* USER CODE BEGIN Error_Handler_Debug */
     /* User can add his own implementation to report the HAL error return uart_state */
     __disable_irq();
+    ERR_GPIO_Port->BRR = ERR_Pin; // toggle error pin low
     while (1) {
     }
     /* USER CODE END Error_Handler_Debug */
