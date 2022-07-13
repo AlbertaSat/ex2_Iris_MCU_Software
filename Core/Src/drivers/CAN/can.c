@@ -31,7 +31,7 @@ void send_can_header(uint8_t *header) {
     int k = 0;
     for (int j = 0; j < sizeof(header); j++) {
         for (int i = 0; i < 8; i++) {
-            if ((header >> i) & 1) {
+            if ((header[j] >> i) & 1) {
                 CAN_TX_GPIO_Port->BSRR = CAN_TX_Pin;
             } else {
                 CAN_TX_GPIO_Port->BRR = CAN_TX_Pin;
