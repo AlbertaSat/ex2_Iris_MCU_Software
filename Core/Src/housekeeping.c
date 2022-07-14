@@ -19,12 +19,37 @@ housekeeping_packet_t _get_housekeeping() {
     hk.gate_temp = get_temp(GATE_TEMP_SENSOR);
     hk.imagenum = get_image_num(1);
     hk.software_version = software_ver;
-    //	hk.MAX_5V_voltage = get_shunt_voltage_peak_pos(CURRENTSENSE_5V);
-    //	hk.MAX_5V_power  = get_power_peak(CURRENTSENSE_5V);
-    //	hk.MAX_3V_voltage = get_shunt_voltage_peak_pos(CURRENTSENSE_3V3);
-    //	hk.MAX_3V_power = get_power_peak(CURRENTSENSE_3V3);
-    //	hk.MIN_5V_voltage = get_shunt_voltage_peak_neg(CURRENTSENSE_5V);
-    //	hk.MIN_3V_voltage = get_shunt_voltage_peak_neg(CURRENTSENSE_3V3);
+
+#if defined IRIS_EM || defined IRIS_FM
+    uint16_t pospeak, pwrpeak, negpeak;
+    // 5V current sense exists.
+    get_shunt_voltage_peak_pos(CURRENTSENSE_5V, &pospeak);
+    get_power_peak(CURRENTSENSE_5V, &pwrpeak);
+    get_shunt_voltage_peak_neg(CURRENTSENSE_5V, &negpeak);
+    hk.MAX_5V_voltage = pospeak;
+    hk.MAX_5V_power = pwrpeak;
+    hk.MIN_5V_voltage = negpeak;
+#else
+    // 5V current sense does not exist (proto / old Iris)
+    hk.MAX_5V_voltage = 0xDEAD;
+    hk.MAX_5V_power = 0xBEEF;
+    hk.MIN_5V_voltage = 0xBABE;
+#endif // IRIS_EM || IRIS_FM
+
+#ifdef IRIS_FM
+    // 3V3 current sense exists
+    get_shunt_voltage_peak_pos(CURRENTSENSE_3V3, &pospeak);
+    get_power_peak(CURRENTSENSE_3V3, &pwrpeak);
+    get_shunt_voltage_peak_neg(CURRENTSENSE_3V3, &negpeak);
+    hk.MAX_3V_voltage = pospeak;
+    hk.MAX_3V_power = pwrpeak;
+    hk.MIN_3V_voltage = negpeak;
+#else
+    // 3v3 current sense does not exist (proto / old / EM)
+    hk.MAX_3V_voltage = 0xDEAD;
+    hk.MAX_3V_power = 0xBEEF;
+    hk.MIN_3V_voltage = 0xBABE;
+#endif // IRIS_FM
     return hk;
 }
 
