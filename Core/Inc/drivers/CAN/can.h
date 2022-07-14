@@ -13,8 +13,8 @@
 #define DOMINANT 0
 #define RECESSIVE 1
 
-#define CAN_HEADER_LEN 19
-#define CAN_FOOTER_LEN 25
+#define CAN_HEADER_LEN 3
+#define CAN_FOOTER_LEN 4
 
 // don't forget stuffin
 // typedef struct __attribute__((__packed__)) CAN_packet_s {
