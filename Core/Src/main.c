@@ -638,7 +638,9 @@ void Error_Handler(void) {
     /* USER CODE BEGIN Error_Handler_Debug */
     /* User can add his own implementation to report the HAL error return uart_state */
     __disable_irq();
+#ifdef SPI_DEBUG
     ERR_GPIO_Port->BRR = ERR_Pin; // toggle error pin low
+#endif                            // SPI_DEBUG
     while (1) {
     }
     /* USER CODE END Error_Handler_Debug */

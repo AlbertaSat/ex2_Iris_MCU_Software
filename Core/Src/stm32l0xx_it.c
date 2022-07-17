@@ -85,7 +85,9 @@ void HardFault_Handler(void)
 {
   /* USER CODE BEGIN HardFault_IRQn 0 */
     __disable_irq();
+#ifdef SPI_DEBUG
     ERR_GPIO_Port->BRR = ERR_Pin; // toggle error pin low
+#endif //SPI_DEBUG
   /* USER CODE END HardFault_IRQn 0 */
   while (1)
   {
