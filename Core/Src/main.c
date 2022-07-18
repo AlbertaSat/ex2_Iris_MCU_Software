@@ -685,6 +685,10 @@ static void onboot_commands(void) {
             "        SPI Edition         \r\n");
     DBG_PUT("-----------------------------------\r\n");
 #endif
+    DBG_PUT("-----------------------------------\r\n");
+    DBG_PUT("Iris Electronics Test Software\r\n"
+            "        FlatSat v2 (18/07/2022) Edition         \r\n");
+    DBG_PUT("-----------------------------------\r\n");
     return;
 
     // Set resolution for both sensors
