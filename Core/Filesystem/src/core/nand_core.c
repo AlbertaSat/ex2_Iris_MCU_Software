@@ -42,7 +42,6 @@ int _find_blank(PhysicalAddrs *addr) {
     NAND_ReturnType status = Ret_Failed;
     for (uint16_t i = 0; i < NUM_BLOCKS; i++) {
         search.block = i;
-        search.plane = i & 1;
         status = NAND_Page_Read(&search, sizeof(node), (uint8_t *)&node);
         if (status != Ret_Success) {
             continue; // Might have hit a bad block, not really sure
@@ -64,11 +63,11 @@ static int _find_inode(PhysicalAddrs *addr, int inodeid) {
     NAND_ReturnType status = Ret_Failed;
     for (uint16_t i = 0; i < NUM_BLOCKS; i++) {
         search.block = i;
-        search.plane = i & 1;
         status = NAND_Page_Read(&search, sizeof(node), (uint8_t *)&node);
         if (status != Ret_Success) {
             continue; // Might have hit a bad block, not really sure
         }
+        DBG_PUT("block %d magic 0x%x inode 0x%x\r\n", search.block, node.magic, node.id);
         if (node.id == inodeid && node.isfirst) {
             memcpy(addr, &search, sizeof(PhysicalAddrs));
             return 0;
@@ -85,7 +84,6 @@ int _find_lowest_inode() {
     int found_valid_file = 0; // Sanity check, if no files found, we will return 0;
     for (uint16_t i = 0; i < NUM_BLOCKS; i++) {
         search.block = i;
-        search.plane = i & 1;
         status = NAND_Page_Read(&search, sizeof(node), (uint8_t *)&node);
         if (status != Ret_Success) {
             continue; // Might have hit a bad block, not really sure
@@ -112,7 +110,6 @@ int _find_highest_inode() {
     int found_valid_file = 0; // Sanity check, if no files found, we will return 0;
     for (uint16_t i = 0; i < NUM_BLOCKS; i++) {
         search.block = i;
-        search.plane = i & 1;
         status = NAND_Page_Read(&search, sizeof(node), (uint8_t *)&node);
         if (status != Ret_Success) {
             continue; // Might have hit a bad block, not really sure
@@ -120,6 +117,7 @@ int _find_highest_inode() {
         if (node.magic != MAGIC) {
             continue;
         }
+        DBG_PUT("find_highest_inode: block %d magic 0x%x inode 0x%x\r\n", search.block, node.magic, node.id);
         found_valid_file = 1;
         if (node.id > highest) {
             highest = node.id;
@@ -169,11 +167,13 @@ int NANDfs_core_create(FileHandle_t *handle) {
     return 0;
 }
 
-int NANDfs_core_format() {
+void NANDfs_core_format() {
     PhysicalAddrs addr = {0};
     for (int i = 0; i < NUM_BLOCKS; i++) {
         addr.block = i;
-        NAND_Block_Erase(&addr);
+        if (NAND_Block_Erase(&addr) != Ret_Success) {
+            DBG_PUT("Erase block %d failed\n", addr.block);
+        }
     }
     lowest_inode = 0;
     highest_inode = 0;

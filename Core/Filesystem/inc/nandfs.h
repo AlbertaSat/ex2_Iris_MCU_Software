@@ -64,7 +64,7 @@ int NANDfs_read(NAND_FILE *fd, int size, void *buf);
 
 int NANDfs_write(NAND_FILE *fd, int size, void *buf);
 
-int NANDfs_format();
+void NANDfs_format();
 
 #ifdef __cplusplus
 }

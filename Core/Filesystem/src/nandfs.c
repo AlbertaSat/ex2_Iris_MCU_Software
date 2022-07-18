@@ -22,6 +22,7 @@
 extern "C" {
 #endif
 
+#include <string.h>
 #include "nandfs.h"
 #include "nand_errno.h"
 #include "nand_m79a_lld.h"
@@ -43,7 +44,7 @@ static FileHandle_t *_get_handle() {
             return &(handles[i]);
         }
     }
-    return -1;
+    return 0;
 }
 
 /*
@@ -57,7 +58,7 @@ static DirHandle_t *_get_dir_handle() {
             return &(dir_handles[i]);
         }
     }
-    return -1;
+    return 0;
 }
 
 int NANDfs_init() { NANDfs_Core_Init(); }
@@ -66,13 +67,13 @@ int NANDfs_delete(int fileid) { return NANDfs_core_delete(fileid); }
 
 NAND_FILE *NANDfs_create() {
     FileHandle_t *handle = _get_handle();
-    if (handle == -1) {
+    if (!handle) {
         nand_errno = NAND_EMFILE;
-        return -1;
+        return 0;
     }
     int ret = NANDfs_core_create(handle);
     if (ret == -1) {
-        return -1;
+        return 0;
     }
     return handle;
 }
@@ -96,24 +97,24 @@ int NANDfs_close(NAND_FILE *file) {
  */
 NAND_FILE *NANDfs_open(int fileid) {
     FileHandle_t *handle = _get_handle();
-    if (handle == -1) {
+    if (!handle) {
         nand_errno = NAND_EMFILE;
-        return (NAND_FILE *)-1;
+        return 0;
     }
     if (NANDfs_core_open(fileid, handle) == -1) {
-        return (NAND_FILE *)-1;
+        return 0;
     }
     return handle;
 }
 
 NAND_DIR *NANDfs_opendir() {
     DirHandle_t *dir = _get_dir_handle();
-    if (dir == -1) {
+    if (!dir) {
         nand_errno = NAND_EMFILE;
-        return (NAND_DIR *)-1;
+        return 0;
     }
     if (NANDfs_Core_opendir(dir) == -1) {
-        return (NAND_DIR *)-1;
+        return 0;
     }
     return (NAND_DIR *)dir;
 }
@@ -143,7 +144,7 @@ int NANDfs_write(NAND_FILE *fd, int size, void *buf) {
     return NANDfs_core_write(file, size, buf);
 }
 
-int NANDfs_format() { return NANDfs_core_format(); }
+void NANDfs_format() { NANDfs_core_format(); }
 
 #ifdef __cplusplus
 }

@@ -25,7 +25,7 @@
 
 int NANDfs_core_delete(uint32_t inodeid);
 int NANDfs_core_create(FileHandle_t *handle);
-int NANDfs_core_format();
+void NANDfs_core_format();
 int NANDfs_Core_Init();
 int NANDfs_core_open(int fileid, FileHandle_t *file);
 int NANDfs_core_write(FileHandle_t *file, int size, void *buf);
