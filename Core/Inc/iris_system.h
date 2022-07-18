@@ -49,6 +49,7 @@ extern "C" {
 
 //#define UART_DEBUG
 #define SPI_DEBUG
+#define SPI_DEBUG_UART_OUTPUT
 
 /* USER CODE END EM */
 

@@ -645,14 +645,16 @@ void init_filesystem() {
 static void onboot_commands(void) {
 
 #ifdef SPI_DEBUG
-//    GPIO_InitTypeDef GPIO_InitStruct = {0};
-//    /*Configure GPIO pin */
-//    GPIO_InitStruct.Pin = ERR_Pin;
-//    GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-//    GPIO_InitStruct.Pull = GPIO_PULLUP;
-//    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-//    HAL_GPIO_Init(ERR_GPIO_Port, &GPIO_InitStruct);
-//    ERR_GPIO_Port->BSRR = ERR_Pin;
+#ifndef SPI_DEBUG_UART_OUTPUT
+    GPIO_InitTypeDef GPIO_InitStruct = {0};
+    /*Configure GPIO pin */
+    GPIO_InitStruct.Pin = ERR_Pin;
+    GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+    GPIO_InitStruct.Pull = GPIO_PULLUP;
+    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+    HAL_GPIO_Init(ERR_GPIO_Port, &GPIO_InitStruct);
+    ERR_GPIO_Port->BSRR = ERR_Pin;
+#endif
 #endif
 
     HAL_TIM_Base_Start(&htim2);
@@ -662,7 +664,7 @@ static void onboot_commands(void) {
 #endif // CURRENTSENSE_5V
     // init_ina209(CURRENTSENSE_5V);
 
-    HAL_Delay(1000);
+    HAL_Delay(500);
 
 #ifdef IRIS_PROTO
     sensor_togglepower(1);
@@ -677,11 +679,12 @@ static void onboot_commands(void) {
     DBG_PUT("Iris Electronics Test Software\r\n"
             "         UART Edition         \r\n");
     DBG_PUT("-----------------------------------\r\n");
-#endif
+#else
     DBG_PUT("-----------------------------------\r\n");
     DBG_PUT("Iris Electronics Test Software\r\n"
-            "        FlatSat v2 (18/07/2022) Edition         \r\n");
+            "        SPI Edition         \r\n");
     DBG_PUT("-----------------------------------\r\n");
+#endif
     return;
 }
 /* USER CODE END 4 */
