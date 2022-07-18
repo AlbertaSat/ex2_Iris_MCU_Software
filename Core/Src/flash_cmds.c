@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include "arducam.h"
 #include "flash_cmds.h"
 #include "debug.h"
@@ -53,7 +54,7 @@ static io_funcs_t uart_driver = {.handle = &huart1,
                                  .close = uart_close};
 
 static int flash_open(struct io_funcs *iofuncs, uint32_t name) {
-    FileHandle_t *fp = NAND_File_Create(name);
+    NAND_FILE *fp = NANDfs_create(name);
     iofuncs->handle = fp;
     if (!fp) {
         DBG_PUT("NAND Flash file open failed\r\n");
@@ -63,11 +64,11 @@ static int flash_open(struct io_funcs *iofuncs, uint32_t name) {
 }
 
 static int flash_write(io_funcs_t *iofuncs, uint8_t *data, uint16_t len) {
-    return NAND_File_Write(iofuncs->handle, len, data);
+    return NANDfs_write(iofuncs->handle, len, data);
 }
 
 static int flash_close(io_funcs_t *iofuncs) {
-    NAND_ReturnType rc = NAND_File_Write_Close(iofuncs->handle);
+    NAND_ReturnType rc = NANDfs_close(iofuncs->handle);
 
     if (rc != Ret_Success) {
         DBG_PUT("NAND Flash file close failed");
@@ -116,7 +117,7 @@ uint8_t fdata[PAGE_DATA_SIZE];
 static int nand_dump_file(int which, io_funcs_t *io_driver) {
     char str[64];
     int rc;
-    uint32_t len = NAND_File_Length(which);
+    uint32_t len = NANDfs_Length(which);
     if (len == 0) {
         DBG_PUT("no files\r\n");
         return -1;
@@ -125,7 +126,7 @@ static int nand_dump_file(int which, io_funcs_t *io_driver) {
     sprintf(str, "rfo %d, length %ld\n", which, len);
     DBG_PUT(str);
 
-    FileHandle_t *fh = NAND_File_Open(which);
+    NAND_FILE *fh = NANDfs_open(which);
     if (!fh) {
         DBG_PUT("open failed\r\n");
         return -2;
@@ -138,10 +139,10 @@ static int nand_dump_file(int which, io_funcs_t *io_driver) {
     }
 
     size_t i = len;
-    uint16_t cnt;
+    int cnt;
     while (i >= PAGE_DATA_SIZE) {
         uint16_t cnt = PAGE_DATA_SIZE;
-        if ((rc = NAND_File_Read(fh, &cnt, fdata)) != Ret_Success) {
+        if ((rc = NANDfs_read(fh, &cnt, fdata)) != Ret_Success) {
             sprintf(str, "read failed: %d\r\n", rc);
             DBG_PUT(str);
             break;
@@ -157,7 +158,7 @@ static int nand_dump_file(int which, io_funcs_t *io_driver) {
     }
 
     if (i > 0) {
-        if ((rc = NAND_File_Read(fh, &cnt, fdata)) != Ret_Success) {
+        if ((rc = NANDfs_read(fh, &cnt, fdata)) != Ret_Success) {
             sprintf(str, "residue read failed: %d\r\n", rc);
             DBG_PUT(str);
         }
@@ -229,8 +230,46 @@ int list_files() {
     DIRENT entry;
     do {
         entry = NANDfs_readdir(dir);
-        sprintf(msg, "%d\n", entry.id);
+        sprintf(msg, "%ld\n", entry.id);
         DBG_PUT(msg);
     } while (entry.id != 0);
     return 0;
 }
+
+static uint8_t data[1024];
+static char dbuf[256];
+
+int dump_page(int block, int page) {
+    PhysicalAddrs paddr = { .block = block, .page = page };
+    NAND_ReturnType rc;
+
+    if ((rc = NAND_Page_Read(&paddr, 1024, data)) != Ret_Success) {
+        DBG_PUT("Page read <%d,%d> failed: %d\r\n", block, page, rc);
+        return -1;
+    }
+
+    char *p = dbuf;
+    for (int i=0; i<64; i++) {
+        *p++ = hex_2_ascii(data[i] >> 4);
+        *p++ = hex_2_ascii(data[i] & 0xf);
+        *p++ = ' ';
+    }
+    *p = 0;
+    DBG_PUT("%s\r\n", dbuf);
+
+    return 0;
+}
+
+int erase_block(int block) {
+    PhysicalAddrs paddr = { .block = block };
+    NAND_ReturnType rc;
+
+    if ((rc = NAND_Block_Erase(&paddr)) != Ret_Success) {
+        DBG_PUT("block erase %d failed: %d\r\n", block, rc);
+        return -1;
+    }
+
+    return 0;
+}
+
+    

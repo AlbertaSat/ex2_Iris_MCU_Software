@@ -66,6 +66,8 @@ int NANDfs_write(NAND_FILE *fd, int size, void *buf);
 
 void NANDfs_format();
 
+int pattern_with_filesystem_test(void);
+
 #ifdef __cplusplus
 }
 #endif

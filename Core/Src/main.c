@@ -143,7 +143,7 @@ int main(void) {
     //    NAND_SPI_Init(&hspi2);
 
     onboot_commands();
-    //    init_filesystem();
+
     uint8_t obc_cmd;
 
     char cmd[64];
@@ -589,6 +589,7 @@ void HAL_SPI_RxCpltCallback(SPI_HandleTypeDef *hspi) {
 }
 
 void init_filesystem() {
+    DBG_PUT("Initializing file system\r\n");
     NAND_SPI_Init(&hspi2);
     NANDfs_init();
 }

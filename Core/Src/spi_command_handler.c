@@ -3,6 +3,7 @@
 #include <iris_system.h>
 #include <string.h>
 #include <arducam.h>
+#include "debug.h"
 
 extern SPI_HandleTypeDef hspi1;
 extern uint8_t cam_to_nand_transfer_flag;
