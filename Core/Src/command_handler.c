@@ -4,12 +4,15 @@
  *  Created on: May 9, 2022
  *      Author: Liam
  */
+#include <stdio.h>
+#include <ctype.h>
+#include <string.h>
 #include "command_handler.h"
-#include "string.h"
 #include "debug.h"
 #include "arducam.h"
 #include "SPI_IT.h"
 #include "IEB_TESTS.h"
+
 extern uint8_t VIS_DETECTED;
 extern uint8_t NIR_DETECTED;
 extern SPI_HandleTypeDef hspi1;
@@ -326,6 +329,9 @@ static inline const char *next_token(const char *ptr) {
     return (*ptr) ? ptr : NULL;
 }
 
+int dump_page(int block, int page);
+int erase_block(int block);
+
 /**
  * @brief UART command handler
  *
@@ -366,21 +372,23 @@ void uart_handle_command(char *cmd) {
         }
         break;
 
-    case 'p':; // janky use of semicolon??
-        const char *p = next_token(cmd);
-        switch (*(p + 1)) {
-        case 'n':
-            sensor_active();
-            break;
-        case 'f':
-            sensor_idle();
-            break;
-        default:
-            DBG_PUT("Use either on or off\r\n");
-            break;
+    case 'p':
+        {
+            const char *p = next_token(cmd);
+            switch (*(p + 1)) {
+            case 'n':
+                sensor_active();
+                break;
+            case 'f':
+                sensor_idle();
+                break;
+            default:
+                DBG_PUT("Use either on or off\r\n");
+                break;
+            }
         }
         break;
-    case 'i':;
+    case 'i':
         switch (*(cmd + 1)) {
         case '2':
             handle_i2c16_8_cmd(cmd); // needs to handle 16 / 8 bit stuff
@@ -404,5 +412,65 @@ void uart_handle_command(char *cmd) {
             help();
             break;
         }
+        break;
+
+    case 'n':
+        {
+            int rc;
+            const char *p = next_token(cmd);
+            int block = 0;
+            int page = 0;
+            if (p) {
+                switch(*p) {
+                case 'f':
+                    DBG_PUT("formatting\r\n");
+                    if ((rc = NANDfs_format())) {
+                        DBG_PUT("format failed: %d\r\n", rc);
+                    }
+                    break;
+                case 't':
+                    DBG_PUT("testing\r\n");
+                    if ((rc = pattern_with_filesystem_test())) {
+                        DBG_PUT("test failed: %d\r\n", rc);
+                    }
+                    break;
+                case 'r':
+                    p = next_token(p);
+                    if (p) {
+                        if (sscanf(p, "%d", &block) != 1) {
+                            DBG_PUT("bad block %s\r\n", p);
+                        }
+                        p = next_token(p);
+                        if (p) {
+                            if (sscanf(p, "%d", &page) != 1) {
+                                DBG_PUT("bad page %s\r\n", p);
+                            }
+                        }
+                    }
+                    DBG_PUT("read page <%d,%d>\r\n", block, page);
+                    dump_page(block, page);
+                    break;
+                case 'e':
+                    p = next_token(p);
+                    if (p) {
+                        if (sscanf(p, "%d", &block) != 1) {
+                            DBG_PUT("bad block %s\r\n", p);
+                        }
+                    }
+                    DBG_PUT("erase block %d\r\n", block);
+                    erase_block(block);
+                    break;
+                    
+                default:
+                    DBG_PUT("unknown NAND cmd: %s\r\n", p);
+                    break;
+                }
+            }
+        }
+        break;
+        
+    default:
+        help();
+        break;
     }
 }

@@ -8,6 +8,7 @@
 #include "nandfs.h"
 #include "nand_m79a_lld.h"
 #include <string.h>
+#include "debug.h"
 
 #define PAGE_LEN 2048
 
@@ -136,6 +137,61 @@ int image_with_filesystem_test() {
         comp += size_to_read;
         size_remaining -= size_to_read;
     }
+    return 0;
+}
+
+uint8_t page[PAGE_LEN];
+
+#define NUM_PAGES 10
+
+int pattern_with_filesystem_test() {
+    int rc, count;
+    NAND_FILE *fd = NANDfs_create();
+    if (!fd) {
+        DBG_PUT("create failed: %d\r\n", nand_errno);
+        return -1;
+    }
+
+    for (count = 0; count < NUM_PAGES; count++) {
+        memset(page, count, PAGE_LEN);
+
+        if ((rc = NANDfs_write(fd, PAGE_LEN, page))) {
+            DBG_PUT("write page %d failedr\n", count);
+            break;
+        }
+    }
+
+    int file_id = fd->node.id;
+    if ((rc = NANDfs_close(fd))) {
+        DBG_PUT("close file %d failed: %d\r\n", file_id, nand_errno);
+    }
+
+    DBG_PUT("wrote file id %d\r\n", file_id);
+
+    fd = NANDfs_open(file_id);
+    if (!fd) {
+        DBG_PUT("open file %d failed: %d\r\n", file_id, nand_errno);
+        return -1;
+    }
+
+    int file_size = fd->node.file_size;
+    if (file_size != PAGE_LEN*NUM_PAGES) {
+        DBG_PUT("wrong len %d\r\n", file_size);
+        return -2;
+    }
+
+    for (count = 0; count < NUM_PAGES; count++) {
+        memset(page, 0, PAGE_LEN); 
+
+        NANDfs_read(fd, PAGE_LEN, page);
+
+        for (int i = 0; i < PAGE_LEN; i++) {
+            if (page[i] != count) {
+                DBG_PUT("bad byte %x at offset %d\r\n", page[i], i);
+            }
+        }
+    }
+
     return 0;
 }
 

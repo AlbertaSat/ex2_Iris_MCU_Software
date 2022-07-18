@@ -4,6 +4,7 @@
 #include <string.h>
 #include <arducam.h>
 #include <spi_bitbang.h>
+#include "debug.h"
 
 extern SPI_HandleTypeDef hspi1;
 extern uint8_t cam_to_nand_transfer_flag;
