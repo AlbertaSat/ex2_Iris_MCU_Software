@@ -644,17 +644,16 @@ void init_filesystem() {
 
 static void onboot_commands(void) {
 
-    //#ifdef SPI_DEBUG
-    GPIO_InitTypeDef GPIO_InitStruct = {0};
-    /*Configure GPIO pin */
-    GPIO_InitStruct.Pin = ERR_Pin;
-    GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-    GPIO_InitStruct.Pull = GPIO_PULLUP;
-    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-    HAL_GPIO_Init(ERR_GPIO_Port, &GPIO_InitStruct);
-    ERR_GPIO_Port->BSRR = ERR_Pin;
-
-    //#endif
+#ifdef SPI_DEBUG
+//    GPIO_InitTypeDef GPIO_InitStruct = {0};
+//    /*Configure GPIO pin */
+//    GPIO_InitStruct.Pin = ERR_Pin;
+//    GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+//    GPIO_InitStruct.Pull = GPIO_PULLUP;
+//    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+//    HAL_GPIO_Init(ERR_GPIO_Port, &GPIO_InitStruct);
+//    ERR_GPIO_Port->BSRR = ERR_Pin;
+#endif
 
     HAL_TIM_Base_Start(&htim2);
     // init_filesystem();
@@ -679,6 +678,10 @@ static void onboot_commands(void) {
             "         UART Edition         \r\n");
     DBG_PUT("-----------------------------------\r\n");
 #endif
+    DBG_PUT("-----------------------------------\r\n");
+    DBG_PUT("Iris Electronics Test Software\r\n"
+            "        FlatSat v2 (18/07/2022) Edition         \r\n");
+    DBG_PUT("-----------------------------------\r\n");
     return;
 }
 /* USER CODE END 4 */

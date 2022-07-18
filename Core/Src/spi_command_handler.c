@@ -138,7 +138,7 @@ int spi_handle_command(uint8_t obc_cmd) {
     }
     case IRIS_TAKE_PIC: {
         // needs dedicated thought put towards implement
-        arducam_set_resolution(JPEG, 1024, VIS);
+        arducam_set_resolution(JPEG, 640, VIS);
         char buf[64];
         write_reg(ARDUCHIP_TIM, VSYNC_LEVEL_MASK, VIS); // VSYNC is active HIGH
         sprintf(buf, "Single Capture Transfer type %x\r\n", format);
@@ -241,4 +241,6 @@ void spi_transfer_image() {
         spi_transmit(image_data, IRIS_IMAGE_TRANSFER_BLOCK_SIZE);
     }
     spi_deinit_burst(VIS);
+
+    DBG_PUT("DONE IMAGE TRANSFER!\r\n");
 }
