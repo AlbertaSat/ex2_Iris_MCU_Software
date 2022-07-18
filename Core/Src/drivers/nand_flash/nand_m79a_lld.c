@@ -334,19 +334,20 @@ NAND_ReturnType NAND_Page_Read(PhysicalAddrs *addr, uint16_t length, uint8_t *bu
     if (length > PAGE_DATA_SIZE) {
         return Ret_ReadFailed;
     }
-    addr->plane = addr->block & 1;
+    uint32_t plane = addr->block & 1;
 
     /* Command 1: PAGE READ. See datasheet page 16 for details */
-    uint32_t paddr = 0;
-    paddr = (0x7ff & addr->block) << 6;
-    paddr |= (0x3f & addr->page);
-    paddr |= (1 & addr->plane) << 20;
+    uint32_t row = 0;
+    row = (0x7ff & addr->block) << 6;
+    row |= (0x3f & addr->page);
 
-    if ((status = NAND_Page_Load(paddr)) != Ret_Success) {
+    if ((status = NAND_Page_Load(row)) != Ret_Success) {
         return status;
     }
+
     /* Command 3: READ FROM CACHE. See datasheet page 18 for details */
-    return NAND_Cache_Read(addr->colAddr, length, buffer);
+    uint32_t col = addr->column | (plane << 12);
+    return NAND_Cache_Read(col, length, buffer);
 }
 
 /******************************************************************************
@@ -381,7 +382,9 @@ NAND_ReturnType NAND_Page_Program(PhysicalAddrs *addr, uint16_t length, uint8_t 
     __write_enable();
 
     /* Command 2: PROGRAM LOAD. See datasheet page 30 for details */
-    uint32_t col = addr->colAddr;
+    uint32_t plane = addr->block & 1;
+
+    uint32_t col = addr->column | (plane << 12);
     uint8_t command_load[3] = {SPI_NAND_PROGRAM_LOAD_X1, BYTE_1(col), BYTE_0(col)};
 
     SPI_Params tx_cmd = {.buffer = command_load, .length = 3};
@@ -394,13 +397,11 @@ NAND_ReturnType NAND_Page_Program(PhysicalAddrs *addr, uint16_t length, uint8_t 
     }
 
     /* Command 3: PROGRAM EXECUTE. See datasheet page 31 for details */
-    addr->plane = addr->block & 1;
-
     uint32_t row = 0;
-    row = 0x7ff & addr->block << 6;
+    row = (0x7ff & addr->block) << 6;
     row |= (0x3f & addr->page);
-    row |= (1 & addr->plane) << 20;
 
+    DBG_PUT("programming row 0x%x\r\n", row);
     uint8_t command_exec[4] = {SPI_NAND_PROGRAM_EXEC, BYTE_2(row), BYTE_1(row), BYTE_0(row)};
     SPI_Params exec_cmd = {.buffer = command_exec, .length = 4};
 
@@ -442,7 +443,7 @@ NAND_ReturnType NAND_Block_Erase(PhysicalAddrs *addr) {
 
     /* Command 2: BLOCK ERASE. See datasheet page 35 for details */
     uint32_t block = 0;
-    block = 0x7ff & addr->block;
+    block = (0x7ff & addr->block) << 6;
     // TODO: datasheet simply specifies block address. assuming that's the 11-bit
     // block number padded with dummy bits. check.
     uint8_t command[4] = {SPI_NAND_BLOCK_ERASE, BYTE_2(block), BYTE_1(block), BYTE_0(block)};
