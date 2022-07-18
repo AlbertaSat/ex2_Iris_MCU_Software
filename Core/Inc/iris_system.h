@@ -86,10 +86,8 @@ void Error_Handler(void);
 #endif
 
 /* Iris Spec Defines --------------------------------------------------------*/
-#ifdef SPI_DEBUG
 #define ERR_Pin GPIO_PIN_9
 #define ERR_GPIO_Port GPIOA
-#endif
 
 /* USER CODE END Private defines */
 
