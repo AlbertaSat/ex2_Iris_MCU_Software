@@ -25,6 +25,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <string.h>
+
 #include "arducam.h"
 #include "iris_system.h"
 #include "spi_bitbang.h"
@@ -35,6 +36,7 @@
 #include "spi_command_handler.h"
 #include "flash_cmds.h"
 #include "nandfs.h"
+#include "can.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -55,6 +57,8 @@ int width = 2592;
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
+CRC_HandleTypeDef hcrc;
+
 I2C_HandleTypeDef hi2c1;
 I2C_HandleTypeDef hi2c2;
 
@@ -78,6 +82,7 @@ static void MX_SPI1_Init(void);
 static void MX_SPI2_Init(void);
 static void MX_USART1_UART_Init(void);
 static void MX_TIM2_Init(void);
+static void MX_CRC_Init(void);
 /* USER CODE BEGIN PFP */
 static void onboot_commands(void);
 /* USER CODE END PFP */
@@ -139,11 +144,14 @@ int main(void) {
     MX_SPI2_Init();
     MX_USART1_UART_Init();
     MX_TIM2_Init();
+    MX_CRC_Init();
     /* USER CODE BEGIN 2 */
     //    NAND_SPI_Init(&hspi2);
 
+    uint8_t can_header[CAN_HEADER_LEN];
+    uint8_t can_footer[CAN_FOOTER_LEN];
     onboot_commands();
-    //    init_filesystem();
+    init_filesystem();
     uint8_t obc_cmd;
 
     char cmd[64];
@@ -281,6 +289,34 @@ void SystemClock_Config(void) {
     if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK) {
         Error_Handler();
     }
+}
+
+/**
+ * @brief CRC Initialization Function
+ * @param None
+ * @retval None
+ */
+static void MX_CRC_Init(void) {
+
+    /* USER CODE BEGIN CRC_Init 0 */
+
+    /* USER CODE END CRC_Init 0 */
+
+    /* USER CODE BEGIN CRC_Init 1 */
+
+    /* USER CODE END CRC_Init 1 */
+    hcrc.Instance = CRC;
+    hcrc.Init.DefaultPolynomialUse = DEFAULT_POLYNOMIAL_ENABLE;
+    hcrc.Init.DefaultInitValueUse = DEFAULT_INIT_VALUE_ENABLE;
+    hcrc.Init.InputDataInversionMode = CRC_INPUTDATA_INVERSION_NONE;
+    hcrc.Init.OutputDataInversionMode = CRC_OUTPUTDATA_INVERSION_DISABLE;
+    hcrc.InputDataFormat = CRC_INPUTDATA_FORMAT_BYTES;
+    if (HAL_CRC_Init(&hcrc) != HAL_OK) {
+        Error_Handler();
+    }
+    /* USER CODE BEGIN CRC_Init 2 */
+
+    /* USER CODE END CRC_Init 2 */
 }
 
 /**
@@ -531,7 +567,7 @@ static void MX_GPIO_Init(void) {
                       GPIO_PIN_RESET);
 
     /*Configure GPIO pin Output Level */
-    HAL_GPIO_WritePin(GPIOB, TEST_OUT1_Pin | NAND_CS1_Pin, GPIO_PIN_RESET);
+    HAL_GPIO_WritePin(GPIOB, TEST_OUT1_Pin | NAND_CS1_Pin | CAN_TX_Pin | CAN_S_Pin, GPIO_PIN_RESET);
 
     /*Configure GPIO pins : USART2_CS1_Pin USART2_CS2_Pin WP__Pin */
     GPIO_InitStruct.Pin = USART2_CS1_Pin | USART2_CS2_Pin | WP__Pin;
@@ -553,12 +589,12 @@ static void MX_GPIO_Init(void) {
     GPIO_InitStruct.Pull = GPIO_NOPULL;
     HAL_GPIO_Init(USART2_MISO_GPIO_Port, &GPIO_InitStruct);
 
-    /*Configure GPIO pin : TEST_OUT1_Pin */
-    GPIO_InitStruct.Pin = TEST_OUT1_Pin;
+    /*Configure GPIO pins : TEST_OUT1_Pin CAN_S_Pin */
+    GPIO_InitStruct.Pin = TEST_OUT1_Pin | CAN_S_Pin;
     GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
     GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-    HAL_GPIO_Init(TEST_OUT1_GPIO_Port, &GPIO_InitStruct);
+    HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
     /*Configure GPIO pin : NAND_CS1_Pin */
     GPIO_InitStruct.Pin = NAND_CS1_Pin;
@@ -580,6 +616,19 @@ static void MX_GPIO_Init(void) {
     GPIO_InitStruct.Pull = GPIO_PULLUP;
     GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
     HAL_GPIO_Init(NAND_CS2_GPIO_Port, &GPIO_InitStruct);
+
+    /*Configure GPIO pin : CAN_TX_Pin */
+    GPIO_InitStruct.Pin = CAN_TX_Pin;
+    GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+    GPIO_InitStruct.Pull = GPIO_PULLUP;
+    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+    HAL_GPIO_Init(CAN_TX_GPIO_Port, &GPIO_InitStruct);
+
+    /*Configure GPIO pin : CAN_RX_Pin */
+    GPIO_InitStruct.Pin = CAN_RX_Pin;
+    GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+    GPIO_InitStruct.Pull = GPIO_NOPULL;
+    HAL_GPIO_Init(CAN_RX_GPIO_Port, &GPIO_InitStruct);
 }
 
 /* USER CODE BEGIN 4 */
@@ -595,7 +644,7 @@ void init_filesystem() {
 
 static void onboot_commands(void) {
 
-#ifdef SPI_DEBUG
+    //#ifdef SPI_DEBUG
     GPIO_InitTypeDef GPIO_InitStruct = {0};
     /*Configure GPIO pin */
     GPIO_InitStruct.Pin = ERR_Pin;
@@ -605,20 +654,20 @@ static void onboot_commands(void) {
     HAL_GPIO_Init(ERR_GPIO_Port, &GPIO_InitStruct);
     ERR_GPIO_Port->BSRR = ERR_Pin;
 
-#endif
+    //#endif
 
     HAL_TIM_Base_Start(&htim2);
-    init_filesystem();
-#ifdef CURRENTSENSE_5V
-    init_ina209(CURRENTSENSE_5V);
-#endif // CURRENTSENSE_5V
-    init_temp_sensors();
+    //    init_filesystem();
+    //#ifdef CURRENTSENSE_5V
+    //    init_ina209(CURRENTSENSE_5V);
+    //#endif // CURRENTSENSE_5V
+    //    init_temp_sensors();
 
-#ifdef IRIS_PROTO
-    sensor_togglepower(1);
-    flood_cam_spi();
-    initalize_sensors();
-#endif // IRIS_PROTO
+    //#ifdef IRIS_PROTO
+    //    sensor_togglepower(1);
+    //    flood_cam_spi();
+    //    initalize_sensors();
+    //#endif // IRIS_PROTO
 
 #ifdef UART_DEBUG
     DBG_PUT("-----------------------------------\r\n");
