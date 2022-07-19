@@ -459,7 +459,7 @@ static void MX_SPI2_Init(void) {
     hspi2.Init.Direction = SPI_DIRECTION_2LINES;
     hspi2.Init.DataSize = SPI_DATASIZE_8BIT;
     hspi2.Init.CLKPolarity = SPI_POLARITY_LOW;
-    hspi2.Init.CLKPhase = SPI_PHASE_2EDGE;
+    hspi2.Init.CLKPhase = SPI_PHASE_1EDGE;
     hspi2.Init.NSS = SPI_NSS_SOFT;
     hspi2.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_32;
     hspi2.Init.FirstBit = SPI_FIRSTBIT_MSB;
@@ -686,6 +686,10 @@ static void onboot_commands(void) {
     DBG_PUT("-----------------------------------\r\n");
 #endif
     return;
+
+    // Set resolution for both sensors
+    arducam_set_resolution(JPEG, 640, VIS_SENSOR);
+    arducam_set_resolution(JPEG, 640, NIR_SENSOR);
 }
 /* USER CODE END 4 */
 

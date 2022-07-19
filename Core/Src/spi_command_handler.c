@@ -11,9 +11,6 @@ extern uint8_t cam_to_nand_transfer_flag;
 uint32_t image_length; // Only here for testing purposes
 static uint32_t count = 0x0FFF0000;
 
-#define VIS 0x3C
-#define NIR 0x3E
-
 /**
  * @brief
  * 		Transmit data of given size over SPI bus in blocking mode
@@ -138,15 +135,14 @@ int spi_handle_command(uint8_t obc_cmd) {
     }
     case IRIS_TAKE_PIC: {
         // needs dedicated thought put towards implement
-        arducam_set_resolution(JPEG, 640, VIS);
         char buf[64];
-        write_reg(ARDUCHIP_TIM, VSYNC_LEVEL_MASK, VIS); // VSYNC is active HIGH
+        write_reg(ARDUCHIP_TIM, VSYNC_LEVEL_MASK, VIS_SENSOR); // VSYNC is active HIGH
         sprintf(buf, "Single Capture Transfer type %x\r\n", format);
         DBG_PUT(buf);
-        flush_fifo(VIS);
-        clear_fifo_flag(VIS);
-        start_capture(VIS);
-        while (!get_bit(ARDUCHIP_TRIG, CAP_DONE_MASK, VIS)) {
+        flush_fifo(VIS_SENSOR);
+        clear_fifo_flag(VIS_SENSOR);
+        start_capture(VIS_SENSOR);
+        while (!get_bit(ARDUCHIP_TRIG, CAP_DONE_MASK, VIS_SENSOR)) {
         }
 
         DBG_PUT("JPG");
@@ -174,7 +170,7 @@ int spi_handle_command(uint8_t obc_cmd) {
         return 0;
     }
     case IRIS_GET_IMAGE_LENGTH: {
-        image_length = read_fifo_length(VIS);
+        image_length = read_fifo_length(VIS_SENSOR);
         uint8_t packet[3];
         packet[0] = (image_length >> (8 * 2)) & 0xff;
         packet[1] = (image_length >> (8 * 1)) & 0xff;
@@ -231,16 +227,16 @@ void spi_transfer_image() {
     num_transfers =
         (uint16_t)((image_length + (IRIS_IMAGE_TRANSFER_BLOCK_SIZE - 1)) / IRIS_IMAGE_TRANSFER_BLOCK_SIZE);
 
-    spi_init_burst(VIS);
+    spi_init_burst(VIS_SENSOR);
     for (int j = 0; j < num_transfers; j++) {
         for (int i = 0; i < IRIS_IMAGE_TRANSFER_BLOCK_SIZE; i++) {
-            image_data[i] = (uint8_t)spi_read_burst(VIS); // reg_addr: 0x3D, sensor: 0 -> VIS
+            image_data[i] = (uint8_t)spi_read_burst(VIS_SENSOR); // reg_addr: 0x3D, sensor: 0 -> VIS_SENSOR
             // image_data[i] = (uint8_t) image_data_buffer[count];
         }
 
         spi_transmit(image_data, IRIS_IMAGE_TRANSFER_BLOCK_SIZE);
     }
-    spi_deinit_burst(VIS);
+    spi_deinit_burst(VIS_SENSOR);
 
     DBG_PUT("DONE IMAGE TRANSFER!\r\n");
 }
