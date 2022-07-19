@@ -14,6 +14,6 @@
 #define COMPRESSION_EXX_FALSE 0
 
 unsigned int rle_compress(unsigned char *arr, unsigned int insize, unsigned char *outarr, uint8_t ecc);
-void test_compression(unsigned char *arr, unsigned int insize);
+void test_compression();
 
 #endif /* INC_DRIVERS_COMPRESSION_COMPRESSION_H_ */
