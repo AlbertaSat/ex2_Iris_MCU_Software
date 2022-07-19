@@ -682,7 +682,7 @@ static void onboot_commands(void) {
 #else
     DBG_PUT("-----------------------------------\r\n");
     DBG_PUT("Iris Electronics Test Software\r\n"
-            "        SPI Edition         \r\n");
+            "        SPI v2_sensors (19/07/2022) Edition         \r\n");
     DBG_PUT("-----------------------------------\r\n");
 #endif
     DBG_PUT("-----------------------------------\r\n");

@@ -11,6 +11,13 @@ extern uint8_t cam_to_nand_transfer_flag;
 uint32_t image_length; // Only here for testing purposes
 static uint32_t count = 0x0FFF0000;
 
+#define VIS 0x3C
+#define NIR 0x3E
+
+uint8_t sensor_mode = 0;
+
+void take_picture();
+
 /**
  * @brief
  * 		Transmit data of given size over SPI bus in blocking mode
@@ -134,21 +141,7 @@ int spi_handle_command(uint8_t obc_cmd) {
         return 0;
     }
     case IRIS_TAKE_PIC: {
-        // needs dedicated thought put towards implement
-        char buf[64];
-        write_reg(ARDUCHIP_TIM, VSYNC_LEVEL_MASK, VIS_SENSOR); // VSYNC is active HIGH
-        sprintf(buf, "Single Capture Transfer type %x\r\n", format);
-        DBG_PUT(buf);
-        flush_fifo(VIS_SENSOR);
-        clear_fifo_flag(VIS_SENSOR);
-        start_capture(VIS_SENSOR);
-        while (!get_bit(ARDUCHIP_TRIG, CAP_DONE_MASK, VIS_SENSOR)) {
-        }
-
-        DBG_PUT("JPG");
-
-        //        iterate_image_num();
-        // cam_to_nand_transfer_flag = 1;
+        take_picture();
         return 0;
     }
     case IRIS_GET_IMAGE_COUNT: {
@@ -170,7 +163,11 @@ int spi_handle_command(uint8_t obc_cmd) {
         return 0;
     }
     case IRIS_GET_IMAGE_LENGTH: {
-        image_length = read_fifo_length(VIS_SENSOR);
+        if (sensor_mode == 0) {
+            image_length = read_fifo_length(VIS);
+        } else {
+            image_length = read_fifo_length(NIR);
+        }
         uint8_t packet[3];
         packet[0] = (image_length >> (8 * 2)) & 0xff;
         packet[1] = (image_length >> (8 * 1)) & 0xff;
@@ -214,6 +211,28 @@ int step_transfer() {
 
     cam_to_nand_transfer_flag = 0;
     return 1;
+}
+
+void take_picture() {
+    arducam_set_resolution(JPEG, 1024, VIS);
+    arducam_set_resolution(JPEG, 1024, NIR);
+    //	char buf[64];
+    write_reg(ARDUCHIP_TIM, VSYNC_LEVEL_MASK, VIS); // VSYNC is active HIGH
+    write_reg(ARDUCHIP_TIM, VSYNC_LEVEL_MASK, NIR); // VSYNC is active HIGH
+                                                    //	sprintf(buf, "Single Capture Transfer type %x\r\n", format);
+                                                    //	DBG_PUT(buf);
+    flush_fifo(VIS);
+    flush_fifo(NIR);
+
+    clear_fifo_flag(VIS);
+    clear_fifo_flag(NIR);
+
+    start_capture(VIS);
+    start_capture(NIR);
+    while (!get_bit(ARDUCHIP_TRIG, CAP_DONE_MASK, VIS) && !get_bit(ARDUCHIP_TRIG, CAP_DONE_MASK, NIR)) {
+    }
+
+    //	DBG_PUT("JPG");
 }
 
 /**
@@ -485,16 +504,34 @@ void spi_transfer_image() {
     num_transfers =
         (uint16_t)((image_length + (IRIS_IMAGE_TRANSFER_BLOCK_SIZE - 1)) / IRIS_IMAGE_TRANSFER_BLOCK_SIZE);
 
-    spi_init_burst(VIS_SENSOR);
+    if (sensor_mode == 0) {
+        spi_init_burst(VIS);
+    } else {
+        spi_init_burst(NIR);
+    }
     for (int j = 0; j < num_transfers; j++) {
         for (int i = 0; i < IRIS_IMAGE_TRANSFER_BLOCK_SIZE; i++) {
-            image_data[i] = (uint8_t)spi_read_burst(VIS_SENSOR); // reg_addr: 0x3D, sensor: 0 -> VIS_SENSOR
+            if (sensor_mode == 0) {
+                image_data[i] = (uint8_t)spi_read_burst(VIS);
+            } else {
+                image_data[i] = (uint8_t)spi_read_burst(NIR);
+            }
             // image_data[i] = (uint8_t) image_data_buffer[count];
         }
 
         spi_transmit(image_data, IRIS_IMAGE_TRANSFER_BLOCK_SIZE);
     }
-    spi_deinit_burst(VIS_SENSOR);
+    if (sensor_mode == 0) {
+        spi_deinit_burst(VIS);
+    } else {
+        spi_deinit_burst(NIR);
+    }
 
-    DBG_PUT("DONE IMAGE TRANSFER!\r\n");
+    if (sensor_mode == 0) {
+        DBG_PUT("DONE IMAGE TRANSFER (VIS)!\r\n");
+        sensor_mode = 1;
+    } else {
+        DBG_PUT("DONE IMAGE TRANSFER (NIR)!\r\n");
+        sensor_mode = 0;
+    }
 }
