@@ -7,7 +7,9 @@
 #include "debug.h"
 #include "IEB_TESTS.h"
 #include "flash_cmds.h"
+#include "nandfs.h"
 #include "housekeeping.h"
+
 extern int format;
 extern I2C_HandleTypeDef hi2c2;
 extern UART_HandleTypeDef huart1;
@@ -373,12 +375,6 @@ void uart_handle_read_file_cmd(const char *cmd) {
     transfer_file(which, media);
 }
 
-void uart_handle_list_files_cmd(const char *cmd) {
-    const char *wptr = next_token(cmd);
-
-    list_files();
-}
-
 void sensor_togglepower(int i) {
     if (i == 1) {
         HAL_GPIO_WritePin(CAM_EN_GPIO_Port, CAM_EN_Pin, GPIO_PIN_SET);
@@ -477,6 +473,80 @@ void uart_get_hk_packet(uint8_t *out) {
     //    memcpy(out, (uint8_t *)&hk, sizeof(housekeeping_packet_t));
     decode_hk_packet(hk);
     return;
+}
+
+int pattern_with_filesystem_test(int page_cnt);
+
+void uart_handle_nand_commands(const char *cmd) {
+    int rc;
+    int block = 0;
+    int page = 0;
+    const char *p = next_token(cmd);
+
+    if (!p) {
+        DBG_PUT("missing nand sub-command\r\n");
+        return;
+    }
+
+    switch(*p) {
+    case 'f':
+        DBG_PUT("formatting\r\n");
+        if ((rc = NANDfs_format())) {
+            DBG_PUT("format failed: %d\r\n", rc);
+        }
+        break;
+    case 'l':
+        DBG_PUT("files:\r\n");
+        list_files();
+        break;
+    case 't':
+        {
+            int count = 10;
+            if ((p = next_token(p))) {
+                if (sscanf(p, "%d", &count) != 1) {
+                    DBG_PUT("bad count %s\r\n", p);
+                    return;
+                }
+            }
+            DBG_PUT("creating a file with %d pages\r\n", count);
+            if ((rc = pattern_with_filesystem_test(count))) {
+                DBG_PUT("test failed: %d\r\n", rc);
+            }
+        }
+        break;
+    case 'r':
+        if ((p = next_token(p))) {
+            if (sscanf(p, "%d", &block) != 1) {
+                DBG_PUT("bad block %s\r\n", p);
+                return;
+            }
+            if ((p = next_token(p))) {
+                if (sscanf(p, "%d", &page) != 1) {
+                    DBG_PUT("bad page %s\r\n", p);
+                    return;
+                }
+            }
+
+            DBG_PUT("read page <%d,%d>\r\n", block, page);
+            dump_page(block, page);
+        }
+        break;
+    case 'e':
+        if ((p = next_token(p))) {
+            if (sscanf(p, "%d", &block) != 1) {
+                DBG_PUT("bad block %s\r\n", p);
+                return;
+            }
+
+            DBG_PUT("erase block %d\r\n", block);
+            erase_block(block);
+        }
+        break;
+
+    default:
+        DBG_PUT("unknown NAND cmd: %s\r\n", p);
+        break;
+    }
 }
 
 void print_progress(uint8_t count, uint8_t max) {

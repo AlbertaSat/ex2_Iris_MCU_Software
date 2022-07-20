@@ -144,8 +144,6 @@ int main(void) {
 
     onboot_commands();
 
-    uint8_t obc_cmd;
-
     char cmd[64];
     char buf[64];
     char *ptr = cmd;
@@ -157,6 +155,8 @@ int main(void) {
     /* USER CODE BEGIN WHILE */
 
 #ifdef SPI_DEBUG
+    uint8_t obc_cmd;
+
     while (1) {
         /* USER CODE END WHILE */
 

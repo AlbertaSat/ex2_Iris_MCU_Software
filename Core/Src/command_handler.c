@@ -330,9 +330,6 @@ static inline const char *next_token(const char *ptr) {
     return (*ptr) ? ptr : NULL;
 }
 
-int dump_page(int block, int page);
-int erase_block(int block);
-
 /**
  * @brief UART command handler
  *
@@ -357,22 +354,24 @@ void uart_handle_command(char *cmd) {
             uart_scan_i2c();
             break;
 
-        case 'a':;
-            const char *c = next_token(cmd);
-            switch (*c) {
-            case 'v':
-                uart_handle_saturation_cmd(c, VIS_SENSOR);
-                break;
-            case 'n':
-                uart_handle_saturation_cmd(c, NIR_SENSOR);
-                break;
-            default:
-                DBG_PUT("Target Error\r\n");
-                break;
+        case 'a':
+            {
+                const char *c = next_token(cmd);
+                switch (*c) {
+                case 'v':
+                    uart_handle_saturation_cmd(c, VIS_SENSOR);
+                    break;
+                case 'n':
+                    uart_handle_saturation_cmd(c, NIR_SENSOR);
+                    break;
+                default:
+                    DBG_PUT("Target Error\r\n");
+                    break;
+                }
             }
+            break;
         }
         break;
-
     case 'p':
         {
             const char *p = next_token(cmd);
@@ -403,7 +402,6 @@ void uart_handle_command(char *cmd) {
             }
         }
         break;
-
     case 'h':
         switch (*(cmd + 1)) {
         case 'k':
@@ -414,62 +412,10 @@ void uart_handle_command(char *cmd) {
             break;
         }
         break;
-
     case 'n':
-        {
-            int rc;
-            const char *p = next_token(cmd);
-            int block = 0;
-            int page = 0;
-            if (p) {
-                switch(*p) {
-                case 'f':
-                    DBG_PUT("formatting\r\n");
-                    if ((rc = NANDfs_format())) {
-                        DBG_PUT("format failed: %d\r\n", rc);
-                    }
-                    break;
-                case 't':
-                    DBG_PUT("testing\r\n");
-                    if ((rc = pattern_with_filesystem_test())) {
-                        DBG_PUT("test failed: %d\r\n", rc);
-                    }
-                    break;
-                case 'r':
-                    p = next_token(p);
-                    if (p) {
-                        if (sscanf(p, "%d", &block) != 1) {
-                            DBG_PUT("bad block %s\r\n", p);
-                        }
-                        p = next_token(p);
-                        if (p) {
-                            if (sscanf(p, "%d", &page) != 1) {
-                                DBG_PUT("bad page %s\r\n", p);
-                            }
-                        }
-                    }
-                    DBG_PUT("read page <%d,%d>\r\n", block, page);
-                    dump_page(block, page);
-                    break;
-                case 'e':
-                    p = next_token(p);
-                    if (p) {
-                        if (sscanf(p, "%d", &block) != 1) {
-                            DBG_PUT("bad block %s\r\n", p);
-                        }
-                    }
-                    DBG_PUT("erase block %d\r\n", block);
-                    erase_block(block);
-                    break;
-                    
-                default:
-                    DBG_PUT("unknown NAND cmd: %s\r\n", p);
-                    break;
-                }
-            }
-        }
+        uart_handle_nand_commands(cmd);
         break;
-        
+
     default:
         help();
         break;
