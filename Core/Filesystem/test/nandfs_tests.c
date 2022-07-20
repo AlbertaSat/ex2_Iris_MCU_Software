@@ -140,11 +140,11 @@ int image_with_filesystem_test() {
     return 0;
 }
 
-uint8_t page[PAGE_LEN];
+uint8_t page[PAGE_DATA_SIZE];
 
 #define NUM_PAGES 10
 
-int pattern_with_filesystem_test() {
+int pattern_with_filesystem_test(int page_cnt) {
     int rc, count;
     NAND_FILE *fd = NANDfs_create();
     if (!fd) {
@@ -152,10 +152,10 @@ int pattern_with_filesystem_test() {
         return -1;
     }
 
-    for (count = 0; count < NUM_PAGES; count++) {
-        memset(page, count, PAGE_LEN);
+    for (count = 0; count < page_cnt; count++) {
+        memset(page, count, PAGE_DATA_SIZE);
 
-        if ((rc = NANDfs_write(fd, PAGE_LEN, page))) {
+        if ((rc = NANDfs_write(fd, PAGE_DATA_SIZE, page))) {
             DBG_PUT("write page %d failedr\n", count);
             break;
         }
@@ -168,30 +168,34 @@ int pattern_with_filesystem_test() {
 
     DBG_PUT("wrote file id %d\r\n", file_id);
 
-    fd = NANDfs_open(file_id);
+    fd = NANDfs_open_latest();
     if (!fd) {
         DBG_PUT("open file %d failed: %d\r\n", file_id, nand_errno);
         return -1;
     }
 
     int file_size = fd->node.file_size;
-    if (file_size != PAGE_LEN*NUM_PAGES) {
+    if (file_size != PAGE_DATA_SIZE*page_cnt) {
         DBG_PUT("wrong len %d\r\n", file_size);
+        NANDfs_close(fd);
         return -2;
     }
 
-    for (count = 0; count < NUM_PAGES; count++) {
-        memset(page, 0, PAGE_LEN); 
+    for (count = 0; count < page_cnt; count++) {
+        memset(page, 0, PAGE_DATA_SIZE);
 
-        NANDfs_read(fd, PAGE_LEN, page);
+        NANDfs_read(fd, PAGE_DATA_SIZE, page);
 
-        for (int i = 0; i < PAGE_LEN; i++) {
-            if (page[i] != count) {
-                DBG_PUT("bad byte %x at offset %d\r\n", page[i], i);
+        int error_reported = 0;
+        for (int i = 0; i < PAGE_DATA_SIZE; i++) {
+            if (page[i] != count && !error_reported) {
+                DBG_PUT("page %d: bad byte %x at offset %d\r\n", count, page[i], i);
+                break;
             }
         }
     }
 
+    NANDfs_close(fd);
     return 0;
 }
 
