@@ -80,6 +80,7 @@ typedef struct {
 #define PAGE_SIZE 2176              /* Page size in bytes */
 #define PAGE_DATA_SIZE 2048         /* Page data size in bytes */
 #define PAGE_SPARE_SIZE 128         /* Page spare size in bytes*/
+#define BLOCK_SIZE (NUM_PAGES_PER_BLOCK*PAGE_DATA_SIZE)
 
 #define BAD_BLOCK_BYTE PAGE_DATA_SIZE
 #define BAD_BLOCK_VALUE 0x00;
@@ -127,7 +128,6 @@ typedef uint32_t NAND_Addr; // logical address type. Max FLASH_SIZE_BYTES
 #define ROW_ADDRESS_BITS 24
 #define COL_ADDRESS_BITS 12
 typedef struct {
-    //uint16_t plane;  // 1 bit to specify plane number
     uint16_t block;  // block number
     uint16_t page;   // page number
     uint16_t column; // starting address within a page for writes

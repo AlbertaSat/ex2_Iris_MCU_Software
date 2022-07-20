@@ -401,7 +401,6 @@ NAND_ReturnType NAND_Page_Program(PhysicalAddrs *addr, uint16_t length, uint8_t 
     row = (0x7ff & addr->block) << 6;
     row |= (0x3f & addr->page);
 
-    DBG_PUT("programming row 0x%x\r\n", row);
     uint8_t command_exec[4] = {SPI_NAND_PROGRAM_EXEC, BYTE_2(row), BYTE_1(row), BYTE_0(row)};
     SPI_Params exec_cmd = {.buffer = command_exec, .length = 4};
 
@@ -442,10 +441,11 @@ NAND_ReturnType NAND_Block_Erase(PhysicalAddrs *addr) {
     __write_enable();
 
     /* Command 2: BLOCK ERASE. See datasheet page 35 for details */
-    uint32_t block = 0;
-    block = (0x7ff & addr->block) << 6;
+
     // TODO: datasheet simply specifies block address. assuming that's the 11-bit
     // block number padded with dummy bits. check.
+    uint32_t block = 0x7ff & addr->block;
+
     uint8_t command[4] = {SPI_NAND_BLOCK_ERASE, BYTE_2(block), BYTE_1(block), BYTE_0(block)};
 
     SPI_Params tx_cmd = {.buffer = command, .length = 4};
@@ -455,7 +455,7 @@ NAND_ReturnType NAND_Block_Erase(PhysicalAddrs *addr) {
 
     /* Command 3: wait for device to be ready again */
     if (NAND_Wait_Until_Ready() != Ret_Success) {
-        return Ret_EraseFailed;
+        return Ret_NANDBusy;
     }
 
     /* Command 4: WRITE DISABLE */

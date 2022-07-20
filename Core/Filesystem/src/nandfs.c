@@ -61,7 +61,7 @@ static DirHandle_t *_get_dir_handle() {
     return 0;
 }
 
-int NANDfs_init() { NANDfs_Core_Init(); }
+int NANDfs_init() { return NANDfs_Core_Init(); }
 
 int NANDfs_delete(int fileid) { return NANDfs_core_delete(fileid); }
 
@@ -95,7 +95,7 @@ int NANDfs_close(NAND_FILE *file) {
 /*
  * Open a file for reading or appending
  */
-NAND_FILE *NANDfs_open(int fileid) {
+NAND_FILE* NANDfs_open(int fileid) {
     FileHandle_t *handle = _get_handle();
     if (!handle) {
         nand_errno = NAND_EMFILE;
@@ -107,7 +107,13 @@ NAND_FILE *NANDfs_open(int fileid) {
     return handle;
 }
 
-NAND_DIR *NANDfs_opendir() {
+/* Open the most recently create file */
+NAND_FILE* NANDfs_open_latest(void) {
+    return NANDfs_open(0);
+}
+
+/* Initialize a directory search by "opening" the inode of the oldest file */
+NAND_DIR* NANDfs_opendir() {
     DirHandle_t *dir = _get_dir_handle();
     if (!dir) {
         nand_errno = NAND_EMFILE;
@@ -119,14 +125,16 @@ NAND_DIR *NANDfs_opendir() {
     return (NAND_DIR *)dir;
 }
 
-// Returns the current inode the dir is pointing to and increments the dir pointer
-// If it is at the end of the dir, the returned entry's node id will be 0, an illegal value
-// If an error occurs, node id will be 0 and nand_errno will be set
-DIRENT NANDfs_readdir(NAND_DIR *dir) {
-    DirHandle_t *thisdir = (DirHandle_t *)dir;
-    inode_t node;
-    NANDfs_Core_readdir(thisdir, &node);
-    return (DIRENT)node;
+/* Peek at the current directory entry */
+DIRENT* NANDfs_getdir(NAND_DIR *dir) {
+    return &dir->current;
+}
+
+/* Move to the next directory entry. Returns: 0 if the current entry is already
+ * the last (most recent) entry; -1 on error; nodeid of the next entry otherwise.
+ */
+int NANDfs_nextdir(NAND_DIR *dir) {
+    return NANDfs_Core_nextdir(dir);
 }
 
 int NANDfs_closedir(NAND_DIR *dir) {
@@ -144,7 +152,7 @@ int NANDfs_write(NAND_FILE *fd, int size, void *buf) {
     return NANDfs_core_write(file, size, buf);
 }
 
-void NANDfs_format() { NANDfs_core_format(); }
+int NANDfs_format() { return NANDfs_core_format(); }
 
 #ifdef __cplusplus
 }

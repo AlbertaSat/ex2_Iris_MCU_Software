@@ -14,6 +14,7 @@ typedef struct {
     uint32_t magic;
     uint32_t id;
     uint32_t file_size;
+    uint16_t start_block;
     uint8_t isfirst;
 } inode_t;
 
