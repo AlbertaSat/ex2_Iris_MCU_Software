@@ -80,7 +80,7 @@ typedef struct {
 #define PAGE_SIZE 2176              /* Page size in bytes */
 #define PAGE_DATA_SIZE 2048         /* Page data size in bytes */
 #define PAGE_SPARE_SIZE 128         /* Page spare size in bytes*/
-#define BLOCK_SIZE (NUM_PAGES_PER_BLOCK*PAGE_DATA_SIZE)
+#define BLOCK_SIZE (NUM_PAGES_PER_BLOCK * PAGE_DATA_SIZE)
 
 #define BAD_BLOCK_BYTE PAGE_DATA_SIZE
 #define BAD_BLOCK_VALUE 0x00;
