@@ -48,6 +48,8 @@ extern "C" {
 /* Exported macro ------------------------------------------------------------*/
 /* USER CODE BEGIN EM */
 
+#define IRIS_REFACTOR
+
 //#define UART_DEBUG
 #define SPI_DEBUG
 #define SPI_DEBUG_UART_OUTPUT

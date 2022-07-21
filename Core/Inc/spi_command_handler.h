@@ -15,8 +15,8 @@
 #define IRIS_GET_IMAGE_LENGTH 0x20
 #define IRIS_TRANSFER_IMAGE 0x31
 #define IRIS_GET_IMAGE_COUNT 0x30
-#define IRIS_ON_SENSOR_IDLE 0x40
-#define IRIS_OFF_SENSOR_IDLE 0x41
+#define IRIS_ON_SENSORS 0x40
+#define IRIS_OFF_SENSORS 0x41
 #define IRIS_SEND_HOUSEKEEPING 0x51
 #define IRIS_UPDATE_SENSOR_I2C_REG 0x60
 #define IRIS_UPDATE_CURRENT_LIMIT 0x70
@@ -33,7 +33,8 @@ void spi_receive(uint8_t *rx_data, uint16_t data_length);
 int spi_listen();
 int spi_verify_command(uint8_t cmd);
 int spi_handle_command(uint8_t cmd);
-int step_transfer();
-void spi_transfer_image();
+
+void transfer_image_to_obc();
+int step_transfer(); // For testing "idle task" running on Iris
 
 #endif /* INC_SPI_COMMAND_HANDLER_H_ */

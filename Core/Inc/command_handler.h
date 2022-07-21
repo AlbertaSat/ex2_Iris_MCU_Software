@@ -32,10 +32,24 @@ typedef struct __attribute__((__packed__)) currentsense_packet_s {
     uint16_t value;
 } currentsense_packet_t;
 
-void uart_handle_command(char *cmd);
+#ifdef IRIS_REFACTOR
+
+#define SENSORS_OFF 0
+#define SENSORS_ON 1
+
+void get_housekeeping(housekeeping_packet_t *hk);
 void take_image();
-void get_image_length(uint32_t *pdata);
-void count_images();
+void get_image_count(uint8_t *image_count);
+void get_image_length(uint32_t *image_length, uint8_t sensor_mode);
+void turn_off_sensors();
+void turn_on_sensors();
+void set_sensors_config();
+#endif
+
+void uart_handle_command(char *cmd);
+// void take_image();
+// void get_image_length(uint32_t *pdata);
+// void count_images();
 void sensor_reset(uint8_t sensor);
 void sensor_idle();
 void sensor_active();

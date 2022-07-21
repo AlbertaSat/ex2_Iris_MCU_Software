@@ -38,6 +38,7 @@
 #include "nandfs.h"
 #include "can.h"
 #include "microtar.h"
+#include "spi_obc.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -184,7 +185,7 @@ int main(void) {
             break;
         case LISTENING:
             iris_state = IDLE;
-            spi_receive(&obc_cmd, 1);
+            obc_spi_receive(&obc_cmd, 1);
             break;
         case HANDLE_COMMAND:
             if (spi_verify_command(obc_cmd) == 0) {
