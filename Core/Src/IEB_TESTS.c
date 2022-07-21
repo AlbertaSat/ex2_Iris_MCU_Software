@@ -59,7 +59,6 @@ void CHECK_LED_I2C_SPI_TS(void) {
 
     // TODO: Test nand
 
-
     HAL_Delay(1000);
 }
 
