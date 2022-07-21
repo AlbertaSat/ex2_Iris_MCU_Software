@@ -425,8 +425,8 @@ static void MX_SPI1_Init(void) {
     hspi1.Init.Direction = SPI_DIRECTION_2LINES;
     hspi1.Init.DataSize = SPI_DATASIZE_8BIT;
     hspi1.Init.CLKPolarity = SPI_POLARITY_LOW;
-    hspi1.Init.CLKPhase = SPI_PHASE_1EDGE;
-    hspi1.Init.NSS = SPI_NSS_HARD_INPUT;
+    hspi1.Init.CLKPhase = SPI_PHASE_2EDGE;
+    hspi1.Init.NSS = SPI_NSS_SOFT;
     hspi1.Init.FirstBit = SPI_FIRSTBIT_MSB;
     hspi1.Init.TIMode = SPI_TIMODE_DISABLE;
     hspi1.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
@@ -644,7 +644,8 @@ void init_filesystem() {
 
 static void onboot_commands(void) {
 
-    //#ifdef SPI_DEBUG
+#ifdef SPI_DEBUG
+#ifndef SPI_DEBUG_UART_OUTPUT
     GPIO_InitTypeDef GPIO_InitStruct = {0};
     /*Configure GPIO pin */
     GPIO_InitStruct.Pin = ERR_Pin;
@@ -653,29 +654,42 @@ static void onboot_commands(void) {
     GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
     HAL_GPIO_Init(ERR_GPIO_Port, &GPIO_InitStruct);
     ERR_GPIO_Port->BSRR = ERR_Pin;
-
-    //#endif
+#endif
+#endif
 
     HAL_TIM_Base_Start(&htim2);
-    //    init_filesystem();
-    //#ifdef CURRENTSENSE_5V
-    //    init_ina209(CURRENTSENSE_5V);
-    //#endif // CURRENTSENSE_5V
-    //    init_temp_sensors();
+    // init_filesystem();
+#ifdef CURRENTSENSE_5V
+    init_ina209(CURRENTSENSE_5V);
+#endif // CURRENTSENSE_5V
+    // init_ina209(CURRENTSENSE_5V);
 
-    //#ifdef IRIS_PROTO
-    //    sensor_togglepower(1);
-    //    flood_cam_spi();
-    //    initalize_sensors();
-    //#endif // IRIS_PROTO
+    HAL_Delay(500);
+
+#ifdef IRIS_PROTO
+    sensor_togglepower(1);
+    flood_cam_spi();
+    initalize_sensors();
+#else
+    flood_cam_spi();
+#endif // IRIS_PROTO
 
 #ifdef UART_DEBUG
     DBG_PUT("-----------------------------------\r\n");
     DBG_PUT("Iris Electronics Test Software\r\n"
             "         UART Edition         \r\n");
     DBG_PUT("-----------------------------------\r\n");
+#else
+    DBG_PUT("-----------------------------------\r\n");
+    DBG_PUT("Iris Electronics Test Software\r\n"
+            "        SPI Edition         \r\n");
+    DBG_PUT("-----------------------------------\r\n");
 #endif
     return;
+
+    // Set resolution for both sensors
+    arducam_set_resolution(JPEG, 640, VIS_SENSOR);
+    arducam_set_resolution(JPEG, 640, NIR_SENSOR);
 }
 /* USER CODE END 4 */
 

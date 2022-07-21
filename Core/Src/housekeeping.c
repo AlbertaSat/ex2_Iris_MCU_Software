@@ -19,6 +19,7 @@ housekeeping_packet_t _get_housekeeping() {
     hk.gate_temp = get_temp(GATE_TEMP_SENSOR);
     hk.imagenum = get_image_num(1);
     hk.software_version = software_ver;
+    hk.errornum = 0x00;
 
 #if defined IRIS_EM || defined IRIS_FM
     uint16_t pospeak, pwrpeak, negpeak;
