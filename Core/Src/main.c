@@ -37,6 +37,7 @@
 #include "flash_cmds.h"
 #include "nandfs.h"
 #include "can.h"
+#include "microtar.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
