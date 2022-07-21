@@ -488,7 +488,7 @@ void uart_handle_nand_commands(const char *cmd) {
         return;
     }
 
-    switch(*p) {
+    switch (*p) {
     case 'f':
         DBG_PUT("formatting\r\n");
         if ((rc = NANDfs_format())) {
@@ -499,21 +499,19 @@ void uart_handle_nand_commands(const char *cmd) {
         DBG_PUT("files:\r\n");
         list_files();
         break;
-    case 't':
-        {
-            int count = 10;
-            if ((p = next_token(p))) {
-                if (sscanf(p, "%d", &count) != 1) {
-                    DBG_PUT("bad count %s\r\n", p);
-                    return;
-                }
-            }
-            DBG_PUT("creating a file with %d pages\r\n", count);
-            if ((rc = pattern_with_filesystem_test(count))) {
-                DBG_PUT("test failed: %d\r\n", rc);
+    case 't': {
+        int count = 10;
+        if ((p = next_token(p))) {
+            if (sscanf(p, "%d", &count) != 1) {
+                DBG_PUT("bad count %s\r\n", p);
+                return;
             }
         }
-        break;
+        DBG_PUT("creating a file with %d pages\r\n", count);
+        if ((rc = pattern_with_filesystem_test(count))) {
+            DBG_PUT("test failed: %d\r\n", rc);
+        }
+    } break;
     case 'r':
         if ((p = next_token(p))) {
             if (sscanf(p, "%d", &block) != 1) {

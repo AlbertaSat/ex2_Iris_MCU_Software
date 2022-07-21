@@ -353,40 +353,36 @@ void uart_handle_command(char *cmd) {
             uart_scan_i2c();
             break;
 
-        case 'a':
-            {
-                const char *c = next_token(cmd);
-                switch (*c) {
-                case 'v':
-                    uart_handle_saturation_cmd(c, VIS_SENSOR);
-                    break;
-                case 'n':
-                    uart_handle_saturation_cmd(c, NIR_SENSOR);
-                    break;
-                default:
-                    DBG_PUT("Target Error\r\n");
-                    break;
-                }
-            }
-            break;
-        }
-        break;
-    case 'p':
-        {
-            const char *p = next_token(cmd);
-            switch (*(p + 1)) {
-            case 'n':
-                sensor_active();
+        case 'a': {
+            const char *c = next_token(cmd);
+            switch (*c) {
+            case 'v':
+                uart_handle_saturation_cmd(c, VIS_SENSOR);
                 break;
-            case 'f':
-                sensor_idle();
+            case 'n':
+                uart_handle_saturation_cmd(c, NIR_SENSOR);
                 break;
             default:
-                DBG_PUT("Use either on or off\r\n");
+                DBG_PUT("Target Error\r\n");
                 break;
             }
+        } break;
         }
         break;
+    case 'p': {
+        const char *p = next_token(cmd);
+        switch (*(p + 1)) {
+        case 'n':
+            sensor_active();
+            break;
+        case 'f':
+            sensor_idle();
+            break;
+        default:
+            DBG_PUT("Use either on or off\r\n");
+            break;
+        }
+    } break;
     case 'i':
         switch (*(cmd + 1)) {
         case '2':

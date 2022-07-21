@@ -175,7 +175,7 @@ int pattern_with_filesystem_test(int page_cnt) {
     }
 
     int file_size = fd->node.file_size;
-    if (file_size != PAGE_DATA_SIZE*page_cnt) {
+    if (file_size != PAGE_DATA_SIZE * page_cnt) {
         DBG_PUT("wrong len %d\r\n", file_size);
         NANDfs_close(fd);
         return -2;
