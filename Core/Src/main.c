@@ -682,18 +682,9 @@ static void onboot_commands(void) {
 #else
     DBG_PUT("-----------------------------------\r\n");
     DBG_PUT("Iris Electronics Test Software\r\n"
-            "        SPI v2_sensors (19/07/2022) Edition         \r\n");
+            "        SPI v2_sensors v2 (20/07/2022) Edition         \r\n");
     DBG_PUT("-----------------------------------\r\n");
 #endif
-    DBG_PUT("-----------------------------------\r\n");
-    DBG_PUT("Iris Electronics Test Software\r\n"
-            "        FlatSat v2 (18/07/2022) Edition         \r\n");
-    DBG_PUT("-----------------------------------\r\n");
-    return;
-
-    // Set resolution for both sensors
-    arducam_set_resolution(JPEG, 640, VIS_SENSOR);
-    arducam_set_resolution(JPEG, 640, NIR_SENSOR);
 }
 /* USER CODE END 4 */
 
