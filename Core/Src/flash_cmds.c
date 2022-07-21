@@ -220,7 +220,7 @@ int list_files() {
     do {
         inode_t *entry = NANDfs_getdir(dir);
 
-        DBG_PUT("id %ld, size %ld, start %d\r\n", entry->id, entry->file_size, entry->start_block);    
+        DBG_PUT("id %ld, size %ld, start %d\r\n", entry->id, entry->file_size, entry->start_block);
     } while (NANDfs_nextdir(dir) > 0);
 
     NANDfs_closedir(dir);
@@ -230,7 +230,7 @@ int list_files() {
 static uint8_t data[PAGE_DATA_SIZE];
 
 int dump_page(int block, int page) {
-    PhysicalAddrs paddr = { .block = block, .page = page };
+    PhysicalAddrs paddr = {.block = block, .page = page};
     NAND_ReturnType rc;
 
     if ((rc = NAND_Page_Read(&paddr, PAGE_DATA_SIZE, data)) != Ret_Success) {
@@ -238,7 +238,7 @@ int dump_page(int block, int page) {
         return -1;
     }
 
-    for (int i=0; i<64; i++) {
+    for (int i = 0; i < 64; i++) {
         DBG_PUT("%02x ", data[i]);
     }
     DBG_PUT("\r\n");
@@ -247,7 +247,7 @@ int dump_page(int block, int page) {
 }
 
 int erase_block(int block) {
-    PhysicalAddrs paddr = { .block = block };
+    PhysicalAddrs paddr = {.block = block};
     NAND_ReturnType rc;
 
     if ((rc = NAND_Block_Erase(&paddr)) != Ret_Success) {
@@ -257,5 +257,3 @@ int erase_block(int block) {
 
     return 0;
 }
-
-    
