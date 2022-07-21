@@ -47,17 +47,17 @@ int NANDfs_init();
 
 int NANDfs_delete(int fileid);
 
-NAND_FILE* NANDfs_create();
+NAND_FILE *NANDfs_create();
 
-NAND_FILE* NANDfs_open(int fileid);
-NAND_FILE* NANDfs_open_latest(void);
+NAND_FILE *NANDfs_open(int fileid);
+NAND_FILE *NANDfs_open_latest(void);
 
 int NANDfs_close(NAND_FILE *file);
 
 // Only one directory exists, but the name is used for familliarity
-NAND_DIR* NANDfs_opendir();
+NAND_DIR *NANDfs_opendir();
 
-DIRENT* NANDfs_getdir(NAND_DIR *dir);
+DIRENT *NANDfs_getdir(NAND_DIR *dir);
 int NANDfs_nextdir(NAND_DIR *dir);
 
 int NANDfs_closedir(NAND_DIR *dir);
