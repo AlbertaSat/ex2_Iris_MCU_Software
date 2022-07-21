@@ -5,10 +5,14 @@
  *      Author: robert
  */
 
+#include <stdbool.h>
+#include <stdlib.h>
+#include "arducam.h"
 #include "nandfs.h"
 #include "nand_m79a_lld.h"
 #include <string.h>
 #include "debug.h"
+#include "iris_system.h"
 
 #define PAGE_LEN 2048
 
@@ -116,6 +120,7 @@ int image_with_filesystem_test() {
     }
     int file_id = fd->node.id;
     NANDfs_close(fd);
+
     fd = NANDfs_open(file_id);
     int file_size = fd->node.file_size;
     if (file_size != sample_png_size) {
@@ -199,8 +204,98 @@ int pattern_with_filesystem_test(int page_cnt) {
     return 0;
 }
 
+int nand_sensor_image_test() {
+    arducam_capture_image(VIS_SENSOR);
+    NANDfs_format();
+    // get image size
+    uint32_t image_size = read_fifo_length(VIS_SENSOR);
+    DBG_PUT("Image size: %d bytes\r\n", image_size);
+
+    //    char *data = (char *)malloc(PAGE_LEN);
+    char data[PAGE_LEN];
+    char *sample = data;
+    NAND_FILE *fd = NANDfs_create();
+    int size_remaining;
+    uint8_t image[PAGE_LEN];
+
+    spi_init_burst(VIS_SENSOR);
+    //    uint8_t prev = 0, curr = 0;
+    //    bool found_header = false;
+    uint32_t i, x = 0;
+
+    uint16_t chunks_to_write = (image_size / PAGE_LEN) + 1;
+
+    for (int j = 0; j < chunks_to_write; j++) {
+        DBG_PUT("Writing chunk %d / %d\r\n", j + 1, chunks_to_write);
+        for (i = 0; i < PAGE_LEN; i++) {
+            //			prev = curr;
+            //			curr = spi_read_burst(VIS_SENSOR);
+            //			DBG_PUT("0x%x\r\n", curr);
+
+            //			if ((curr == 0xd9) && (prev == 0xff)) {
+            //				// found the footer - break
+            //				data[x++] = curr;
+            //				x = 0;
+            //				i++;
+            //				found_header = false;
+            //				break;
+            //			}
+            //			if (found_header) {
+            //				data[x++] = curr;
+            //				x++;
+            //				if (x >= PAGE_LEN) {
+            //					x = 0;
+            //				}
+            //			} else if ((curr == 0xd8) && (prev = 0xff)) {
+            //				found_header = true;
+            //				data[0] = prev;
+            //				data[1] = curr;
+            //				x = 0;
+            //			}
+            image[i] = spi_read_burst(VIS_SENSOR);
+        }
+        size_remaining = i;
+        //		memcpy(image, sample, i);
+        sample += PAGE_LEN;
+        while (size_remaining > 0) {
+            int size_to_write = size_remaining > PAGE_LEN ? PAGE_LEN : size_remaining;
+            NANDfs_write(fd, size_to_write, &image);
+            //			memcpy(image, sample, size_to_write);
+            sample += size_to_write;
+            size_remaining -= size_to_write;
+        }
+    }
+    int file_id = fd->node.id;
+    NANDfs_close(fd);
+
+    HAL_Delay(1000);
+    DBG_PUT("Reading image back\r\n");
+
+    fd = NANDfs_open_latest();
+    if (!fd) {
+        DBG_PUT("open file %d failed: %d\r\n", file_id, nand_errno);
+        return -1;
+    }
+
+    int file_size = fd->node.file_size;
+    DBG_PUT("File size: %d\r\n", file_size);
+    int page_cnt = (file_size / PAGE_LEN) + 1;
+    for (int count = 0; count < page_cnt; count++) {
+        memset(page, 0, PAGE_DATA_SIZE);
+
+        NANDfs_read(fd, PAGE_DATA_SIZE, page);
+
+        int error_reported = 0;
+        for (int i = 0; i < PAGE_DATA_SIZE; i++) {
+            DBG_PUT("0x%x\r\n", page[i]);
+        }
+    }
+
+    NANDfs_close(fd);
+}
+
 int nand_flash_test() {
     // return flash_write_to_every_block ();
-    return nand_indep_image_test();
-    return image_with_filesystem_test();
+    //    return nand_indep_image_test();
+    //    return image_with_filesystem_test();
 }

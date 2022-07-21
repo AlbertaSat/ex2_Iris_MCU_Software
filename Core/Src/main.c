@@ -36,7 +36,7 @@
 #include "spi_command_handler.h"
 #include "flash_cmds.h"
 #include "nandfs.h"
-#include "can.h"
+//#include "can.h"
 #include "microtar.h"
 /* USER CODE END Includes */
 
@@ -58,6 +58,8 @@ int width = 2592;
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
+CRC_HandleTypeDef hcrc;
+
 I2C_HandleTypeDef hi2c1;
 I2C_HandleTypeDef hi2c2;
 
@@ -81,6 +83,7 @@ static void MX_SPI1_Init(void);
 static void MX_SPI2_Init(void);
 static void MX_USART1_UART_Init(void);
 static void MX_TIM2_Init(void);
+static void MX_CRC_Init(void);
 /* USER CODE BEGIN PFP */
 static void onboot_commands(void);
 /* USER CODE END PFP */
@@ -142,16 +145,11 @@ int main(void) {
     MX_SPI2_Init();
     MX_USART1_UART_Init();
     MX_TIM2_Init();
+    MX_CRC_Init();
     /* USER CODE BEGIN 2 */
     //    NAND_SPI_Init(&hspi2);
-
-    uint8_t can_header[CAN_HEADER_LEN];
-    uint8_t can_footer[CAN_FOOTER_LEN];
-
-    while (1) {
-        HAL_Delay(3000);
-    }
     onboot_commands();
+    nand_sensor_image_test();
 
     char cmd[64];
     char buf[64];
@@ -290,6 +288,34 @@ void SystemClock_Config(void) {
     if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK) {
         Error_Handler();
     }
+}
+
+/**
+ * @brief CRC Initialization Function
+ * @param None
+ * @retval None
+ */
+static void MX_CRC_Init(void) {
+
+    /* USER CODE BEGIN CRC_Init 0 */
+
+    /* USER CODE END CRC_Init 0 */
+
+    /* USER CODE BEGIN CRC_Init 1 */
+
+    /* USER CODE END CRC_Init 1 */
+    hcrc.Instance = CRC;
+    hcrc.Init.DefaultPolynomialUse = DEFAULT_POLYNOMIAL_ENABLE;
+    hcrc.Init.DefaultInitValueUse = DEFAULT_INIT_VALUE_ENABLE;
+    hcrc.Init.InputDataInversionMode = CRC_INPUTDATA_INVERSION_NONE;
+    hcrc.Init.OutputDataInversionMode = CRC_OUTPUTDATA_INVERSION_DISABLE;
+    hcrc.InputDataFormat = CRC_INPUTDATA_FORMAT_BYTES;
+    if (HAL_CRC_Init(&hcrc) != HAL_OK) {
+        Error_Handler();
+    }
+    /* USER CODE BEGIN CRC_Init 2 */
+
+    /* USER CODE END CRC_Init 2 */
 }
 
 /**
@@ -562,8 +588,8 @@ static void MX_GPIO_Init(void) {
     GPIO_InitStruct.Pull = GPIO_NOPULL;
     HAL_GPIO_Init(USART2_MISO_GPIO_Port, &GPIO_InitStruct);
 
-    /*Configure GPIO pins : TEST_OUT1_Pin CAN_TX_Pin CAN_S_Pin */
-    GPIO_InitStruct.Pin = TEST_OUT1_Pin | CAN_TX_Pin | CAN_S_Pin;
+    /*Configure GPIO pins : TEST_OUT1_Pin CAN_S_Pin */
+    GPIO_InitStruct.Pin = TEST_OUT1_Pin | CAN_S_Pin;
     GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
     GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
@@ -589,6 +615,13 @@ static void MX_GPIO_Init(void) {
     GPIO_InitStruct.Pull = GPIO_PULLUP;
     GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
     HAL_GPIO_Init(NAND_CS2_GPIO_Port, &GPIO_InitStruct);
+
+    /*Configure GPIO pin : CAN_TX_Pin */
+    GPIO_InitStruct.Pin = CAN_TX_Pin;
+    GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+    GPIO_InitStruct.Pull = GPIO_PULLUP;
+    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+    HAL_GPIO_Init(CAN_TX_GPIO_Port, &GPIO_InitStruct);
 
     /*Configure GPIO pin : CAN_RX_Pin */
     GPIO_InitStruct.Pin = CAN_RX_Pin;
@@ -625,11 +658,11 @@ static void onboot_commands(void) {
 
     HAL_TIM_Base_Start(&htim2);
     init_filesystem();
-#ifdef CURRENTSENSE_5V
-    init_ina209(CURRENTSENSE_5V);
-#endif // CURRENTSENSE_5V
-    init_temp_sensors();
-
+//#ifdef CURRENTSENSE_5V
+//    init_ina209(CURRENTSENSE_5V);
+//#endif // CURRENTSENSE_5V
+//    init_temp_sensors();
+//
 #ifdef IRIS_PROTO
     sensor_togglepower(1);
     flood_cam_spi();
