@@ -69,6 +69,8 @@ void take_image() {
     while (!get_bit(ARDUCHIP_TRIG, CAP_DONE_MASK, VIS_SENSOR) &&
            !get_bit(ARDUCHIP_TRIG, CAP_DONE_MASK, NIR_SENSOR)) {
     }
+
+    // DBG_PUT("Image capture complete");
     // TODO: Take image data from camera and transport it to NAND fs
 }
 
@@ -93,9 +95,9 @@ void get_image_count(uint8_t *image_count) {
  */
 void get_image_length(uint32_t *image_length, uint8_t sensor_mode) {
     if (sensor_mode == 0) {
-        image_length = (uint32_t)read_fifo_length(VIS_SENSOR);
+        *(image_length) = (uint32_t)read_fifo_length(VIS_SENSOR);
     } else {
-        image_length = (uint32_t)read_fifo_length(VIS_SENSOR);
+        *(image_length) = (uint32_t)read_fifo_length(NIR_SENSOR);
     }
 }
 
@@ -108,7 +110,7 @@ void turn_off_sensors() { sensor_togglepower(SENSORS_OFF); }
  * @brief Sends Arducam sensors into an active (re: powered on) state by turning on FET driver pin
  */
 void turn_on_sensors() {
-    sensor_togglepower(SENSORS_OFF);
+    sensor_togglepower(SENSORS_ON);
     initalize_sensors();
 }
 
@@ -118,8 +120,10 @@ void turn_on_sensors() {
  */
 void set_sensors_config() {
     // Set resolution for both sensors
-    arducam_set_resolution(JPEG, 640, VIS_SENSOR);
-    arducam_set_resolution(JPEG, 640, NIR_SENSOR);
+    arducam_set_resolution(JPEG, 1024, VIS_SENSOR);
+    arducam_set_resolution(JPEG, 1024, NIR_SENSOR);
+
+    HAL_Delay(500);
 }
 
 /**
@@ -161,11 +165,6 @@ void initalize_sensors() {
         return;
     }
     HAL_Delay(100);
-
-    // change resolution of sensors
-    arducam_set_resolution(format, width, VIS_SENSOR);
-    arducam_set_resolution(format, width, NIR_SENSOR);
-    HAL_Delay(500);
 }
 
 /**

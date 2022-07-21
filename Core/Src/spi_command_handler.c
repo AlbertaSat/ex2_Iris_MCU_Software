@@ -150,8 +150,9 @@ int spi_handle_command(uint8_t obc_cmd) {
     }
     case IRIS_ON_SENSORS: {
         turn_on_sensors();
-        set_sensors_config();
         DBG_PUT("Sensor activated\r\n");
+        set_sensors_config();
+        DBG_PUT("Sensors configured\r\n");
         return 0;
     }
     case IRIS_GET_IMAGE_LENGTH: {
