@@ -219,39 +219,14 @@ int nand_sensor_image_test() {
     uint8_t image[PAGE_LEN];
 
     spi_init_burst(VIS_SENSOR);
-    //    uint8_t prev = 0, curr = 0;
-    //    bool found_header = false;
-    uint32_t i, x = 0;
+
+    uint32_t i = 0;
 
     uint16_t chunks_to_write = (image_size / PAGE_LEN) + 1;
 
     for (int j = 0; j < chunks_to_write; j++) {
         DBG_PUT("Writing chunk %d / %d\r\n", j + 1, chunks_to_write);
         for (i = 0; i < PAGE_LEN; i++) {
-            //			prev = curr;
-            //			curr = spi_read_burst(VIS_SENSOR);
-            //			DBG_PUT("0x%x\r\n", curr);
-
-            //			if ((curr == 0xd9) && (prev == 0xff)) {
-            //				// found the footer - break
-            //				data[x++] = curr;
-            //				x = 0;
-            //				i++;
-            //				found_header = false;
-            //				break;
-            //			}
-            //			if (found_header) {
-            //				data[x++] = curr;
-            //				x++;
-            //				if (x >= PAGE_LEN) {
-            //					x = 0;
-            //				}
-            //			} else if ((curr == 0xd8) && (prev = 0xff)) {
-            //				found_header = true;
-            //				data[0] = prev;
-            //				data[1] = curr;
-            //				x = 0;
-            //			}
             image[i] = spi_read_burst(VIS_SENSOR);
         }
         size_remaining = i;
@@ -269,6 +244,7 @@ int nand_sensor_image_test() {
     NANDfs_close(fd);
 
     HAL_Delay(1000);
+
     DBG_PUT("Reading image back\r\n");
 
     fd = NANDfs_open_latest();
@@ -277,21 +253,32 @@ int nand_sensor_image_test() {
         return -1;
     }
 
+#define CHUNK_LENGTH 512
+
+    uint8_t to_send[CHUNK_LENGTH];
     int file_size = fd->node.file_size;
     DBG_PUT("File size: %d\r\n", file_size);
     int page_cnt = (file_size / PAGE_LEN) + 1;
+
+    // below reads out a 2048 byte page, then splits it into 4 512 chunks to transmit over spi
     for (int count = 0; count < page_cnt; count++) {
+        DBG_PUT("Reading Page %d / %d.\r\n", count + 1, page_cnt);
         memset(page, 0, PAGE_DATA_SIZE);
-
+        // read 2048B into buffer
         NANDfs_read(fd, PAGE_DATA_SIZE, page);
-
-        int error_reported = 0;
-        for (int i = 0; i < PAGE_DATA_SIZE; i++) {
-            DBG_PUT("0x%x\r\n", page[i]);
+        for (int k = 0; k < 4; k++) {
+            DBG_PUT("\tReading Page %d Block %d / 4\r\n", count + 1, k + 1);
+            for (int i = 0; i < CHUNK_LENGTH; i++) {
+                to_send[i] = page[(512 * k) + i];
+                DBG_PUT("0x%x\r\n", page[(512 * k) + i]);
+            }
+            // TRANSFER SPI CHUNK HERE i think
+            // spi_transfer(to_send)
         }
     }
 
     NANDfs_close(fd);
+    return 0;
 }
 
 int nand_flash_test() {
