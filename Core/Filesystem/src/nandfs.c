@@ -22,6 +22,7 @@
 extern "C" {
 #endif
 
+#include <string.h>
 #include "nandfs.h"
 #include "nand_errno.h"
 #include "nand_m79a_lld.h"
@@ -43,7 +44,7 @@ static FileHandle_t *_get_handle() {
             return &(handles[i]);
         }
     }
-    return -1;
+    return 0;
 }
 
 /*
@@ -57,22 +58,22 @@ static DirHandle_t *_get_dir_handle() {
             return &(dir_handles[i]);
         }
     }
-    return -1;
+    return 0;
 }
 
-int NANDfs_init() { NANDfs_Core_Init(); }
+int NANDfs_init() { return NANDfs_Core_Init(); }
 
 int NANDfs_delete(int fileid) { return NANDfs_core_delete(fileid); }
 
 NAND_FILE *NANDfs_create() {
     FileHandle_t *handle = _get_handle();
-    if (handle == -1) {
+    if (!handle) {
         nand_errno = NAND_EMFILE;
-        return -1;
+        return 0;
     }
     int ret = NANDfs_core_create(handle);
     if (ret == -1) {
-        return -1;
+        return 0;
     }
     return handle;
 }
@@ -96,37 +97,39 @@ int NANDfs_close(NAND_FILE *file) {
  */
 NAND_FILE *NANDfs_open(int fileid) {
     FileHandle_t *handle = _get_handle();
-    if (handle = -1) {
+    if (!handle) {
         nand_errno = NAND_EMFILE;
-        return (NAND_FILE *)-1;
+        return 0;
     }
     if (NANDfs_core_open(fileid, handle) == -1) {
-        return (NAND_FILE *)-1;
+        return 0;
     }
     return handle;
 }
 
+/* Open the most recently create file */
+NAND_FILE *NANDfs_open_latest(void) { return NANDfs_open(0); }
+
+/* Initialize a directory search by "opening" the inode of the oldest file */
 NAND_DIR *NANDfs_opendir() {
     DirHandle_t *dir = _get_dir_handle();
-    if (dir == -1) {
+    if (!dir) {
         nand_errno = NAND_EMFILE;
-        return (NAND_DIR *)-1;
+        return 0;
     }
     if (NANDfs_Core_opendir(dir) == -1) {
-        return (NAND_DIR *)-1;
+        return 0;
     }
     return (NAND_DIR *)dir;
 }
 
-// Returns the current inode the dir is pointing to and increments the dir pointer
-// If it is at the end of the dir, the returned entry's node id will be 0, an illegal value
-// If an error occurs, node id will be 0 and nand_errno will be set
-DIRENT NANDfs_readdir(NAND_DIR *dir) {
-    DirHandle_t *thisdir = (DirHandle_t *)dir;
-    inode_t node;
-    NANDfs_Core_readdir(thisdir, &node);
-    return (DIRENT)node;
-}
+/* Peek at the current directory entry */
+DIRENT *NANDfs_getdir(NAND_DIR *dir) { return &dir->current; }
+
+/* Move to the next directory entry. Returns: 0 if the current entry is already
+ * the last (most recent) entry; -1 on error; nodeid of the next entry otherwise.
+ */
+int NANDfs_nextdir(NAND_DIR *dir) { return NANDfs_Core_nextdir(dir); }
 
 int NANDfs_closedir(NAND_DIR *dir) {
     memset(dir, 0, sizeof(NAND_DIR));

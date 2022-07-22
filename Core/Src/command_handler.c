@@ -4,12 +4,15 @@
  *  Created on: May 9, 2022
  *      Author: Liam
  */
+#include <stdio.h>
+#include <ctype.h>
+#include <string.h>
 #include "command_handler.h"
-#include "string.h"
 #include "debug.h"
 #include "arducam.h"
 #include "SPI_IT.h"
 #include "IEB_TESTS.h"
+
 extern uint8_t VIS_DETECTED;
 extern uint8_t NIR_DETECTED;
 extern SPI_HandleTypeDef hspi1;
@@ -350,7 +353,7 @@ void uart_handle_command(char *cmd) {
             uart_scan_i2c();
             break;
 
-        case 'a':;
+        case 'a': {
             const char *c = next_token(cmd);
             switch (*c) {
             case 'v':
@@ -363,10 +366,10 @@ void uart_handle_command(char *cmd) {
                 DBG_PUT("Target Error\r\n");
                 break;
             }
+        } break;
         }
         break;
-
-    case 'p':; // janky use of semicolon??
+    case 'p': {
         const char *p = next_token(cmd);
         switch (*(p + 1)) {
         case 'n':
@@ -379,8 +382,8 @@ void uart_handle_command(char *cmd) {
             DBG_PUT("Use either on or off\r\n");
             break;
         }
-        break;
-    case 'i':;
+    } break;
+    case 'i':
         switch (*(cmd + 1)) {
         case '2':
             handle_i2c16_8_cmd(cmd); // needs to handle 16 / 8 bit stuff
@@ -394,7 +397,6 @@ void uart_handle_command(char *cmd) {
             }
         }
         break;
-
     case 'h':
         switch (*(cmd + 1)) {
         case 'k':
@@ -404,5 +406,13 @@ void uart_handle_command(char *cmd) {
             help();
             break;
         }
+        break;
+    case 'n':
+        uart_handle_nand_commands(cmd);
+        break;
+
+    default:
+        help();
+        break;
     }
 }

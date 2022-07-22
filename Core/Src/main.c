@@ -151,8 +151,6 @@ int main(void) {
     uint8_t can_header[CAN_HEADER_LEN];
     uint8_t can_footer[CAN_FOOTER_LEN];
     onboot_commands();
-    init_filesystem();
-    uint8_t obc_cmd;
 
     char cmd[64];
     char buf[64];
@@ -165,6 +163,8 @@ int main(void) {
     /* USER CODE BEGIN WHILE */
 
 #ifdef SPI_DEBUG
+    uint8_t obc_cmd;
+
     while (1) {
         /* USER CODE END WHILE */
 
@@ -637,7 +637,8 @@ void HAL_SPI_RxCpltCallback(SPI_HandleTypeDef *hspi) {
     spi_int_flag = 1;
 }
 
-void init_filesystem() {
+static void init_filesystem() {
+    DBG_PUT("Initializing file system\r\n");
     NAND_SPI_Init(&hspi2);
     NANDfs_init();
 }
@@ -658,7 +659,9 @@ static void onboot_commands(void) {
 #endif
 
     HAL_TIM_Base_Start(&htim2);
-    // init_filesystem();
+
+    init_filesystem();
+
 #ifdef CURRENTSENSE_5V
     init_ina209(CURRENTSENSE_5V);
 #endif // CURRENTSENSE_5V
