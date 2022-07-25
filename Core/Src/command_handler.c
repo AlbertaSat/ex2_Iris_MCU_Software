@@ -13,6 +13,8 @@
 #include "SPI_IT.h"
 #include "IEB_TESTS.h"
 
+#include "iris_time.h"
+#include "time.h"
 extern uint8_t VIS_DETECTED;
 extern uint8_t NIR_DETECTED;
 extern SPI_HandleTypeDef hspi1;
@@ -20,6 +22,7 @@ extern int format;
 extern int width;
 extern const struct sensor_reg OV5642_JPEG_Capture_QSXGA[];
 extern const struct sensor_reg OV5642_QVGA_Preview[];
+extern RTC_HandleTypeDef hrtc;
 
 uint8_t VIS_DETECTED = 0;
 uint8_t NIR_DETECTED = 0;
@@ -137,6 +140,45 @@ void sensor_active() {
     //	// initialize sensors
     initalize_sensors();
     return;
+}
+
+void set_time(uint32_t unix_time) {
+    RTC_TimeTypeDef sTime;
+    RTC_DateTypeDef sDate;
+    tmElements_t tm = {0};
+
+    convertUnixToUTC((time_t)unix_time, &tm);
+
+    sTime.Hours = tm.Hour;     // set hours
+    sTime.Minutes = tm.Minute; // set minutes
+    sTime.Seconds = tm.Second; // set seconds
+    sTime.DayLightSaving = RTC_DAYLIGHTSAVING_NONE;
+    sTime.StoreOperation = RTC_STOREOPERATION_RESET;
+    if (HAL_RTC_SetTime(&hrtc, &sTime, RTC_FORMAT_BIN) != HAL_OK) {
+        Error_Handler();
+    }
+    sDate.WeekDay = tm.Wday; // day
+    sDate.Month = tm.Month;  // month
+    sDate.Date = tm.Day;     // date
+    sDate.Year = tm.Year;    // year
+    if (HAL_RTC_SetDate(&hrtc, &sDate, RTC_FORMAT_BIN) != HAL_OK) {
+        Error_Handler();
+    }
+    HAL_RTCEx_BKUPWrite(&hrtc, RTC_BKP_DR1, 0x32F2); // backup register
+}
+
+void get_time(void) {
+    RTC_DateTypeDef gDate;
+    RTC_TimeTypeDef gTime;
+
+    /* Get the RTC current Time */
+    HAL_RTC_GetTime(&hrtc, &gTime, RTC_FORMAT_BIN);
+    /* Get the RTC current Date */
+    HAL_RTC_GetDate(&hrtc, &gDate, RTC_FORMAT_BIN);
+    /* Display time Format: hh:mm:ss */
+    DBG_PUT("%02d:%02d:%02d\r\n", gTime.Hours, gTime.Minutes, gTime.Seconds);
+    /* Display date Format: dd-mm-yy */
+    DBG_PUT("%02d-%02d-%2d\r\n", gDate.Date, gDate.Month, 1970 + gDate.Year);
 }
 
 /**

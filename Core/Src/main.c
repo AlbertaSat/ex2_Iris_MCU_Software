@@ -88,8 +88,6 @@ static void MX_CRC_Init(void);
 static void MX_RTC_Init(void);
 /* USER CODE BEGIN PFP */
 static void onboot_commands(void);
-static void set_time(void);
-static void get_time(void);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -156,13 +154,8 @@ int main(void) {
 
     uint8_t can_header[CAN_HEADER_LEN];
     uint8_t can_footer[CAN_FOOTER_LEN];
-    //    onboot_commands();
+    onboot_commands();
     //    init_filesystem();
-    set_time();
-    while (1) {
-        get_time();
-        HAL_Delay(1000);
-    }
     uint8_t obc_cmd;
 
     char cmd[64];
@@ -505,8 +498,8 @@ static void MX_SPI1_Init(void) {
     hspi1.Init.Direction = SPI_DIRECTION_2LINES;
     hspi1.Init.DataSize = SPI_DATASIZE_8BIT;
     hspi1.Init.CLKPolarity = SPI_POLARITY_LOW;
-    hspi1.Init.CLKPhase = SPI_PHASE_1EDGE;
-    hspi1.Init.NSS = SPI_NSS_HARD_INPUT;
+    hspi1.Init.CLKPhase = SPI_PHASE_2EDGE;
+    hspi1.Init.NSS = SPI_NSS_SOFT;
     hspi1.Init.FirstBit = SPI_FIRSTBIT_MSB;
     hspi1.Init.TIMode = SPI_TIMODE_DISABLE;
     hspi1.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
@@ -714,7 +707,9 @@ static void MX_GPIO_Init(void) {
 /* USER CODE BEGIN 4 */
 void HAL_SPI_RxCpltCallback(SPI_HandleTypeDef *hspi) {
     // Flag is set whenever OBC wants to communicate
-    spi_int_flag = 1;
+    if (iris_state != HANDLE_COMMAND) {
+        spi_int_flag = 1;
+    }
 }
 
 static void init_filesystem() {
@@ -770,45 +765,6 @@ static void onboot_commands(void) {
 #endif
 }
 /* USER CODE END 4 */
-
-void set_time(void) {
-    RTC_TimeTypeDef sTime;
-    RTC_DateTypeDef sDate;
-    sTime.Hours = 0x10;   // set hours
-    sTime.Minutes = 0x20; // set minutes
-    sTime.Seconds = 0x30; // set seconds
-    sTime.DayLightSaving = RTC_DAYLIGHTSAVING_NONE;
-    sTime.StoreOperation = RTC_STOREOPERATION_RESET;
-    if (HAL_RTC_SetTime(&hrtc, &sTime, RTC_FORMAT_BCD) != HAL_OK) {
-        Error_Handler();
-    }
-    sDate.WeekDay = RTC_WEEKDAY_THURSDAY; // day
-    sDate.Month = RTC_MONTH_AUGUST;       // month
-    sDate.Date = 0x9;                     // date
-    sDate.Year = 0x18;                    // year
-    if (HAL_RTC_SetDate(&hrtc, &sDate, RTC_FORMAT_BCD) != HAL_OK) {
-        Error_Handler();
-    }
-    HAL_RTCEx_BKUPWrite(&hrtc, RTC_BKP_DR1, 0x32F2); // backup register
-}
-
-void get_time(void) {
-    RTC_DateTypeDef gDate;
-    RTC_TimeTypeDef gTime;
-
-    char *time_format;
-    char *date_format;
-    /* Get the RTC current Time */
-    HAL_RTC_GetTime(&hrtc, &gTime, RTC_FORMAT_BIN);
-    /* Get the RTC current Date */
-    HAL_RTC_GetDate(&hrtc, &gDate, RTC_FORMAT_BIN);
-    /* Display time Format: hh:mm:ss */
-    sprintf((char *)time_format, "%02d:%02d:%02d", gTime.Hours, gTime.Minutes, gTime.Seconds);
-    DBG_PUT(time_format);
-    /* Display date Format: dd-mm-yy */
-    sprintf((char *)date_format, "%02d-%02d-%2d", gDate.Date, gDate.Month, 2000 + gDate.Year);
-    DBG_PUT(date_format);
-}
 
 /**
  * @brief  This function is executed in case of error occurrence.

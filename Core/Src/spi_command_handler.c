@@ -39,6 +39,17 @@ void spi_receive(uint8_t *rx_data, uint16_t data_length) { HAL_SPI_Receive_IT(&h
 
 /**
  * @brief
+ * 		Receive data of given size over SPI bus in blocking mode
+ * @param
+ * 		*rx_data: pointer to receive data
+ * 		data_length: numbers of bytes to be receive
+ */
+void spi_receive_blocking(uint8_t *rx_data, uint16_t data_length) {
+    HAL_SPI_Receive(&hspi1, rx_data, data_length, HAL_MAX_DELAY);
+}
+
+/**
+ * @brief
  * 		Verifies if command from OBC is valid or not
  * @param
  * 		obc_cmd: Command from OBC
@@ -90,6 +101,10 @@ int spi_verify_command(uint8_t obc_cmd) {
         break;
     }
     case IRIS_WDT_CHECK: {
+        transmit_ack = 1;
+        break;
+    }
+    case IRIS_SET_TIME: {
         transmit_ack = 1;
         break;
     }
@@ -176,6 +191,21 @@ int spi_handle_command(uint8_t obc_cmd) {
         //    	update_current_limits();
         spi_transmit(&tx_data, 1);
         return 0;
+    }
+    case IRIS_SET_TIME: {
+        uint32_t obc_unix_time;
+        uint8_t iris_unix_time_buffer[IRIS_UNIX_TIME_SIZE];
+        spi_receive_blocking(iris_unix_time_buffer, 4);
+
+        obc_unix_time =
+            (uint32_t)((uint8_t)iris_unix_time_buffer[0] << 24 | (uint8_t)iris_unix_time_buffer[1] << 16 |
+                       (uint8_t)iris_unix_time_buffer[2] << 8 | (uint8_t)iris_unix_time_buffer[3]);
+
+        set_time(obc_unix_time);
+        while (1) {
+            get_time();
+            HAL_Delay(1000);
+        }
     }
     case IRIS_WDT_CHECK: {
         return 0;
