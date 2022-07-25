@@ -169,7 +169,6 @@ int main(void) {
     /* USER CODE BEGIN WHILE */
 
 #ifdef SPI_DEBUG
-    uint8_t obc_cmd;
 
     while (1) {
         /* USER CODE END WHILE */
