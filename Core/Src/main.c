@@ -148,8 +148,6 @@ int main(void) {
     /* USER CODE BEGIN 2 */
     //    NAND_SPI_Init(&hspi2);
 
-    uint8_t can_header[CAN_HEADER_LEN];
-    uint8_t can_footer[CAN_FOOTER_LEN];
     onboot_commands();
 
     char cmd[64];
