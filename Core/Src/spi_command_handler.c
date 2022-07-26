@@ -109,6 +109,8 @@ int spi_verify_command(uint8_t obc_cmd) {
         return 0;
     } else {
         spi_transmit(&nack, 1);
+        iterate_error_num();
+        // sys_log("oh shit, SPI command failed!");
         return -1;
     }
 }
