@@ -196,6 +196,8 @@ int spi_handle_command(uint8_t obc_cmd) {
         return 0;
     }
     default:
+        iterate_error_num();
+        // sys_log("Oh shit! We failed to handle a command!");
         return -1;
     }
 }
