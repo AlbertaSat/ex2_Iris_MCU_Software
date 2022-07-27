@@ -29,3 +29,16 @@ void obc_spi_transmit(uint8_t *tx_data, uint16_t data_length) {
  * 		data_length: numbers of bytes to be receive
  */
 void obc_spi_receive(uint8_t *rx_data, uint16_t data_length) { HAL_SPI_Receive_IT(&hspi1, rx_data, data_length); }
+
+/**
+ * @brief
+ * 		Receive data of given size over SPI bus in blocking mode
+ * 		Used primarily for receiving data via SPI when in handling
+ * 		command mode.
+ * @param
+ * 		*rx_data: pointer to receive data
+ * 		data_length: numbers of bytes to be receive
+ */
+void obc_spi_receive_blocking(uint8_t *rx_data, uint16_t data_length) {
+    HAL_SPI_Receive(&hspi1, rx_data, data_length, HAL_MAX_DELAY);
+}
