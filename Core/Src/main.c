@@ -688,11 +688,6 @@ static void onboot_commands(void) {
             "        SPI Edition         \r\n");
     DBG_PUT("-----------------------------------\r\n");
 #endif
-    return;
-
-    // Set resolution for both sensors
-    arducam_set_resolution(JPEG, 640, VIS_SENSOR);
-    arducam_set_resolution(JPEG, 640, NIR_SENSOR);
 }
 /* USER CODE END 4 */
 
