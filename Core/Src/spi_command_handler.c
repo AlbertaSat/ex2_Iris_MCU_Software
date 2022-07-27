@@ -202,10 +202,6 @@ int spi_handle_command(uint8_t obc_cmd) {
                        (uint8_t)iris_unix_time_buffer[2] << 8 | (uint8_t)iris_unix_time_buffer[3]);
 
         set_time(obc_unix_time);
-        while (1) {
-            get_time();
-            HAL_Delay(1000);
-        }
     }
     case IRIS_WDT_CHECK: {
         return 0;
