@@ -246,6 +246,7 @@ void initalize_sensors(void) {
     }
     if (res == -1) {
         // need some error handling eh
+        iterate_error_num();
         DBG_PUT("VIS init failed./r/n");
         return;
     }
@@ -259,6 +260,7 @@ void initalize_sensors(void) {
     }
     if (res == -1) {
         // need some error handling eh
+        iterate_error_num();
         DBG_PUT("NIR init failed.\r\n");
         return;
     }
