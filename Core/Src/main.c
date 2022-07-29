@@ -18,6 +18,7 @@
 
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
+#include <obc_handler.h>
 #include "main.h"
 
 /* Private includes ----------------------------------------------------------*/
