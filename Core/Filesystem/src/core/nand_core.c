@@ -68,6 +68,9 @@ static int _find_inode(int inodeid, inode_t *inode, PhysicalAddrs *paddr) {
 
     for (int i = RESERVED_BLOCK_CNT; i < NUM_BLOCKS; i++) {
         search.block = i;
+        if (NAND_is_Bad_Block(search.block)) {
+            continue;
+        }
         if (NAND_Page_Read(&search, sizeof(snode), (uint8_t *)&snode) != Ret_Success) {
             continue; // Might have hit a bad block, not really sure
         }
@@ -229,13 +232,26 @@ int NANDfs_core_create(FileHandle_t *handle) {
     return 0;
 }
 
-int NANDfs_core_format() {
+NAND_ReturnType _NANDfs_core_erase_block(int block) {
     PhysicalAddrs addr = {0};
+    addr.block = block;
+    if (NAND_is_Bad_Block(&addr)) { // Skip bad block
+        return Ret_Success;
+    }
+    NAND_ReturnType ret = NAND_Block_Erase(&addr);
+    if (ret == Ret_EraseFailed) {
+        NAND_Mark_Bad_Block(&addr);
+        return Ret_EraseFailed;
+#if NAND_DEBUG
+        DBG_PUT("failed to erase block %d, ret:%d\r\n", addr.block, ret);
+#endif
+    }
+    return ret;
+}
+
+int NANDfs_core_format() {
     for (int i = 0; i < NUM_BLOCKS; i++) {
-        addr.block = i;
-        if (NAND_Block_Erase(&addr) != Ret_Success) {
-            return -1;
-        }
+        _NANDfs_core_erase_block(i);
     }
     memset(&lowest_inode, 0, sizeof(lowest_inode));
     memset(&highest_inode, 0, sizeof(highest_inode));
@@ -249,17 +265,17 @@ int NANDfs_core_erase(inode_t *inode) {
     PhysicalAddrs addr = {.block = inode->start_block};
     inode_t fnode = {0};
     do {
-        if (NAND_Block_Erase(&addr) != Ret_Success) {
-            return -1;
-        }
+        _NANDfs_core_erase_block(addr.block);
         addr.block++;
         if (addr.block >= NUM_BLOCKS) {
-            // TODO: Add bad block skipover
             addr.block = RESERVED_BLOCK_CNT;
+        }
+        if (NAND_is_Bad_Block(addr.block)) {
+            continue;
         }
         NAND_ReturnType status = NAND_Page_Read(&addr, sizeof(inode_t), (uint8_t *)&fnode);
         if (status != Ret_Success) {
-            return -1; // TODO: Add handling for bad block
+            return -1;
         }
     } while (fnode.magic == MAGIC && fnode.id == inode->id);
 
@@ -303,6 +319,12 @@ int NANDfs_core_write(FileHandle_t *file, int size, void *buf) {
         // If we reached the end of a block, page will be set to 0,
         // This means we must delete the file that's in the way and add our own inode
         if (seek->page == 0) {
+            if (NAND_is_Bad_Block(seek->block)) {
+                if (i > 0)
+                    i--;
+                seek->block++;
+                continue;
+            }
             inode_t node;
             NAND_ReturnType status;
 
@@ -317,7 +339,7 @@ int NANDfs_core_write(FileHandle_t *file, int size, void *buf) {
                 }
                 NANDfs_core_erase(&node);
             } else { // Erase for good measure
-                if ((status = NAND_Block_Erase(seek))) {
+                if ((status = _NANDfs_core_erase_block(seek->block))) {
                     nand_errno = NAND_EFUBAR;
                     return -1;
                 }

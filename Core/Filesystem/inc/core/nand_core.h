@@ -23,6 +23,8 @@
 
 #include "nand_m79a_lld.h"
 
+#define NAND_DEBUG 1
+
 int NANDfs_core_format();
 int NANDfs_Core_Init();
 int NANDfs_core_create(FileHandle_t *handle);
