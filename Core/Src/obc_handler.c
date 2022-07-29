@@ -1,8 +1,8 @@
-#include <spi_command_handler.h>
 #include <command_handler.h>
 #include <iris_system.h>
 #include <string.h>
 #include <arducam.h>
+#include <obc_handler.h>
 #include <spi_bitbang.h>
 #include "debug.h"
 #include <spi_obc.h>
@@ -43,7 +43,7 @@ void spi_receive_blocking(uint8_t *rx_data, uint16_t data_length) {
  * @return
  * 		1 if valid command, 0 if not
  */
-int spi_verify_command(uint8_t obc_cmd) {
+int obc_verify_command(uint8_t obc_cmd) {
     uint8_t ack = 0xAA;
     uint8_t nack = 0x0F;
     uint8_t transmit_ack;
@@ -117,7 +117,7 @@ int spi_verify_command(uint8_t obc_cmd) {
  * @return
  * 		1 if valid command, 0 if not
  */
-int spi_handle_command(uint8_t obc_cmd) {
+int obc_handle_command(uint8_t obc_cmd) {
     uint8_t tx_data = 0x69;
 
     switch (obc_cmd) {

@@ -5,8 +5,8 @@
  *      Author: jenish
  */
 
-#ifndef INC_SPI_COMMAND_HANDLER_H_
-#define INC_SPI_COMMAND_HANDLER_H_
+#ifndef INC_OBC_HANDLER_H_
+#define INC_OBC_HANDLER_H_
 
 #include <stdio.h>
 
@@ -37,4 +37,4 @@ int spi_handle_command(uint8_t cmd);
 void transfer_image_to_obc();
 int step_transfer(); // For testing "idle task" running on Iris
 
-#endif /* INC_SPI_COMMAND_HANDLER_H_ */
+#endif /* INC_OBC_HANDLER_H_ */

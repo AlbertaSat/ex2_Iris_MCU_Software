@@ -18,6 +18,7 @@
 
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
+#include <obc_handler.h>
 #include "main.h"
 
 /* Private includes ----------------------------------------------------------*/
@@ -33,7 +34,6 @@
 #include "tmp421.h"
 #include "housekeeping.h"
 #include "command_handler.h"
-#include "spi_command_handler.h"
 #include "flash_cmds.h"
 #include "nandfs.h"
 #include "can.h"
@@ -188,8 +188,9 @@ int main(void) {
             obc_spi_receive(&obc_cmd, 1);
             break;
         case HANDLE_COMMAND:
-            if (spi_verify_command(obc_cmd) == 0) {
-                spi_handle_command(obc_cmd);
+            ret = obc_verify_command(obc_cmd);
+            if (ret != -1) {
+                ret = obc_handle_command(obc_cmd);
             }
             iris_state = FINISH;
             break;
