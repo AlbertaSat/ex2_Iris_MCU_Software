@@ -28,17 +28,12 @@ const uint8_t iris_commands[IRIS_NUM_COMMANDS] = {IRIS_TAKE_PIC,
                                                   IRIS_SET_TIME,
                                                   IRIS_WDT_CHECK};
 
-/**
- * @brief
- * 		Receive data of given size over SPI bus in blocking mode
- * @param
- * 		*rx_data: pointer to receive data
- * 		data_length: numbers of bytes to be receive
+/*
+ * Refactor Iris
+ * - No processing of command occurs, delegate it to command_handler.h
+ * - spi drivers should be placed in the driver file **
+ * - Only verification and facilitation of commands should happen hear
  */
-void spi_receive_blocking(uint8_t *rx_data, uint16_t data_length) {
-    uint8_t tx_dummy = 0xFF;
-    HAL_SPI_TransmitReceive(&hspi1, &tx_dummy, rx_data, data_length, HAL_MAX_DELAY);
-}
 
 /**
  * @brief
@@ -55,54 +50,10 @@ int obc_verify_command(uint8_t obc_cmd) {
 
     transmit_ack = 0;
 
-    switch (obc_cmd) {
-    case IRIS_SEND_HOUSEKEEPING: {
-        transmit_ack = 1;
-        break;
-    }
-    case IRIS_TAKE_PIC: {
-        transmit_ack = 1;
-        break;
-    }
-    case IRIS_GET_IMAGE_COUNT: {
-        transmit_ack = 1;
-        break;
-    }
-    case IRIS_TRANSFER_IMAGE: {
-        transmit_ack = 1;
-        break;
-    }
-    case IRIS_OFF_SENSORS: {
-        transmit_ack = 1;
-        break;
-    }
-    case IRIS_ON_SENSORS: {
-        transmit_ack = 1;
-        break;
-    }
-    case IRIS_GET_IMAGE_LENGTH: {
-        transmit_ack = 1;
-        break;
-    }
-    case IRIS_UPDATE_SENSOR_I2C_REG: {
-        transmit_ack = 1;
-        break;
-    }
-    case IRIS_UPDATE_CURRENT_LIMIT: {
-        transmit_ack = 1;
-        break;
-    }
-    case IRIS_WDT_CHECK: {
-        transmit_ack = 1;
-        break;
-    }
-    case IRIS_SET_TIME: {
-        transmit_ack = 1;
-        break;
-    }
-    default: {
-        transmit_ack = 0;
-    }
+    for (uint8_t index = 0; index < IRIS_NUM_COMMANDS; index++) {
+        if (iris_commands[index] == obc_cmd) {
+            transmit_ack = 1;
+        }
     }
 
     if (transmit_ack != 0) {
