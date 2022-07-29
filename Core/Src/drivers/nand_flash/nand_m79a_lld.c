@@ -468,13 +468,36 @@ NAND_ReturnType NAND_Block_Erase(PhysicalAddrs *addr) {
  * True: Block is bad
  */
 bool NAND_is_Bad_Block(int block) {
-    // TODO: Look for the bad block marker
-    // This will be page 0 of the current block, first spare area
-    // So far, it seems fine to read a bad block. So that would be convenient
-    return false;
+    PhysicalAddrs addr = {0};
+    addr.block = block;
+    addr.column = 2048;
+    uint8_t marker = 0xFF;
+    NAND_Page_Read(&addr, sizeof(marker), &marker);
+    return marker != 0xFF;
 }
 
-NAND_ReturnType NAND_Mark_Bad_Block(int block) { return Ret_Success; }
+NAND_ReturnType NAND_Mark_Bad_Block(int block) {
+    PhysicalAddrs addr = {0};
+    addr.block = block;
+    addr.column = 2048;
+    uint8_t marker = 0x00;
+    // It seems that sometimes we can write a couple bits to a bad block
+    // Really all the marker needs to be is not 0xFF
+    // The datasheet seems confident that this will work
+    return NAND_Page_Write(&addr, sizeof(marker), &marker);
+}
+
+/**
+ * THIS WILL ERASE THE BAD BLOCK TABLE. Probably a bad idea, but it's your funeral
+ */
+NAND_ReturnType NAND_Erase_All() {
+    PhysicalAddrs addr = {0};
+    for (int i = 0; i < NUM_BLOCKS; i++) {
+        addr.block = i;
+        NAND_Block_Erase(&addr);
+    }
+    return Ret_Success;
+}
 
 /******************************************************************************
  *                              Move Operations
