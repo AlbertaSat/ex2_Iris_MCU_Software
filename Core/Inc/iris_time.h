@@ -20,11 +20,11 @@ typedef struct {
     uint8_t Wday; // day of week, sunday is day 1
     uint8_t Day;
     uint8_t Month;
-    uint8_t Year; // offset from 1970;
-} tmElements_t;
+    uint16_t Year; // offset from 1970;
+} Iris_Timestamp;
 
 static const uint8_t monthDays[] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
 
-void breakTime(time_t timeInput);
+void convertUnixToUTC(time_t timeInput, Iris_Timestamp *timestamp);
 
 #endif /* INC_IRIS_TIME_H_ */

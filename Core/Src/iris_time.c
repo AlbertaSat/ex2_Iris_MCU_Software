@@ -9,7 +9,7 @@
 #include "iris_time.h"
 #include "time.h"
 
-void convertUnixToUTC(time_t timeInput, tmElements_t *tm) {
+void convertUnixToUTC(time_t timeInput, Iris_Timestamp *timestamp) {
     // break the given time_t into time components
     // this is a more compact version of the C library localtime function
     // note that year is offset from 1970 !!!
@@ -20,20 +20,20 @@ void convertUnixToUTC(time_t timeInput, tmElements_t *tm) {
     unsigned long days;
 
     time = (uint32_t)timeInput;
-    tm->Second = time % 60;
+    timestamp->Second = time % 60;
     time /= 60; // now it is minutes
-    tm->Minute = time % 60;
+    timestamp->Minute = time % 60;
     time /= 60; // now it is hours
-    tm->Hour = time % 24;
-    time /= 24;                      // now it is days
-    tm->Wday = ((time + 4) % 7) + 1; // Sunday is day 1
+    timestamp->Hour = time % 24;
+    time /= 24;                             // now it is days
+    timestamp->Wday = ((time + 4) % 7) + 1; // Sunday is day 1
 
     year = 0;
     days = 0;
     while ((unsigned)(days += (LEAP_YEAR(year) ? 366 : 365)) <= time) {
         year++;
     }
-    tm->Year = year; // year is offset from 1970
+    timestamp->Year = year; // year is offset from 1970
 
     days -= LEAP_YEAR(year) ? 366 : 365;
     time -= days; // now it is days in this year, starting at 0
@@ -58,6 +58,6 @@ void convertUnixToUTC(time_t timeInput, tmElements_t *tm) {
             break;
         }
     }
-    tm->Month = month + 1; // jan is month 1
-    tm->Day = time + 1;    // day of month
+    timestamp->Month = month + 1; // jan is month 1
+    timestamp->Day = time + 1;    // day of month
 }

@@ -145,29 +145,29 @@ void sensor_active() {
 void set_time(uint32_t unix_time) {
     RTC_TimeTypeDef sTime;
     RTC_DateTypeDef sDate;
-    tmElements_t tm = {0};
+    Iris_Timestamp timestamp = {0};
 
-    convertUnixToUTC((time_t)unix_time, &tm);
+    convertUnixToUTC((time_t)unix_time, &timestamp);
 
-    sTime.Hours = tm.Hour;     // set hours
-    sTime.Minutes = tm.Minute; // set minutes
-    sTime.Seconds = tm.Second; // set seconds
+    sTime.Hours = timestamp.Hour;     // set hours
+    sTime.Minutes = timestamp.Minute; // set minutes
+    sTime.Seconds = timestamp.Second; // set seconds
     sTime.DayLightSaving = RTC_DAYLIGHTSAVING_NONE;
     sTime.StoreOperation = RTC_STOREOPERATION_RESET;
     if (HAL_RTC_SetTime(&hrtc, &sTime, RTC_FORMAT_BIN) != HAL_OK) {
         Error_Handler();
     }
-    sDate.WeekDay = tm.Wday; // day
-    sDate.Month = tm.Month;  // month
-    sDate.Date = tm.Day;     // date
-    sDate.Year = tm.Year;    // year
+    sDate.WeekDay = timestamp.Wday; // day
+    sDate.Month = timestamp.Month;  // month
+    sDate.Date = timestamp.Day;     // date
+    sDate.Year = timestamp.Year;    // year
     if (HAL_RTC_SetDate(&hrtc, &sDate, RTC_FORMAT_BIN) != HAL_OK) {
         Error_Handler();
     }
     HAL_RTCEx_BKUPWrite(&hrtc, RTC_BKP_DR1, 0x32F2); // backup register
 }
 
-void get_time(void) {
+void get_time(Iris_Timestamp *timestamp) {
     RTC_DateTypeDef gDate;
     RTC_TimeTypeDef gTime;
 
@@ -175,10 +175,21 @@ void get_time(void) {
     HAL_RTC_GetTime(&hrtc, &gTime, RTC_FORMAT_BIN);
     /* Get the RTC current Date */
     HAL_RTC_GetDate(&hrtc, &gDate, RTC_FORMAT_BIN);
+
+    timestamp->Hour = gTime.Hours;
+    timestamp->Minute = gTime.Minutes;
+    timestamp->Second = gTime.Seconds;
+    timestamp->Wday = 0; // Not needed
+    timestamp->Day = gDate.Date;
+    timestamp->Month = gDate.Month;
+    timestamp->Year = 1970 + gDate.Year;
+
+#ifdef SPI_DEBUG_UART_OUTPUT
     /* Display time Format: hh:mm:ss */
-    DBG_PUT("%02d:%02d:%02d\r\n", gTime.Hours, gTime.Minutes, gTime.Seconds);
+    DBG_PUT("%02d:%02d:%02d\r\n", timestamp->Hour, timestamp->Minute, timestamp->Second);
     /* Display date Format: dd-mm-yy */
-    DBG_PUT("%02d-%02d-%2d\r\n", gDate.Date, gDate.Month, 1970 + gDate.Year);
+    DBG_PUT("%02d-%02d-%2d\r\n", timestamp->Day, timestamp->Month, timestamp->Year);
+#endif
 }
 
 /**
