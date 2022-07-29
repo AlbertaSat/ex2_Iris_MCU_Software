@@ -27,6 +27,7 @@
 #define nand_m79a_lld_h
 
 #include "nand_spi.h"
+#include <stdbool.h>
 
 /* Functions Return Codes */
 typedef enum {
@@ -145,7 +146,7 @@ typedef struct {
 #define BYTE_2(data) ((uint8_t)((data >> 16) & 0xFF))
 #define BYTE_3(data) ((uint8_t)((data >> 24) & 0xFF))
 
-#define CHECK_OIP(status_reg) (status_reg & SPI_NAND_OIP) // returns 1 if OIP bit is 1 and device is busy
+#define CHECK_OIP(status_reg) (status_reg & NAND_OIP) // returns 1 if OIP bit is 1 and device is busy
 
 /* Command Code Definitions (see Datasheet page 13) */
 typedef enum {
@@ -248,12 +249,12 @@ typedef enum {
 
 /* Values for status register (see Datasheet page 43) */
 typedef enum {
-    SPI_NAND_CRBSY = (1 << 7),                     /* Cache Read Busy */
-    SPI_NAND_ECC = (1 << 6) | (1 << 5) | (1 << 4), /* ECC bits */
-    SPI_NAND_PF = (1 << 3),                        /* program fail */
-    SPI_NAND_EF = (1 << 2),                        /* erase fail */
-    SPI_NAND_WEL = (1 << 1),                       /* write enable latch */
-    SPI_NAND_OIP = (1 << 0),                       /* operation in progress */
+    NAND_CRBSY = (1 << 7),                     /* Cache Read Busy */
+    NAND_ECC = (1 << 6) | (1 << 5) | (1 << 4), /* ECC bits */
+    NAND_PF = (1 << 3),                        /* program fail */
+    NAND_EF = (1 << 2),                        /* erase fail */
+    NAND_WEL = (1 << 1),                       /* write enable latch */
+    NAND_OIP = (1 << 0),                       /* operation in progress */
 } StatusRegBits;
 
 /* Die Select Register Definitions (see Datasheet page 37)
@@ -320,6 +321,13 @@ NAND_ReturnType NAND_Page_Program(PhysicalAddrs *addr, uint16_t length, uint8_t 
 
 /* erase operation */
 NAND_ReturnType NAND_Block_Erase(PhysicalAddrs *addr);
+
+/* Bad block handling */
+bool NAND_is_Bad_Block(int block);
+
+NAND_ReturnType NAND_Mark_Bad_Block(int block);
+
+NAND_ReturnType NAND_Copy_Block(PhysicalAddrs *src, PhysicalAddrs *dst);
 
 /* internal data move operations */
 // NAND_ReturnType NAND_Copy_Back(NAND_Addr src_addr, NAND_Addr dest_addr);
