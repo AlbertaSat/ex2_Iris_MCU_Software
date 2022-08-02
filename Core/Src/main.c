@@ -708,6 +708,8 @@ void HAL_SPI_RxCpltCallback(SPI_HandleTypeDef *hspi) {
     // Flag is set whenever OBC wants to communicate
     if (iris_state != HANDLE_COMMAND) {
         spi_int_flag = 1;
+    } else {
+        spi_int_flag = 0;
     }
 }
 

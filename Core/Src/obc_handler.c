@@ -119,6 +119,7 @@ int obc_verify_command(uint8_t obc_cmd) {
  */
 int obc_handle_command(uint8_t obc_cmd) {
     uint8_t tx_data = 0x69;
+    uint8_t tx_ack = 0xAA;
 
     switch (obc_cmd) {
     case IRIS_SEND_HOUSEKEEPING: {
@@ -146,6 +147,7 @@ int obc_handle_command(uint8_t obc_cmd) {
     case IRIS_OFF_SENSORS: {
         turn_off_sensors();
         DBG_PUT("Sensor de-activated\r\n");
+        obc_spi_transmit(&tx_ack, 1);
         return 0;
     }
     case IRIS_ON_SENSORS: {
@@ -153,6 +155,7 @@ int obc_handle_command(uint8_t obc_cmd) {
         DBG_PUT("Sensor activated\r\n");
         set_sensors_config();
         DBG_PUT("Sensors configured\r\n");
+        obc_spi_transmit(&tx_ack, 1);
         return 0;
     }
     case IRIS_GET_IMAGE_LENGTH: {

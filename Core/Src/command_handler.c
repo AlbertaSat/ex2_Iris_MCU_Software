@@ -94,11 +94,7 @@ void get_image_count(uint8_t *image_count) {
  * it is desired to extract image lengths from NAND fs
  */
 void get_image_length(uint32_t *image_length, uint8_t sensor_mode) {
-    if (sensor_mode == 0) {
-        *(image_length) = (uint32_t)read_fifo_length(VIS_SENSOR);
-    } else {
-        *(image_length) = (uint32_t)read_fifo_length(NIR_SENSOR);
-    }
+    *(image_length) = (uint32_t)read_fifo_length(sensor_mode);
 }
 
 /**
