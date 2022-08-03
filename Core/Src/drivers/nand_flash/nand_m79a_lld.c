@@ -25,6 +25,8 @@
 
 #include "nand_m79a_lld.h"
 
+static NAND_ReturnType __Status_Reg_2_ReturnType(uint8_t status_reg);
+
 /**
  * @brief Initializes the NAND. Steps: Reset device and check for correct device IDs.
  * @note  This function must be called first when powered on.
@@ -102,34 +104,22 @@ NAND_ReturnType NAND_Reset(void) {
  * @return NAND_ReturnType
  */
 
-#define MAX_ATTEMPTS 10
+#define MAX_ATTEMPTS 10000
 
 NAND_ReturnType NAND_Wait_Until_Ready(void) {
     uint8_t timeout_counter = 0;
 
     /* SPI Transaction set up for NAND_SPI_Receive */
     uint8_t data_rx = 0;
-    SPI_Params rx = {.buffer = &data_rx, .length = 1};
 
-    NAND_Get_Features(SPI_NAND_STATUS_REG_ADDR, &data_rx);
-
+    NAND_ReturnType ret;
     /* if busy, keep polling for until reaching max_attempts. if still busy, return busy */
-    while (CHECK_OIP(data_rx)) {
-        if (timeout_counter < MAX_ATTEMPTS) {
-            NAND_SPI_Receive(&rx);
-            // NAND_Get_Features(SPI_NAND_STATUS_REG_ADDR, &data_rx);
-            timeout_counter += 1;
-        } else {
-            return Ret_NANDBusy;
-        }
-    }
-
-    /* Check the Program Failed bit */
-    if (data_rx & SPI_NAND_PF) {
-        return Ret_Failed;
-    }
-
-    return Ret_Success;
+    do {
+        NAND_Get_Features(SPI_NAND_STATUS_REG_ADDR, &data_rx);
+        ret = __Status_Reg_2_ReturnType(data_rx);
+        timeout_counter += 1;
+    } while (ret == Ret_NANDBusy);
+    return ret;
 }
 
 /**
@@ -408,8 +398,15 @@ NAND_ReturnType NAND_Page_Program(PhysicalAddrs *addr, uint16_t length, uint8_t 
         return Ret_WriteFailed;
     }
 
-    /* Make sure the device is ready and then disable writes. */
-    return NAND_Wait_Until_Ready();
+    /* Command 3: wait for device to be ready again */
+    NAND_ReturnType status = NAND_Wait_Until_Ready();
+    if (status != Ret_Success) {
+        NAND_Reset();
+    }
+
+    /* Command 4: WRITE DISABLE */
+    __write_disable();
+    return status;
 }
 
 /******************************************************************************
@@ -439,30 +436,66 @@ NAND_ReturnType NAND_Block_Erase(PhysicalAddrs *addr) {
 
     /* Command 1: WRITE ENABLE */
     __write_enable();
-
+    NAND_ReturnType status = NAND_Wait_Until_Ready();
+    if (status != Ret_Success) {
+        return Ret_Failed;
+    }
     /* Command 2: BLOCK ERASE. See datasheet page 35 for details */
 
     // TODO: datasheet simply specifies block address. assuming that's the 11-bit
     // block number padded with dummy bits. check.
-    uint32_t block = 0x7ff & addr->block;
+    uint32_t block = (0x7ff & addr->block) << 6;
 
     uint8_t command[4] = {SPI_NAND_BLOCK_ERASE, BYTE_2(block), BYTE_1(block), BYTE_0(block)};
 
     SPI_Params tx_cmd = {.buffer = command, .length = 4};
     if (NAND_SPI_Send(&tx_cmd) != SPI_OK) {
-        return Ret_EraseFailed;
+        return Ret_Failed; // I/O failure
     }
 
     /* Command 3: wait for device to be ready again */
-    if (NAND_Wait_Until_Ready() != Ret_Success) {
-        return Ret_NANDBusy;
+    status = NAND_Wait_Until_Ready();
+    if (status != Ret_Success) {
+        NAND_Reset();
     }
-
     /* Command 4: WRITE DISABLE */
     __write_disable();
+    return status;
+}
 
-    // TODO: check erase fail bit in status register and return that
+/*
+ * False: Block is good
+ * True: Block is bad
+ */
+bool NAND_is_Bad_Block(int block) {
+    PhysicalAddrs addr = {0};
+    addr.block = block;
+    addr.column = 2048;
+    uint8_t marker = 0xFF;
+    NAND_Page_Read(&addr, sizeof(marker), &marker);
+    return marker != 0xFF;
+}
 
+NAND_ReturnType NAND_Mark_Bad_Block(int block) {
+    PhysicalAddrs addr = {0};
+    addr.block = block;
+    addr.column = 2048;
+    uint8_t marker = 0x00;
+    // It seems that sometimes we can write a couple bits to a bad block
+    // Really all the marker needs to be is not 0xFF
+    // The datasheet seems confident that this will work
+    return NAND_Page_Write(&addr, sizeof(marker), &marker);
+}
+
+/**
+ * THIS WILL ERASE THE BAD BLOCK TABLE. Probably a bad idea, but it's your funeral
+ */
+NAND_ReturnType NAND_Erase_All() {
+    PhysicalAddrs addr = {0};
+    for (int i = 0; i < NUM_BLOCKS; i++) {
+        addr.block = i;
+        NAND_Block_Erase(&addr);
+    }
     return Ret_Success;
 }
 
@@ -470,9 +503,7 @@ NAND_ReturnType NAND_Block_Erase(PhysicalAddrs *addr) {
  *                              Move Operations
  *****************************************************************************/
 
-// NAND_ReturnType NAND_Copy_Back(NAND_Addr src_addr, NAND_Addr dest_addr) {
-
-// }
+NAND_ReturnType NAND_Copy_Block(PhysicalAddrs *src, PhysicalAddrs *dst) { return Ret_Success; }
 
 /******************************************************************************
  *                              Lock Operations
@@ -481,6 +512,24 @@ NAND_ReturnType NAND_Block_Erase(PhysicalAddrs *addr) {
 /******************************************************************************
  *                              Internal Functions
  *****************************************************************************/
+
+static NAND_ReturnType __Status_Reg_2_ReturnType(uint8_t status_reg) {
+    // DBG_PUT("0x%x\r\n", status_reg);
+    //  Check all the non-ecc statuses
+    if (status_reg & NAND_CRBSY) {
+        return Ret_NANDBusy;
+    }
+    if (status_reg & NAND_PF) {
+        return Ret_WriteFailed;
+    }
+    if (status_reg & NAND_EF) {
+        return Ret_EraseFailed;
+    }
+    if (status_reg & NAND_OIP) {
+        return Ret_NANDBusy;
+    }
+    return Ret_Success;
+}
 
 /**
  * @brief Enable writing to NAND.

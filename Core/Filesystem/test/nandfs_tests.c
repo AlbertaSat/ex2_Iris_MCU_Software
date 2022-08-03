@@ -4,7 +4,7 @@
  *  Created on: Jun. 22, 2022
  *      Author: robert
  */
-
+#include <stdlib.h>
 #include "nandfs.h"
 #include "nand_m79a_lld.h"
 #include <string.h>
@@ -58,6 +58,52 @@ int flash_write_to_every_block() {
     return hadfail;
 }
 
+int check_all_pages_in_block(int block, char c) {
+    PhysicalAddrs addr = {0};
+    char buffer[PAGE_LEN];
+    addr.block = block;
+    for (int i = 0; i < NUM_PAGES_PER_BLOCK; i++) {
+        memset(buffer, 0, PAGE_LEN);
+
+        NAND_ReturnType ret = NAND_Page_Read(&addr, PAGE_LEN, buffer);
+        if (ret != Ret_Success) {
+            DBG_PUT("read b %d p %d r %d\r\n", block, i, ret);
+            return ret;
+        }
+        for (int j = 0; j < PAGE_LEN; j++) {
+            if (buffer[j] != c) {
+                DBG_PUT("buff b %d p %d %d != %d\r\n", block, i, buffer[j], c);
+                return -1;
+            }
+        }
+    }
+}
+
+int write_all_pages_in_block(int block, char c) {
+    PhysicalAddrs addr = {0};
+    char buffer[PAGE_LEN];
+    memset(buffer, c, PAGE_LEN);
+    addr.block = block;
+    for (int i = 0; i < NUM_PAGES_PER_BLOCK; i++) {
+        NAND_ReturnType ret = NAND_Page_Program(&addr, PAGE_LEN, buffer);
+        if (ret != Ret_Success) {
+            DBG_PUT("prog b %d p %d r %d\r\n", block, i, ret);
+            return ret;
+        }
+    }
+}
+
+int nand_find_bad_block_test() {
+    NANDfs_format();
+    for (int i = 0; i < 2048; i++) {
+        char testchar = rand();
+        DBG_PUT("W %d\r\n", i);
+        write_all_pages_in_block(i, testchar);
+        DBG_PUT("C %d\r\n", i);
+        check_all_pages_in_block(i, testchar);
+    }
+}
+
 int nand_indep_image_test() {
     NANDfs_format();
     extern int sample_png_size;
@@ -71,7 +117,8 @@ int nand_indep_image_test() {
         int size_to_write = size_remaining > PAGE_LEN ? PAGE_LEN : size_remaining;
         memcpy(image, sample, size_to_write);
         sample += size_to_write;
-        NAND_Page_Program(&addr, size_to_write, image);
+        NAND_ReturnType ret = NAND_Page_Program(&addr, size_to_write, image);
+        DBG_PUT("Ret: %d\r\n", ret);
         size_remaining -= size_to_write;
         _increment_seek2(&addr, 0);
     }
@@ -200,7 +247,12 @@ int pattern_with_filesystem_test(int page_cnt) {
 }
 
 int nand_flash_test() {
+    for (int i = 0; i < 4; i++) {
+        nand_find_bad_block_test();
+    }
     // return flash_write_to_every_block ();
+    while (1)
+        ;
     return nand_indep_image_test();
     return image_with_filesystem_test();
 }
