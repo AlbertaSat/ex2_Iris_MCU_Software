@@ -5,6 +5,8 @@
 #include <arducam.h>
 #include <spi_bitbang.h>
 #include "debug.h"
+#include <nandfs.h>
+#include "nand_types.h"
 
 extern SPI_HandleTypeDef hspi1;
 extern uint8_t cam_to_nand_transfer_flag;
@@ -153,7 +155,7 @@ int spi_handle_command(uint8_t obc_cmd) {
         return 0;
     }
     case IRIS_TRANSFER_IMAGE: {
-        spi_transfer_image();
+        spi_transfer_image_from_nand();
         return 0;
     }
     case IRIS_OFF_SENSOR_IDLE: {
@@ -169,11 +171,11 @@ int spi_handle_command(uint8_t obc_cmd) {
         return 0;
     }
     case IRIS_GET_IMAGE_LENGTH: {
-        if (sensor_mode == 0) {
-            image_length = read_fifo_length(VIS_SENSOR);
-        } else {
-            image_length = read_fifo_length(NIR_SENSOR);
-        }
+        NAND_FILE *fd;
+        fd = NANDfs_open_latest();
+        image_length = (uint32_t)fd->node.file_size;
+        NANDfs_close(fd);
+
         uint8_t packet[3];
         packet[0] = (image_length >> (8 * 2)) & 0xff;
         packet[1] = (image_length >> (8 * 1)) & 0xff;
@@ -291,4 +293,42 @@ void spi_transfer_image() {
         DBG_PUT("DONE IMAGE TRANSFER (NIR_SENSOR)!\r\n");
         sensor_mode = 0;
     }
+}
+
+void spi_transfer_image_from_nand() {
+    NAND_FILE *fd;
+    uint8_t page[2048];
+
+    fd = NANDfs_open_latest();
+    if (!fd) {
+        DBG_PUT("open file %d failed: %d\r\n", fd, nand_errno);
+        return;
+    }
+
+#define CHUNK_LENGTH 512
+
+    uint8_t to_send[CHUNK_LENGTH];
+    int file_size = fd->node.file_size;
+    // DBG_PUT("File size: %d\r\n", file_size);
+    int page_cnt = ((file_size + (2048 - 1)) / 2048);
+
+    // below reads out a 2048 byte page, then splits it into 4 512 chunks to transmit over spi
+    for (int count = 0; count < page_cnt; count++) {
+        // DBG_PUT("Reading Page %d / %d.\r\n", count + 1, page_cnt);
+        memset(page, 0, PAGE_DATA_SIZE);
+        // read 2048B into buffer
+        NANDfs_read(fd, PAGE_DATA_SIZE, page);
+        for (int k = 0; k < 4; k++) {
+            // DBG_PUT("\tReading Page %d Block %d / 4\r\n", count + 1, k + 1);
+            for (int i = 0; i < CHUNK_LENGTH; i++) {
+                to_send[i] = page[(CHUNK_LENGTH * k) + i];
+                // DBG_PUT("0x%x\r\n", page[(512 * k) + i]);
+            }
+            // TRANSFER SPI CHUNK HERE i think
+            spi_transmit(to_send, IRIS_IMAGE_TRANSFER_BLOCK_SIZE);
+        }
+    }
+
+    DBG_PUT("Image transfer finished");
+    NANDfs_close(fd);
 }

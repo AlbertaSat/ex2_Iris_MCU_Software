@@ -48,7 +48,7 @@
 /* USER CODE BEGIN PD */
 
 int format = JPEG;
-int width = 2592;
+int width = 1280;
 
 /* USER CODE END PD */
 
@@ -155,6 +155,7 @@ int main(void) {
     uint8_t can_header[CAN_HEADER_LEN];
     uint8_t can_footer[CAN_FOOTER_LEN];
     onboot_commands();
+    nand_sensor_image_test();
     //    init_filesystem();
     uint8_t obc_cmd;
 
@@ -750,6 +751,9 @@ static void onboot_commands(void) {
 #else
     flood_cam_spi();
 #endif // IRIS_PROTO
+
+    sensor_togglepower(1);
+    initalize_sensors();
 
 #ifdef UART_DEBUG
     DBG_PUT("-----------------------------------\r\n");

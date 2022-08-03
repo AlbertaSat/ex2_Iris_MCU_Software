@@ -9,6 +9,8 @@
 #include "nand_m79a_lld.h"
 #include <string.h>
 #include "debug.h"
+#include "arducam.h"
+#include "iris_system.h"
 
 #define PAGE_LEN 2048
 
@@ -243,6 +245,51 @@ int pattern_with_filesystem_test(int page_cnt) {
     }
 
     NANDfs_close(fd);
+    return 0;
+}
+
+int nand_sensor_image_test() {
+    arducam_capture_image(VIS_SENSOR);
+    NANDfs_format();
+    // get image size
+    uint32_t image_size = read_fifo_length(VIS_SENSOR);
+    DBG_PUT("Image size: %d bytes\r\n", image_size);
+
+    //    char *data = (char *)malloc(PAGE_LEN);
+    char data[PAGE_LEN];
+    char *sample = data;
+    NAND_FILE *fd = NANDfs_create();
+    int size_remaining;
+    uint8_t image[PAGE_LEN];
+
+    spi_init_burst(VIS_SENSOR);
+    //    uint8_t prev = 0, curr = 0;
+    //    bool found_header = false;
+    uint32_t i = 0;
+
+    int chunks_to_write = ((image_size + (PAGE_LEN - 1)) / PAGE_LEN);
+
+    for (int j = 0; j < chunks_to_write; j++) {
+        DBG_PUT("Writing chunk %d / %d\r\n", j + 1, chunks_to_write);
+        for (i = 0; i < PAGE_LEN; i++) {
+            image[i] = spi_read_burst(VIS_SENSOR);
+        }
+        size_remaining = i;
+        //		memcpy(image, sample, i);
+        sample += PAGE_LEN;
+        while (size_remaining > 0) {
+            int size_to_write = size_remaining > PAGE_LEN ? PAGE_LEN : size_remaining;
+            NANDfs_write(fd, size_to_write, image);
+            //			memcpy(image, sample, size_to_write);
+            sample += size_to_write;
+            size_remaining -= size_to_write;
+        }
+    }
+
+    spi_init_burst(VIS_SENSOR);
+    int file_id = fd->node.id;
+    NANDfs_close(fd);
+
     return 0;
 }
 

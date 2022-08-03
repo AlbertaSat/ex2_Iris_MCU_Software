@@ -35,5 +35,6 @@ int spi_verify_command(uint8_t cmd);
 int spi_handle_command(uint8_t cmd);
 int step_transfer();
 void spi_transfer_image();
+void spi_transfer_image_from_nand();
 
 #endif /* INC_SPI_COMMAND_HANDLER_H_ */
