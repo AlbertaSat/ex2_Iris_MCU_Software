@@ -40,5 +40,6 @@ void obc_spi_receive(uint8_t *rx_data, uint16_t data_length) { HAL_SPI_Receive_I
  * 		data_length: numbers of bytes to be receive
  */
 void obc_spi_receive_blocking(uint8_t *rx_data, uint16_t data_length) {
-    HAL_SPI_Receive(&hspi1, rx_data, data_length, HAL_MAX_DELAY);
+    uint8_t tx_dummy = 0xFF;
+    HAL_SPI_TransmitReceive(&hspi1, &tx_dummy, rx_data, data_length, HAL_MAX_DELAY);
 }

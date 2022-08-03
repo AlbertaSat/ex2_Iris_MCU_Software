@@ -188,7 +188,8 @@ int obc_handle_command(uint8_t obc_cmd) {
     case IRIS_SET_TIME: {
         uint32_t obc_unix_time;
         uint8_t iris_unix_time_buffer[IRIS_UNIX_TIME_SIZE];
-        spi_receive_blocking(iris_unix_time_buffer, 4);
+
+        obc_spi_receive_blocking(iris_unix_time_buffer, IRIS_UNIX_TIME_SIZE);
 
         obc_unix_time =
             (uint32_t)((uint8_t)iris_unix_time_buffer[0] << 24 | (uint8_t)iris_unix_time_buffer[1] << 16 |
