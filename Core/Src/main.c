@@ -18,7 +18,6 @@
 
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
-#include <obc_handler.h>
 #include "main.h"
 
 /* Private includes ----------------------------------------------------------*/
@@ -32,6 +31,7 @@
 #include "spi_bitbang.h"
 #include "IEB_TESTS.h"
 #include "nandfs.h"
+#include "flash_cmds.h"
 #include "can.h"
 #include "obc_handler.h"
 #include "command_handler.h"
