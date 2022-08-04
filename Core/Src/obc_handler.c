@@ -6,6 +6,7 @@
 #include <spi_bitbang.h>
 #include "debug.h"
 #include <spi_obc.h>
+#include "iris_time.h"
 
 extern SPI_HandleTypeDef hspi1;
 extern uint8_t cam_to_nand_transfer_flag;
@@ -195,7 +196,10 @@ int obc_handle_command(uint8_t obc_cmd) {
             (uint32_t)((uint8_t)iris_unix_time_buffer[0] << 24 | (uint8_t)iris_unix_time_buffer[1] << 16 |
                        (uint8_t)iris_unix_time_buffer[2] << 8 | (uint8_t)iris_unix_time_buffer[3]);
 
-        set_time(obc_unix_time);
+        set_rtc_time(obc_unix_time);
+
+        Iris_Timestamp tm = {0};
+        get_rtc_time(&tm);
     }
     case IRIS_WDT_CHECK: {
         return 0;

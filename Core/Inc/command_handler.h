@@ -13,6 +13,7 @@
 #include "SPI_IT.h"
 #include "I2C.h"
 #include "housekeeping.h"
+#include "iris_time.h"
 #define REG_SYS_CTL0 0x3008 /* System Control */
 
 //#define GET_IMAGE_NUM 0x15
@@ -44,8 +45,12 @@ void get_image_length(uint32_t *image_length, uint8_t sensor_mode);
 void turn_off_sensors();
 void turn_on_sensors();
 void set_sensors_config();
-#endif
-
+void initalize_sensors(void);
+uint8_t onboot_sensors(uint8_t sensor);
+void set_rtc_time(uint32_t obc_unix_time);
+void get_rtc_time(Iris_Timestamp *timestamp);
+void flood_cam_spi();
+#else
 void uart_handle_command(char *cmd);
 // void take_image();
 // void get_image_length(uint32_t *pdata);
