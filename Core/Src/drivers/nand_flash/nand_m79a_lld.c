@@ -484,7 +484,7 @@ NAND_ReturnType NAND_Mark_Bad_Block(int block) {
     // It seems that sometimes we can write a couple bits to a bad block
     // Really all the marker needs to be is not 0xFF
     // The datasheet seems confident that this will work
-    return NAND_Page_Write(&addr, sizeof(marker), &marker);
+    return NAND_Page_Program(&addr, sizeof(marker), &marker);
 }
 
 /**
