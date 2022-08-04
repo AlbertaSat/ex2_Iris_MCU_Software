@@ -48,7 +48,7 @@
 /* USER CODE BEGIN PD */
 
 int format = JPEG;
-int width = 1280;
+int width = 2592;
 
 /* USER CODE END PD */
 
@@ -155,7 +155,7 @@ int main(void) {
     uint8_t can_header[CAN_HEADER_LEN];
     uint8_t can_footer[CAN_FOOTER_LEN];
     onboot_commands();
-    nand_sensor_image_test();
+    //	nand_sensor_image_test();
     //    init_filesystem();
     uint8_t obc_cmd;
 
@@ -534,7 +534,7 @@ static void MX_SPI2_Init(void) {
     hspi2.Init.CLKPolarity = SPI_POLARITY_LOW;
     hspi2.Init.CLKPhase = SPI_PHASE_1EDGE;
     hspi2.Init.NSS = SPI_NSS_SOFT;
-    hspi2.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_2;
+    hspi2.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_4;
     hspi2.Init.FirstBit = SPI_FIRSTBIT_MSB;
     hspi2.Init.TIMode = SPI_TIMODE_DISABLE;
     hspi2.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
@@ -751,9 +751,6 @@ static void onboot_commands(void) {
 #else
     flood_cam_spi();
 #endif // IRIS_PROTO
-
-    sensor_togglepower(1);
-    initalize_sensors();
 
 #ifdef UART_DEBUG
     DBG_PUT("-----------------------------------\r\n");
