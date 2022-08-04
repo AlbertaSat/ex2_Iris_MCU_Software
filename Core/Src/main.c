@@ -18,7 +18,6 @@
 
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
-#include <obc_handler.h>
 #include "main.h"
 
 /* Private includes ----------------------------------------------------------*/
@@ -27,16 +26,17 @@
 #include <stdbool.h>
 #include <string.h>
 
-#include "arducam.h"
 #include "iris_system.h"
+#include "arducam.h"
 #include "spi_bitbang.h"
 #include "IEB_TESTS.h"
-#include "tmp421.h"
-#include "housekeeping.h"
-#include "command_handler.h"
-#include "flash_cmds.h"
 #include "nandfs.h"
+#include "flash_cmds.h"
 #include "can.h"
+#include "obc_handler.h"
+#include "command_handler.h"
+#include "housekeeping.h"
+#include "tmp421.h"
 #include "microtar.h"
 #include "spi_obc.h"
 /* USER CODE END Includes */

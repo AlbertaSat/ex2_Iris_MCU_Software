@@ -1,4 +1,5 @@
 #include <stdio.h>
+
 #include "arducam.h"
 #include "flash_cmds.h"
 #include "debug.h"

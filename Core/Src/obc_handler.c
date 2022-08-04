@@ -1,11 +1,9 @@
-#include <command_handler.h>
-#include <iris_system.h>
-#include <string.h>
-#include <arducam.h>
-#include <obc_handler.h>
-#include <spi_bitbang.h>
+#include "command_handler.h"
+#include "iris_system.h"
+#include "arducam.h"
+#include "obc_handler.h"
 #include "debug.h"
-#include <spi_obc.h>
+#include "spi_obc.h"
 #include "iris_time.h"
 
 extern SPI_HandleTypeDef hspi1;

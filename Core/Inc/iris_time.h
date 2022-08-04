@@ -8,8 +8,8 @@
 #ifndef INC_IRIS_TIME_H_
 #define INC_IRIS_TIME_H_
 
-#include <iris_system.h>
-#include <time.h>
+#include "iris_system.h"
+#include "time.h"
 
 #define LEAP_YEAR(Y) (((1970 + (Y)) > 0) && !((1970 + (Y)) % 4) && (((1970 + (Y)) % 100) || !((1970 + (Y)) % 400)))
 

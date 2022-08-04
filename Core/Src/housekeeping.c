@@ -4,11 +4,11 @@
  *  Created on: Mar. 29, 2022
  *      Author: Liam Droog
  */
-#include <iris_system.h>
-#include "tmp421.h"
-#include "debug.h"
-#include "housekeeping.h"
+#include "iris_system.h"
 #include "command_handler.h"
+#include "housekeeping.h"
+#include "debug.h"
+#include "tmp421.h"
 #include "ina209.h"
 
 housekeeping_packet_t _get_housekeeping() {

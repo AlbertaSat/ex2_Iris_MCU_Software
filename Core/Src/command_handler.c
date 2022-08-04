@@ -12,9 +12,9 @@
 #include "arducam.h"
 #include "SPI_IT.h"
 #include "IEB_TESTS.h"
-
 #include "iris_time.h"
 #include "time.h"
+
 extern uint8_t VIS_DETECTED;
 extern uint8_t NIR_DETECTED;
 extern SPI_HandleTypeDef hspi1;
