@@ -395,17 +395,17 @@ NAND_ReturnType NAND_Page_Program(PhysicalAddrs *addr, uint16_t length, uint8_t 
     SPI_Params exec_cmd = {.buffer = command_exec, .length = 4};
 
     if (NAND_SPI_Send(&exec_cmd) != SPI_OK) {
-        return Ret_WriteFailed;
+        return Ret_Failed;
     }
 
     /* Command 3: wait for device to be ready again */
     NAND_ReturnType status = NAND_Wait_Until_Ready();
-    if (status != Ret_Success) {
-        NAND_Reset();
-    }
 
     /* Command 4: WRITE DISABLE */
     __write_disable();
+    if (status != Ret_Success) {
+        NAND_Reset();
+    }
     return status;
 }
 
