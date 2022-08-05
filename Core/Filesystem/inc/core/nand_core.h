@@ -23,16 +23,17 @@
 
 #include "nand_m79a_lld.h"
 
-int NANDfs_core_delete(uint32_t inodeid);
-int NANDfs_core_create(FileHandle_t *handle);
 int NANDfs_core_format();
 int NANDfs_Core_Init();
+int NANDfs_core_create(FileHandle_t *handle);
 int NANDfs_core_open(int fileid, FileHandle_t *file);
 int NANDfs_core_write(FileHandle_t *file, int size, void *buf);
 int NANDfs_core_read(FileHandle_t *file, int size, void *buf);
 int NANDfs_core_close_rdonly(FileHandle_t *file);
 int NANDfs_core_close_wronly(FileHandle_t *file);
+int NANDfs_core_delete(uint32_t inodeid);
+int NANDfs_core_erase(inode_t *inode);
 int NANDfs_Core_opendir(DirHandle_t *dir);
-int NANDfs_Core_readdir(DirHandle_t *dir, inode_t *node);
+int NANDfs_Core_nextdir(DirHandle_t *dir);
 
 #endif /* NAND_CORE_H_ */

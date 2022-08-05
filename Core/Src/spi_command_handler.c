@@ -3,12 +3,18 @@
 #include <iris_system.h>
 #include <string.h>
 #include <arducam.h>
+#include <spi_bitbang.h>
+#include "debug.h"
 
 extern SPI_HandleTypeDef hspi1;
 extern uint8_t cam_to_nand_transfer_flag;
 
-uint32_t image_length = 0x5F3; // Only here for testing purposes
+uint32_t image_length; // Only here for testing purposes
 static uint32_t count = 0x0FFF0000;
+
+uint8_t sensor_mode = 0;
+
+void take_picture();
 
 /**
  * @brief
@@ -24,22 +30,24 @@ void spi_transmit(uint8_t *tx_data, uint16_t data_length) {
 
 /**
  * @brief
- * 		Transmit data of given size over SPI bus in blocking mode
- *
- * @param
- * 		*tx_data: pointer to transmit data
- * 		data_length: numbers of bytes to be sent
- */
-void spi_transmit_it(uint8_t *tx_data, uint16_t data_length) { HAL_SPI_Transmit_IT(&hspi1, tx_data, data_length); }
-
-/**
- * @brief
  * 		Receive data of given size over SPI bus in interrupt mode
  * @param
  * 		*rx_data: pointer to receive data
  * 		data_length: numbers of bytes to be receive
  */
 void spi_receive(uint8_t *rx_data, uint16_t data_length) { HAL_SPI_Receive_IT(&hspi1, rx_data, data_length); }
+
+/**
+ * @brief
+ * 		Receive data of given size over SPI bus in blocking mode
+ * @param
+ * 		*rx_data: pointer to receive data
+ * 		data_length: numbers of bytes to be receive
+ */
+void spi_receive_blocking(uint8_t *rx_data, uint16_t data_length) {
+    uint8_t tx_dummy = 0xFF;
+    HAL_SPI_TransmitReceive(&hspi1, &tx_dummy, rx_data, data_length, HAL_MAX_DELAY);
+}
 
 /**
  * @brief
@@ -97,6 +105,10 @@ int spi_verify_command(uint8_t obc_cmd) {
         transmit_ack = 1;
         break;
     }
+    case IRIS_SET_TIME: {
+        transmit_ack = 1;
+        break;
+    }
     default: {
         transmit_ack = 0;
     }
@@ -106,7 +118,7 @@ int spi_verify_command(uint8_t obc_cmd) {
         spi_transmit(&ack, 2);
         return 0;
     } else {
-        spi_transmit_it(&nack, 1);
+        spi_transmit(&nack, 1);
         return -1;
     }
 }
@@ -130,14 +142,10 @@ int spi_handle_command(uint8_t obc_cmd) {
         uint8_t buffer[sizeof(hk)];
         memcpy(buffer, &hk, sizeof(hk));
         spi_transmit(buffer, sizeof(buffer));
-
         return 0;
     }
     case IRIS_TAKE_PIC: {
-        // needs dedicated thought put towards implement
-        arducam_capture_image(0);
-        //        iterate_image_num();
-        // cam_to_nand_transfer_flag = 1;
+        take_picture();
         return 0;
     }
     case IRIS_GET_IMAGE_COUNT: {
@@ -155,11 +163,18 @@ int spi_handle_command(uint8_t obc_cmd) {
     }
     case IRIS_ON_SENSOR_IDLE: {
         sensor_active();
+        // Set resolution for both sensors
+        arducam_set_resolution(JPEG, 640, VIS_SENSOR);
+        arducam_set_resolution(JPEG, 640, NIR_SENSOR);
         DBG_PUT("Sensor activated\r\n");
         return 0;
     }
     case IRIS_GET_IMAGE_LENGTH: {
-        uint32_t image_length = read_fifo_length(0);
+        if (sensor_mode == 0) {
+            image_length = read_fifo_length(VIS_SENSOR);
+        } else {
+            image_length = read_fifo_length(NIR_SENSOR);
+        }
         uint8_t packet[3];
         packet[0] = (image_length >> (8 * 2)) & 0xff;
         packet[1] = (image_length >> (8 * 1)) & 0xff;
@@ -177,6 +192,17 @@ int spi_handle_command(uint8_t obc_cmd) {
         //    	update_current_limits();
         spi_transmit(&tx_data, 1);
         return 0;
+    }
+    case IRIS_SET_TIME: {
+        uint32_t obc_unix_time;
+        uint8_t iris_unix_time_buffer[IRIS_UNIX_TIME_SIZE];
+        spi_receive_blocking(iris_unix_time_buffer, 4);
+
+        obc_unix_time =
+            (uint32_t)((uint8_t)iris_unix_time_buffer[0] << 24 | (uint8_t)iris_unix_time_buffer[1] << 16 |
+                       (uint8_t)iris_unix_time_buffer[2] << 8 | (uint8_t)iris_unix_time_buffer[3]);
+
+        set_time(obc_unix_time);
     }
     case IRIS_WDT_CHECK: {
         return 0;
@@ -205,24 +231,65 @@ int step_transfer() {
     return 1;
 }
 
+void take_picture() {
+    //	char buf[64];
+    write_reg(ARDUCHIP_TIM, VSYNC_LEVEL_MASK, VIS_SENSOR); // VSYNC is active HIGH
+    write_reg(ARDUCHIP_TIM, VSYNC_LEVEL_MASK,
+              NIR_SENSOR); // VSYNC is active HIGH
+                           //	sprintf(buf, "Single Capture Transfer type %x\r\n", //format); 	DBG_PUT(buf);
+    flush_fifo(VIS_SENSOR);
+    flush_fifo(NIR_SENSOR);
+
+    clear_fifo_flag(VIS_SENSOR);
+    clear_fifo_flag(NIR_SENSOR);
+
+    start_capture(VIS_SENSOR);
+    start_capture(NIR_SENSOR);
+    while (!get_bit(ARDUCHIP_TRIG, CAP_DONE_MASK, VIS_SENSOR) &&
+           !get_bit(ARDUCHIP_TRIG, CAP_DONE_MASK, NIR_SENSOR)) {
+    }
+    //	DBG_PUT("JPG");
+}
+
 /**
  * @brief
  * 		Dummy function to dump image data to OBC
  */
 void spi_transfer_image() {
-    uint8_t image_data[IRIS_IMAGE_TRANSFER_BLOCK_SIZE];
-    uint16_t num_transfers;
+    static uint8_t image_data[IRIS_IMAGE_TRANSFER_BLOCK_SIZE];
+    static uint16_t num_transfers;
 
     num_transfers =
         (uint16_t)((image_length + (IRIS_IMAGE_TRANSFER_BLOCK_SIZE - 1)) / IRIS_IMAGE_TRANSFER_BLOCK_SIZE);
-    uint32_t count = 0;
+
+    if (sensor_mode == 0) {
+        spi_init_burst(VIS_SENSOR);
+    } else {
+        spi_init_burst(NIR_SENSOR);
+    }
     for (int j = 0; j < num_transfers; j++) {
         for (int i = 0; i < IRIS_IMAGE_TRANSFER_BLOCK_SIZE; i++) {
-            image_data[i] = (uint8_t)read_reg(SINGLE_FIFO_READ, 0); // reg_addr: 0x3D, sensor: 0 -> VIS
+            if (sensor_mode == 0) {
+                image_data[i] = (uint8_t)spi_read_burst(VIS_SENSOR);
+            } else {
+                image_data[i] = (uint8_t)spi_read_burst(NIR_SENSOR);
+            }
             // image_data[i] = (uint8_t) image_data_buffer[count];
-            count++;
         }
 
         spi_transmit(image_data, IRIS_IMAGE_TRANSFER_BLOCK_SIZE);
+    }
+    if (sensor_mode == 0) {
+        spi_deinit_burst(VIS_SENSOR);
+    } else {
+        spi_deinit_burst(NIR_SENSOR);
+    }
+
+    if (sensor_mode == 0) {
+        DBG_PUT("DONE IMAGE TRANSFER (VIS_SENSOR)!\r\n");
+        sensor_mode = 1;
+    } else {
+        DBG_PUT("DONE IMAGE TRANSFER (NIR_SENSOR)!\r\n");
+        sensor_mode = 0;
     }
 }

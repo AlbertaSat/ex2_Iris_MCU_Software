@@ -63,6 +63,8 @@ CRC_HandleTypeDef hcrc;
 I2C_HandleTypeDef hi2c1;
 I2C_HandleTypeDef hi2c2;
 
+RTC_HandleTypeDef hrtc;
+
 SPI_HandleTypeDef hspi1;
 SPI_HandleTypeDef hspi2;
 
@@ -84,6 +86,7 @@ static void MX_SPI2_Init(void);
 static void MX_USART1_UART_Init(void);
 static void MX_TIM2_Init(void);
 static void MX_CRC_Init(void);
+static void MX_RTC_Init(void);
 /* USER CODE BEGIN PFP */
 static void onboot_commands(void);
 /* USER CODE END PFP */
@@ -146,13 +149,14 @@ int main(void) {
     MX_USART1_UART_Init();
     MX_TIM2_Init();
     MX_CRC_Init();
+    MX_RTC_Init();
     /* USER CODE BEGIN 2 */
     //    NAND_SPI_Init(&hspi2);
 
     uint8_t can_header[CAN_HEADER_LEN];
     uint8_t can_footer[CAN_FOOTER_LEN];
     onboot_commands();
-    init_filesystem();
+    //    init_filesystem();
     uint8_t obc_cmd;
 
     char cmd[64];
@@ -166,6 +170,7 @@ int main(void) {
     /* USER CODE BEGIN WHILE */
 
 #ifdef SPI_DEBUG
+
     while (1) {
         /* USER CODE END WHILE */
 
@@ -262,8 +267,9 @@ void SystemClock_Config(void) {
     /** Initializes the RCC Oscillators according to the specified parameters
      * in the RCC_OscInitTypeDef structure.
      */
-    RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
+    RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_LSI | RCC_OSCILLATORTYPE_HSE;
     RCC_OscInitStruct.HSEState = RCC_HSE_BYPASS;
+    RCC_OscInitStruct.LSIState = RCC_LSI_ON;
     RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
     RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
     RCC_OscInitStruct.PLL.PLLMUL = RCC_PLLMUL_4;
@@ -284,9 +290,10 @@ void SystemClock_Config(void) {
     if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_1) != HAL_OK) {
         Error_Handler();
     }
-    PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_USART1 | RCC_PERIPHCLK_I2C1;
+    PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_USART1 | RCC_PERIPHCLK_I2C1 | RCC_PERIPHCLK_RTC;
     PeriphClkInit.Usart1ClockSelection = RCC_USART1CLKSOURCE_PCLK2;
     PeriphClkInit.I2c1ClockSelection = RCC_I2C1CLKSOURCE_PCLK1;
+    PeriphClkInit.RTCClockSelection = RCC_RTCCLKSOURCE_LSI;
     if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK) {
         Error_Handler();
     }
@@ -407,6 +414,71 @@ static void MX_I2C2_Init(void) {
 }
 
 /**
+ * @brief RTC Initialization Function
+ * @param None
+ * @retval None
+ */
+static void MX_RTC_Init(void) {
+
+    /* USER CODE BEGIN RTC_Init 0 */
+
+    /* USER CODE END RTC_Init 0 */
+
+    RTC_TimeTypeDef sTime = {0};
+    RTC_DateTypeDef sDate = {0};
+
+    /* USER CODE BEGIN RTC_Init 1 */
+
+    /* USER CODE END RTC_Init 1 */
+
+    /** Initialize RTC Only
+     */
+    hrtc.Instance = RTC;
+    hrtc.Init.HourFormat = RTC_HOURFORMAT_24;
+    hrtc.Init.AsynchPrediv = 127;
+    hrtc.Init.SynchPrediv = 255;
+    hrtc.Init.OutPut = RTC_OUTPUT_DISABLE;
+    hrtc.Init.OutPutRemap = RTC_OUTPUT_REMAP_NONE;
+    hrtc.Init.OutPutPolarity = RTC_OUTPUT_POLARITY_HIGH;
+    hrtc.Init.OutPutType = RTC_OUTPUT_TYPE_OPENDRAIN;
+    if (HAL_RTC_Init(&hrtc) != HAL_OK) {
+        Error_Handler();
+    }
+
+    /* USER CODE BEGIN Check_RTC_BKUP */
+
+    /* USER CODE END Check_RTC_BKUP */
+
+    /** Initialize RTC and set the Time and Date
+     */
+    sTime.Hours = 0x0;
+    sTime.Minutes = 0x0;
+    sTime.Seconds = 0x0;
+    sTime.DayLightSaving = RTC_DAYLIGHTSAVING_NONE;
+    sTime.StoreOperation = RTC_STOREOPERATION_RESET;
+    if (HAL_RTC_SetTime(&hrtc, &sTime, RTC_FORMAT_BCD) != HAL_OK) {
+        Error_Handler();
+    }
+    sDate.WeekDay = RTC_WEEKDAY_MONDAY;
+    sDate.Month = RTC_MONTH_JANUARY;
+    sDate.Date = 0x1;
+    sDate.Year = 0x0;
+
+    if (HAL_RTC_SetDate(&hrtc, &sDate, RTC_FORMAT_BCD) != HAL_OK) {
+        Error_Handler();
+    }
+
+    /** Enable the TimeStamp
+     */
+    if (HAL_RTCEx_SetTimeStamp_IT(&hrtc, RTC_TIMESTAMPEDGE_RISING, RTC_TIMESTAMPPIN_DEFAULT) != HAL_OK) {
+        Error_Handler();
+    }
+    /* USER CODE BEGIN RTC_Init 2 */
+
+    /* USER CODE END RTC_Init 2 */
+}
+
+/**
  * @brief SPI1 Initialization Function
  * @param None
  * @retval None
@@ -426,8 +498,8 @@ static void MX_SPI1_Init(void) {
     hspi1.Init.Direction = SPI_DIRECTION_2LINES;
     hspi1.Init.DataSize = SPI_DATASIZE_8BIT;
     hspi1.Init.CLKPolarity = SPI_POLARITY_LOW;
-    hspi1.Init.CLKPhase = SPI_PHASE_1EDGE;
-    hspi1.Init.NSS = SPI_NSS_HARD_INPUT;
+    hspi1.Init.CLKPhase = SPI_PHASE_2EDGE;
+    hspi1.Init.NSS = SPI_NSS_SOFT;
     hspi1.Init.FirstBit = SPI_FIRSTBIT_MSB;
     hspi1.Init.TIMode = SPI_TIMODE_DISABLE;
     hspi1.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
@@ -635,17 +707,21 @@ static void MX_GPIO_Init(void) {
 /* USER CODE BEGIN 4 */
 void HAL_SPI_RxCpltCallback(SPI_HandleTypeDef *hspi) {
     // Flag is set whenever OBC wants to communicate
-    spi_int_flag = 1;
+    if (iris_state != HANDLE_COMMAND) {
+        spi_int_flag = 1;
+    }
 }
 
-void init_filesystem() {
+static void init_filesystem() {
+    DBG_PUT("Initializing file system\r\n");
     NAND_SPI_Init(&hspi2);
     NANDfs_init();
 }
 
 static void onboot_commands(void) {
 
-    //#ifdef SPI_DEBUG
+#ifdef SPI_DEBUG
+#ifndef SPI_DEBUG_UART_OUTPUT
     GPIO_InitTypeDef GPIO_InitStruct = {0};
     /*Configure GPIO pin */
     GPIO_InitStruct.Pin = ERR_Pin;
@@ -654,29 +730,39 @@ static void onboot_commands(void) {
     GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
     HAL_GPIO_Init(ERR_GPIO_Port, &GPIO_InitStruct);
     ERR_GPIO_Port->BSRR = ERR_Pin;
-
-    //#endif
+#endif
+#endif
 
     HAL_TIM_Base_Start(&htim2);
-    //    init_filesystem();
-    //#ifdef CURRENTSENSE_5V
-    //    init_ina209(CURRENTSENSE_5V);
-    //#endif // CURRENTSENSE_5V
-    //    init_temp_sensors();
 
-    //#ifdef IRIS_PROTO
-    //    sensor_togglepower(1);
-    //    flood_cam_spi();
-    //    initalize_sensors();
-    //#endif // IRIS_PROTO
+    init_filesystem();
+
+#ifdef CURRENTSENSE_5V
+    init_ina209(CURRENTSENSE_5V);
+#endif // CURRENTSENSE_5V
+    // init_ina209(CURRENTSENSE_5V);
+
+    HAL_Delay(500);
+
+#ifdef IRIS_PROTO
+    sensor_togglepower(1);
+    flood_cam_spi();
+    initalize_sensors();
+#else
+    flood_cam_spi();
+#endif // IRIS_PROTO
 
 #ifdef UART_DEBUG
     DBG_PUT("-----------------------------------\r\n");
     DBG_PUT("Iris Electronics Test Software\r\n"
             "         UART Edition         \r\n");
     DBG_PUT("-----------------------------------\r\n");
+#else
+    DBG_PUT("-----------------------------------\r\n");
+    DBG_PUT("Iris Electronics Test Software\r\n"
+            "        SPI Edition         \r\n");
+    DBG_PUT("-----------------------------------\r\n");
 #endif
-    return;
 }
 /* USER CODE END 4 */
 

@@ -24,68 +24,71 @@
 #include "nand_m79a_lld.h"
 #include "nand_types.h"
 #include "nand_errno.h"
+#include "debug.h"
 
-static int lowest_inode = 0;
-static int highest_inode = 0;
+static inode_t lowest_inode;
+static inode_t highest_inode;
 
-void _increment_seek(PhysicalAddrs *addr, int size);
+static void _increment_seek(PhysicalAddrs *addr, int size);
 
-/*
- * Finds the first unformatted block
- * @Return:
- * 0, success, blank space found
- * -1, failed. Could be I/O or full device, No distinction made
- */
-int _find_blank(PhysicalAddrs *addr) {
-    PhysicalAddrs search = {0};
-    inode_t node = {0};
-    NAND_ReturnType status = Ret_Failed;
-    for (uint16_t i = 0; i < NUM_BLOCKS; i++) {
-        search.block = i;
-        search.plane = i & 1;
-        status = NAND_Page_Read(&search, sizeof(node), (uint8_t *)&node);
-        if (status != Ret_Success) {
-            continue; // Might have hit a bad block, not really sure
-        }
-        if (node.magic != MAGIC) {
-            memcpy(addr, &search, sizeof(PhysicalAddrs));
-            return 0;
-        }
+#define RESERVED_BLOCK_CNT 0
+
+uint16_t _next_free_block(inode_t *inode) {
+    if (inode->magic != MAGIC) {
+        // freshly formatted file system, i.e. no files yet
+        return RESERVED_BLOCK_CNT;
     }
-    return -1;
+
+    uint16_t seek_block = inode->start_block;
+    int remaining_data = inode->file_size;
+    // There is always one inode page per block
+    int bytes_per_block = BLOCK_SIZE - PAGE_DATA_SIZE;
+    int file_blocks = 0;
+    while (remaining_data >= bytes_per_block) {
+        remaining_data -= bytes_per_block;
+        ++file_blocks; // completely filled blocks
+    }
+    if (remaining_data > 0) { // partially filled blocks
+        ++file_blocks;
+    }
+
+    seek_block += file_blocks;
+    if (seek_block >= NUM_BLOCKS) {
+        seek_block = (seek_block - NUM_BLOCKS) + RESERVED_BLOCK_CNT;
+    }
+    return seek_block;
 }
 
 /*
  * Finds the PhysicalAddr of the first block of an inode by its ID
  */
-static int _find_inode(PhysicalAddrs *addr, int inodeid) {
+static int _find_inode(int inodeid, inode_t *inode, PhysicalAddrs *paddr) {
     PhysicalAddrs search = {0};
-    inode_t node = {0};
-    NAND_ReturnType status = Ret_Failed;
-    for (uint16_t i = 0; i < NUM_BLOCKS; i++) {
+    inode_t snode = {0};
+
+    for (int i = RESERVED_BLOCK_CNT; i < NUM_BLOCKS; i++) {
         search.block = i;
-        search.plane = i & 1;
-        status = NAND_Page_Read(&search, sizeof(node), (uint8_t *)&node);
-        if (status != Ret_Success) {
+        if (NAND_Page_Read(&search, sizeof(snode), (uint8_t *)&snode) != Ret_Success) {
             continue; // Might have hit a bad block, not really sure
         }
-        if (node.id == inodeid && node.isfirst) {
-            memcpy(addr, &search, sizeof(PhysicalAddrs));
+
+        if (snode.id == inodeid && snode.isfirst) {
+            *inode = snode;
+            *paddr = search;
             return 0;
         }
     }
     return -1;
 }
 
-int _find_lowest_inode() {
+int _find_lowest_inode(inode_t *inode) {
     uint32_t lowest = UINT32_MAX;
     PhysicalAddrs search = {0};
     inode_t node = {0};
     NAND_ReturnType status = Ret_Failed;
     int found_valid_file = 0; // Sanity check, if no files found, we will return 0;
-    for (uint16_t i = 0; i < NUM_BLOCKS; i++) {
+    for (uint16_t i = RESERVED_BLOCK_CNT; i < NUM_BLOCKS; i++) {
         search.block = i;
-        search.plane = i & 1;
         status = NAND_Page_Read(&search, sizeof(node), (uint8_t *)&node);
         if (status != Ret_Success) {
             continue; // Might have hit a bad block, not really sure
@@ -96,23 +99,25 @@ int _find_lowest_inode() {
         found_valid_file = 1;
         if (node.id < lowest) {
             lowest = node.id;
+            *inode = node;
         }
     }
     if (found_valid_file) {
+        DBG_PUT("lowest inode id %d, start %d\r\n", inode->id, inode->start_block);
         return lowest;
     }
+    memset(inode, 0, sizeof(inode_t));
     return 0;
 }
 
-int _find_highest_inode() {
+int _find_highest_inode(inode_t *inode) {
     uint32_t highest = 0;
     PhysicalAddrs search = {0};
     inode_t node = {0};
     NAND_ReturnType status = Ret_Failed;
     int found_valid_file = 0; // Sanity check, if no files found, we will return 0;
-    for (uint16_t i = 0; i < NUM_BLOCKS; i++) {
+    for (uint16_t i = RESERVED_BLOCK_CNT; i < NUM_BLOCKS; i++) {
         search.block = i;
-        search.plane = i & 1;
         status = NAND_Page_Read(&search, sizeof(node), (uint8_t *)&node);
         if (status != Ret_Success) {
             continue; // Might have hit a bad block, not really sure
@@ -120,52 +125,107 @@ int _find_highest_inode() {
         if (node.magic != MAGIC) {
             continue;
         }
+
         found_valid_file = 1;
         if (node.id > highest) {
             highest = node.id;
+            *inode = node;
         }
     }
     if (found_valid_file) {
+        DBG_PUT("highest inode id %d, start %d\r\n", inode->id, inode->start_block);
         return highest;
     }
+    memset(inode, 0, sizeof(inode_t));
     return 0;
+}
+
+/*
+ * Uses the highest_inode to determine where the next file should start.
+ * Checks that that block is indeed erased.
+ * @Return:
+ * block, success - blank space found at block
+ * 0, partial success - there is an old file at the next block
+ * -1, failed. Could be I/O or full device, see nand_errno for details
+ */
+static int _find_blank(inode_t *next_inode) {
+    PhysicalAddrs search = {.block = _next_free_block(&highest_inode)};
+    inode_t node = {0};
+    NAND_ReturnType status;
+    status = NAND_Page_Read(&search, sizeof(node), (uint8_t *)&node);
+    if (status != Ret_Success) {
+        nand_errno = NAND_EIO;
+        return -1;
+    }
+    if (node.magic == MAGIC) {
+        *next_inode = node;
+        return 0;
+    }
+
+    return search.block;
 }
 
 int NANDfs_Core_Init() {
     NAND_Init();
 
-    lowest_inode = _find_lowest_inode();
-    highest_inode = _find_highest_inode();
+    _find_lowest_inode(&lowest_inode);
+    _find_highest_inode(&highest_inode);
     return 0;
 }
 
 int NANDfs_core_create(FileHandle_t *handle) {
-    PhysicalAddrs addr = {0};
     inode_t node;
+    int rc;
+    PhysicalAddrs addr = {0};
 
     // First, find a blank space for the file
-    int ret = _find_blank(&addr);
+    int start_block = _find_blank(&node);
 
-    while (ret != 0) { // Couldn't find any blank space. Delete the oldest file instead
-        NANDfs_core_delete(lowest_inode);
-        lowest_inode = _find_lowest_inode();
-        ret = _find_blank(&addr);
-    }
-    node.magic = MAGIC;
-    node.id = highest_inode + 1;
-    node.isfirst = 1;
-    node.file_size = UINT32_MAX; // So we don't accidentally drop some 1's to 0's and mess up the size
-    NAND_ReturnType status = NAND_Page_Program(&addr, sizeof(node), (uint8_t *)&node);
-    if (status != Ret_Success) {
-        nand_errno = NAND_EIO;
+    if (start_block == -1) {
+        // We can't even determine what the start block should be
         return -1;
     }
-    _increment_seek(&addr, 2048);
+    if (start_block == 0) {
+        /* _find_blank found an inode at the next file. That should mean that
+         * we have wrapped around and are encountering old files. Erase the
+         * block and reuse its starting block.
+         */
+        DBG_PUT("erasing file %d at block %d\r\n", node.id, node.start_block);
+
+        addr.block = node.start_block;
+        if ((rc = NANDfs_core_erase(&node))) {
+            return rc;
+        }
+        if (node.id == lowest_inode.id) {
+            // Just deleted the oldest file. Fine the new oldest file.
+            _find_lowest_inode(&lowest_inode);
+        }
+    } else {
+        addr.block = start_block;
+        if (NAND_Block_Erase(&addr) != Ret_Success) {
+            return -1;
+        }
+    }
+
+    node.magic = MAGIC;
+    node.id = highest_inode.id + 1;
+    node.isfirst = 1;
+    node.start_block = addr.block;
     node.file_size = 0; // Set it to 0 now so the writes are accurate
-    memcpy(&(handle->seek), &addr, sizeof(addr));
-    memcpy(&(handle->node), &node, sizeof(node));
+
+    _increment_seek(&addr, PAGE_DATA_SIZE); // Data starts on the next page
+
+    handle->seek = addr;
+    handle->node = node;
     handle->open = 1;
-    highest_inode++;
+
+    highest_inode = node;
+    if (lowest_inode.id == 0) {
+        // This is the first file created, so it is both lowest and highest inode.
+        lowest_inode = node;
+    }
+
+    DBG_PUT("Creating file %d at block %d\r\n", handle->node.id, handle->node.start_block);
     return 0;
 }
 
@@ -173,47 +233,48 @@ int NANDfs_core_format() {
     PhysicalAddrs addr = {0};
     for (int i = 0; i < NUM_BLOCKS; i++) {
         addr.block = i;
-        NAND_Block_Erase(&addr);
-    }
-    lowest_inode = 0;
-    highest_inode = 0;
-}
-
-// Increments seek by one page
-void _increment_seek(PhysicalAddrs *addr, int size) {
-    (void)size; // TODO: Silence warnings, size not implemented
-    addr->page++;
-    if (addr->page >= NUM_PAGES_PER_BLOCK) {
-        addr->page = 0;
-        addr->block++;
-        if (addr->block >= NUM_BLOCKS) {
-            // TODO: Add bad block skipover
-            addr->block = 0;
+        if (NAND_Block_Erase(&addr) != Ret_Success) {
+            return -1;
         }
     }
+    memset(&lowest_inode, 0, sizeof(lowest_inode));
+    memset(&highest_inode, 0, sizeof(highest_inode));
+    lowest_inode.start_block = RESERVED_BLOCK_CNT;
+    highest_inode.start_block = RESERVED_BLOCK_CNT;
+
+    return 0;
+}
+
+int NANDfs_core_erase(inode_t *inode) {
+    PhysicalAddrs addr = {.block = inode->start_block};
+    inode_t fnode = {0};
+    do {
+        if (NAND_Block_Erase(&addr) != Ret_Success) {
+            return -1;
+        }
+        addr.block++;
+        if (addr.block >= NUM_BLOCKS) {
+            // TODO: Add bad block skipover
+            addr.block = RESERVED_BLOCK_CNT;
+        }
+        NAND_ReturnType status = NAND_Page_Read(&addr, sizeof(inode_t), (uint8_t *)&fnode);
+        if (status != Ret_Success) {
+            return -1; // TODO: Add handling for bad block
+        }
+    } while (fnode.magic == MAGIC && fnode.id == inode->id);
+
+    return 0;
 }
 
 int NANDfs_core_delete(uint32_t inodeid) {
-    PhysicalAddrs addr = {0};
     inode_t node = {0};
-    int ret = _find_inode(&addr, inodeid);
+    PhysicalAddrs addr = {0};
+    int ret = _find_inode(inodeid, &node, &addr);
     if (ret == -1) {
         nand_errno = NAND_EINVAL;
         return -1;
     }
-    do {
-        NAND_Block_Erase(&addr);
-        addr.block++;
-        if (addr.block >= NUM_BLOCKS) {
-            // TODO: Add bad block skipover
-            addr.block = 0;
-        }
-        NAND_ReturnType status = NAND_Page_Read(&addr, sizeof(node), (uint8_t *)&node);
-        if (status == Ret_Failed) {
-            return -1; // TODO: Add handling for bad block
-        }
-    } while (node.magic == MAGIC && node.id == inodeid);
-    return 0;
+    return NANDfs_core_erase(&node);
 }
 
 /*
@@ -243,24 +304,38 @@ int NANDfs_core_write(FileHandle_t *file, int size, void *buf) {
         // This means we must delete the file that's in the way and add our own inode
         if (seek->page == 0) {
             inode_t node;
-            NAND_ReturnType status = NAND_Page_Read(seek, sizeof(node), (uint8_t *)&node);
-            if (node.magic == MAGIC) {         // This is a valid inode
-                if (node.id = file->node.id) { // Oh no, we hit our tail
+            NAND_ReturnType status;
+
+            if ((status = NAND_Page_Read(seek, sizeof(node), (uint8_t *)&node))) {
+                nand_errno = NAND_EFUBAR;
+                return -1;
+            }
+            if (node.magic == MAGIC) {          // This is a valid inode
+                if (node.id == file->node.id) { // Oh no, we hit our tail
                     nand_errno = NAND_EFBIG;
                     return -1;
                 }
-                NANDfs_core_delete(node.id);
-            } else {
-                status = NAND_Block_Erase(seek); // Erase for good measure
+                NANDfs_core_erase(&node);
+            } else { // Erase for good measure
+                if ((status = NAND_Block_Erase(seek))) {
+                    nand_errno = NAND_EFUBAR;
+                    return -1;
+                }
             }
             // Now, write our inode to the first page
-            memcpy(&node, &(file->node), sizeof(node));
+            node = file->node;
             node.isfirst = 0;
-            status = NAND_Page_Program(seek, sizeof(node), (uint8_t *)&node);
+            DBG_PUT("writing intermediate inode %d at <%d,%d>\r\n", node.id, seek->block, seek->page);
+
+            if (NAND_Page_Program(seek, sizeof(inode_t), (uint8_t *)&node)) {
+                nand_errno = NAND_EFUBAR;
+                return -1;
+            }
             _increment_seek(seek, PAGE_DATA_SIZE);
+            DBG_PUT("first seek of new block: <%d,%d>\r\n", seek->block, seek->page);
         }
-        NAND_ReturnType ret = NAND_Page_Program(seek, size, (uint8_t *)buf);
-        if (ret == Ret_Failed) {
+
+        if (NAND_Page_Program(seek, size, (uint8_t *)buf) != Ret_Success) {
             nand_errno = NAND_EIO;
             return -1;
         }
@@ -294,6 +369,10 @@ int NANDfs_core_read(FileHandle_t *file, int size, void *buf) {
         if (seek->page == 0) {
             inode_t node;
             NAND_ReturnType status = NAND_Page_Read(seek, sizeof(node), (uint8_t *)&node);
+            if (status != Ret_Success) {
+                nand_errno = NAND_EFUBAR;
+                return -1;
+            }
             if (node.magic != MAGIC) { // This is a valid inode
                 nand_errno = NAND_EINVAL;
                 return -1;
@@ -306,7 +385,7 @@ int NANDfs_core_read(FileHandle_t *file, int size, void *buf) {
             _increment_seek(seek, PAGE_DATA_SIZE);
         }
         NAND_ReturnType ret = NAND_Page_Read(seek, size, (uint8_t *)buf);
-        if (ret == Ret_Failed) {
+        if (ret != Ret_Success) {
             nand_errno = NAND_EIO;
             return -1;
         }
@@ -317,20 +396,35 @@ int NANDfs_core_read(FileHandle_t *file, int size, void *buf) {
 
 int NANDfs_core_open(int fileid, FileHandle_t *file) {
     PhysicalAddrs addr = {0};
-    int ret = _find_inode(&addr, fileid);
+    inode_t node = {0};
+    int ret = 0;
+
+    if (fileid == 0) {
+        /* Open the most recently created file */
+        if (highest_inode.id == 0) {
+            ret = -1;
+        } else {
+            node = highest_inode;
+            addr.block = highest_inode.start_block;
+        }
+    } else {
+        ret = _find_inode(fileid, &node, &addr);
+    }
     if (ret == -1) {
         nand_errno = NAND_ENOENT;
         return -1;
     }
     file->readonly = 1;
     file->open = 1;
-    NAND_ReturnType status = NAND_Page_Read(&addr, sizeof(file->node), (uint8_t *)&(file->node));
-    if (status != Ret_Success) {
-        nand_errno = NAND_EIO;
-        return -1;
+    file->node = node;
+    if (node.start_block != addr.block) {
+        DBG_PUT("file %d start block mismatch %d != %d\r\n", fileid, node.start_block, addr.block);
     }
+
+    /* Move the current offset past the inode page */
     _increment_seek(&addr, PAGE_DATA_SIZE);
-    memcpy(&(file->seek), &addr, sizeof(addr));
+    file->seek = addr;
+
     return 0;
 }
 
@@ -356,17 +450,28 @@ int NANDfs_core_close_wronly(FileHandle_t *file) {
         nand_errno = NAND_EBADF;
         return -1;
     }
-    PhysicalAddrs addr = {0};
+
     // We are closing a file that was just created. Update its first inode with the information.
-    int ret = _find_inode(&addr, file->node.id);
-    if (ret == -1) {
-        nand_errno = NAND_ENOENT;
+    PhysicalAddrs addr = {.block = file->node.start_block};
+    DBG_PUT("closing file %d at block %d\r\n", file->node.id, addr.block);
+
+    NAND_ReturnType status = NAND_Page_Program(&addr, sizeof(inode_t), (uint8_t *)&file->node);
+    if (status != Ret_Success) {
+        nand_errno = NAND_EIO;
         return -1;
     }
-    inode_t newnode = {0};
-    NAND_ReturnType status = NAND_Page_Read(&addr, sizeof(newnode), (uint8_t *)&newnode);
-    newnode.file_size = file->node.file_size;
-    status = NAND_Page_Program(&addr, sizeof(newnode), (uint8_t *)&newnode);
+
+    if (file->node.id == highest_inode.id) {
+        // Update highest inode with size, etc.
+        DBG_PUT("updating highest_inode to id %d\r\n", file->node.id);
+        highest_inode = file->node;
+    }
+    if (file->node.id == lowest_inode.id) {
+        // Update lowest inode with size, etc.
+        DBG_PUT("updating lowest_inode to id %d\r\n", file->node.id);
+        lowest_inode = file->node;
+    }
+
     memset(file, 0, sizeof(FileHandle_t));
     return 0;
 }
@@ -379,63 +484,62 @@ int NANDfs_Core_opendir(DirHandle_t *dir) {
         nand_errno = NAND_EBADF;
         return -1;
     }
-    PhysicalAddrs addr = {0};
-    inode_t node = {0};
-    for (int i = 0; i < NUM_BLOCKS; i++) {
-        addr.block = i;
-        NAND_ReturnType status = NAND_Page_Read(&addr, sizeof(node), (uint8_t *)&node);
-        if (status != Ret_Success) {
-            continue; // Might have hit a bad block
-        }
-        if (node.magic == MAGIC && node.isfirst) { // Find the first node in the flash. Don't care about order
-            memcpy(&(dir->first), &node, sizeof(node));
-            memcpy(&(dir->current), &node, sizeof(node));
-            memcpy(&(dir->seek), &addr, sizeof(addr));
-            dir->open = 1;
-            return 0;
-        }
+
+    if (lowest_inode.id == 0) {
+        nand_errno = NAND_ENOENT;
+        return -1;
     }
-    nand_errno = NAND_ENOENT;
-    return -1;
+
+    dir->first = lowest_inode;
+    dir->current = lowest_inode;
+    dir->open = 1;
+
+    return 0;
 }
 
-int NANDfs_Core_readdir(DirHandle_t *dir, inode_t *node) {
-    // If the inode is the first inode we read, write 0 in to the node
-    // else copy the inode at the current seek to the output node
-    // Set the seek to the next inode in the flash
+int NANDfs_Core_nextdir(DirHandle_t *dir) {
     if (!dir->open) {
         nand_errno = NAND_EBADF;
         return -1;
     }
-    NAND_ReturnType status = NAND_Page_Read(&(dir->seek), sizeof(node), (uint8_t *)node);
+
+    if (dir->current.id == highest_inode.id) {
+        /* Already at the last inode - all done! */
+        return 0;
+    }
+
+    /* addr should be the inode of the next file */
+    PhysicalAddrs addr = {.block = _next_free_block(&dir->current)};
+
+    DBG_PUT("nextdir: id %d, block %d, size %d; next inode at %d\r\n", dir->current.id, dir->current.start_block,
+            dir->current.file_size, addr.block);
+
+    inode_t node = {0};
+    NAND_ReturnType status = NAND_Page_Read(&addr, sizeof(inode_t), (uint8_t *)&node);
     if (status != Ret_Success) {
         nand_errno = NAND_EIO;
-        node->id = 0;
         return -1;
     }
-    if (node->magic != MAGIC) {
+    if (node.magic != MAGIC || !node.isfirst) {
+        DBG_PUT("no inode at %d, magic %x\r\n", addr.block, node.magic);
         nand_errno = NAND_EFUBAR;
         return -1;
     }
-    if (node->id == dir->first.id) {
-        node->id = 0;
-        return 0;
-    }
-    // find the next inode, if we can.
-    inode_t search;
-    int num_checked;
-    while (num_checked++ < NUM_BLOCKS) { // Prevent infinite loop
-        dir->seek.block++;
-        if (dir->seek.block >= NUM_BLOCKS) {
-            dir->seek.block = 0;
-        }
-        NAND_ReturnType status = NAND_Page_Read(&(dir->seek), sizeof(inode_t), (uint8_t *)&search);
-        if (status != Ret_Success) {
-            continue; // Might have hit a bad block, not sure
-        }
-        if (search.magic == MAGIC && search.isfirst) {
-            return 0; // Stop when we find the next node, we'll leave checking it for the next call
+
+    dir->current = node;
+    return node.id;
+}
+
+// Increments seek by one page
+static void _increment_seek(PhysicalAddrs *addr, int size) {
+    (void)size; // TODO: Silence warnings, size not implemented
+    addr->page++;
+    if (addr->page >= NUM_PAGES_PER_BLOCK) {
+        addr->page = 0;
+        addr->block++;
+        if (addr->block >= NUM_BLOCKS) {
+            // TODO: Add bad block skipover
+            addr->block = RESERVED_BLOCK_CNT;
         }
     }
-    return 0;
 }

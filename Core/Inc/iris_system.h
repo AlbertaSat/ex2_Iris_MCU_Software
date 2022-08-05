@@ -49,6 +49,7 @@ extern "C" {
 
 //#define UART_DEBUG
 #define SPI_DEBUG
+#define SPI_DEBUG_UART_OUTPUT
 
 /* USER CODE END EM */
 
@@ -69,7 +70,7 @@ void Error_Handler(void);
 /* Iris Model Defines --------------------------------------------------------*/
 //#define IRIS_EM
 //#define IRIS_FM
-#define IRIS_PROTO
+// #define IRIS_PROTO
 
 #ifdef IRIS_FM
 #define CURRENTSENSE_5V 0x40
@@ -85,10 +86,8 @@ void Error_Handler(void);
 #endif
 
 /* Iris Spec Defines --------------------------------------------------------*/
-#ifdef SPI_DEBUG
 #define ERR_Pin GPIO_PIN_9
 #define ERR_GPIO_Port GPIOA
-#endif
 
 /* USER CODE END Private defines */
 

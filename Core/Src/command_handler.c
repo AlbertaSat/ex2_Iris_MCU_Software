@@ -4,12 +4,17 @@
  *  Created on: May 9, 2022
  *      Author: Liam
  */
+#include <stdio.h>
+#include <ctype.h>
+#include <string.h>
 #include "command_handler.h"
-#include "string.h"
 #include "debug.h"
 #include "arducam.h"
 #include "SPI_IT.h"
 #include "IEB_TESTS.h"
+
+#include "iris_time.h"
+#include "time.h"
 extern uint8_t VIS_DETECTED;
 extern uint8_t NIR_DETECTED;
 extern SPI_HandleTypeDef hspi1;
@@ -17,6 +22,7 @@ extern int format;
 extern int width;
 extern const struct sensor_reg OV5642_JPEG_Capture_QSXGA[];
 extern const struct sensor_reg OV5642_QVGA_Preview[];
+extern RTC_HandleTypeDef hrtc;
 
 uint8_t VIS_DETECTED = 0;
 uint8_t NIR_DETECTED = 0;
@@ -119,8 +125,7 @@ void sensor_idle() {
      * 		 cut power to it and require reprogramming.
      */
     // pull mosfet driver pin low, cutting power to sensors
-    HAL_GPIO_WritePin(CAM_EN_GPIO_Port, CAM_EN_Pin, GPIO_PIN_RESET);
-    SPI1_IT_Transmit(&ack);
+    sensor_togglepower(0);
 
     return;
 }
@@ -131,10 +136,60 @@ void sensor_idle() {
  */
 void sensor_active() {
     // pull mosfet driver pin high, powering sensors
-    HAL_GPIO_WritePin(CAM_EN_GPIO_Port, CAM_EN_Pin, GPIO_PIN_SET);
+    sensor_togglepower(1);
     //	// initialize sensors
     initalize_sensors();
     return;
+}
+
+void set_time(uint32_t unix_time) {
+    RTC_TimeTypeDef sTime;
+    RTC_DateTypeDef sDate;
+    Iris_Timestamp timestamp = {0};
+
+    convertUnixToUTC((time_t)unix_time, &timestamp);
+
+    sTime.Hours = timestamp.Hour;     // set hours
+    sTime.Minutes = timestamp.Minute; // set minutes
+    sTime.Seconds = timestamp.Second; // set seconds
+    sTime.DayLightSaving = RTC_DAYLIGHTSAVING_NONE;
+    sTime.StoreOperation = RTC_STOREOPERATION_RESET;
+    if (HAL_RTC_SetTime(&hrtc, &sTime, RTC_FORMAT_BIN) != HAL_OK) {
+        Error_Handler();
+    }
+    sDate.WeekDay = timestamp.Wday; // day
+    sDate.Month = timestamp.Month;  // month
+    sDate.Date = timestamp.Day;     // date
+    sDate.Year = timestamp.Year;    // year
+    if (HAL_RTC_SetDate(&hrtc, &sDate, RTC_FORMAT_BIN) != HAL_OK) {
+        Error_Handler();
+    }
+    HAL_RTCEx_BKUPWrite(&hrtc, RTC_BKP_DR1, 0x32F2); // backup register
+}
+
+void get_time(Iris_Timestamp *timestamp) {
+    RTC_DateTypeDef gDate;
+    RTC_TimeTypeDef gTime;
+
+    /* Get the RTC current Time */
+    HAL_RTC_GetTime(&hrtc, &gTime, RTC_FORMAT_BIN);
+    /* Get the RTC current Date */
+    HAL_RTC_GetDate(&hrtc, &gDate, RTC_FORMAT_BIN);
+
+    timestamp->Hour = gTime.Hours;
+    timestamp->Minute = gTime.Minutes;
+    timestamp->Second = gTime.Seconds;
+    timestamp->Wday = 0; // Not needed
+    timestamp->Day = gDate.Date;
+    timestamp->Month = gDate.Month;
+    timestamp->Year = 1970 + gDate.Year;
+
+#ifdef SPI_DEBUG_UART_OUTPUT
+    /* Display time Format: hh:mm:ss */
+    DBG_PUT("%02d:%02d:%02d\r\n", timestamp->Hour, timestamp->Minute, timestamp->Second);
+    /* Display date Format: dd-mm-yy */
+    DBG_PUT("%02d-%02d-%2d\r\n", timestamp->Day, timestamp->Month, timestamp->Year);
+#endif
 }
 
 /**
@@ -351,7 +406,7 @@ void uart_handle_command(char *cmd) {
             uart_scan_i2c();
             break;
 
-        case 'a':;
+        case 'a': {
             const char *c = next_token(cmd);
             switch (*c) {
             case 'v':
@@ -364,10 +419,10 @@ void uart_handle_command(char *cmd) {
                 DBG_PUT("Target Error\r\n");
                 break;
             }
+        } break;
         }
         break;
-
-    case 'p':; // janky use of semicolon??
+    case 'p': {
         const char *p = next_token(cmd);
         switch (*(p + 1)) {
         case 'n':
@@ -380,8 +435,8 @@ void uart_handle_command(char *cmd) {
             DBG_PUT("Use either on or off\r\n");
             break;
         }
-        break;
-    case 'i':;
+    } break;
+    case 'i':
         switch (*(cmd + 1)) {
         case '2':
             handle_i2c16_8_cmd(cmd); // needs to handle 16 / 8 bit stuff
@@ -395,7 +450,6 @@ void uart_handle_command(char *cmd) {
             }
         }
         break;
-
     case 'h':
         switch (*(cmd + 1)) {
         case 'k':
@@ -405,5 +459,13 @@ void uart_handle_command(char *cmd) {
             help();
             break;
         }
+        break;
+    case 'n':
+        uart_handle_nand_commands(cmd);
+        break;
+
+    default:
+        help();
+        break;
     }
 }
