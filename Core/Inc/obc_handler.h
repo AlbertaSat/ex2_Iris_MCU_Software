@@ -27,12 +27,8 @@
 #define IRIS_IMAGE_SIZE_WIDTH 3            // Image size represented in 3 bytes
 #define IRIS_UNIX_TIME_SIZE 4
 
-void spi_transmit(uint8_t *tx_data, uint16_t data_length);
-void spi_receive(uint8_t *rx_data, uint16_t data_length);
-
-int spi_listen();
-int spi_verify_command(uint8_t cmd);
-int spi_handle_command(uint8_t cmd);
+int obc_verify_command(uint8_t cmd);
+int obc_handle_command(uint8_t cmd);
 
 void transfer_image_to_obc();
 int step_transfer(); // For testing "idle task" running on Iris

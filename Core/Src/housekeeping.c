@@ -4,6 +4,8 @@
  *  Created on: Mar. 29, 2022
  *      Author: Liam Droog
  */
+#include <stdio.h>
+
 #include "iris_system.h"
 #include "command_handler.h"
 #include "housekeeping.h"
@@ -13,11 +15,14 @@
 
 housekeeping_packet_t _get_housekeeping() {
     housekeeping_packet_t hk;
+    uint8_t image_count;
+    get_image_count(&image_count);
+
     hk.vis_temp = get_temp(VIS_TEMP_SENSOR);
     hk.nir_temp = get_temp(NIR_TEMP_SENSOR);
     hk.flash_temp = get_temp(FLASH_TEMP_SENSOR);
     hk.gate_temp = get_temp(GATE_TEMP_SENSOR);
-    hk.imagenum = get_image_num(1);
+    hk.imagenum = image_count;
     hk.software_version = software_ver;
     hk.errornum = get_error_num();
 

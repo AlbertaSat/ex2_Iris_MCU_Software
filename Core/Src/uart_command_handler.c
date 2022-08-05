@@ -28,7 +28,7 @@ static inline const char *next_token(const char *ptr) {
 
 void help() {
     // UART DEBUG ONLY
-#ifdef UART_DEBUG
+#ifdef UART_HANDLER
     DBG_PUT("TO RUN TESTS: test\r\n\n\n");
     DBG_PUT("Commands:\r\n");
     DBG_PUT("\tWorking/Tested:\r\n");
@@ -374,16 +374,6 @@ void uart_handle_read_file_cmd(const char *cmd) {
     }
 
     transfer_file(which, media);
-}
-
-void sensor_togglepower(int i) {
-    if (i == 1) {
-        HAL_GPIO_WritePin(CAM_EN_GPIO_Port, CAM_EN_Pin, GPIO_PIN_SET);
-        DBG_PUT("Sensor Power Enabled.\r\n");
-        return;
-    }
-    HAL_GPIO_WritePin(CAM_EN_GPIO_Port, CAM_EN_Pin, GPIO_PIN_RESET);
-    DBG_PUT("Sensor Power Disabled.\r\n");
 }
 
 // todo implement sensor selection

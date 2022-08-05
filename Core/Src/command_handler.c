@@ -10,36 +10,28 @@
 #include "command_handler.h"
 #include "debug.h"
 #include "arducam.h"
-#include "SPI_IT.h"
 #include "IEB_TESTS.h"
 #include "iris_time.h"
 #include "time.h"
 
 extern uint8_t VIS_DETECTED;
 extern uint8_t NIR_DETECTED;
+
 extern SPI_HandleTypeDef hspi1;
-extern int format;
-extern int width;
-extern const struct sensor_reg OV5642_JPEG_Capture_QSXGA[];
-extern const struct sensor_reg OV5642_QVGA_Preview[];
 extern RTC_HandleTypeDef hrtc;
 
+extern int format;
+extern int width;
+
+extern const struct sensor_reg OV5642_JPEG_Capture_QSXGA[];
+extern const struct sensor_reg OV5642_QVGA_Preview[];
+
+#ifdef UART_HANDLER
+// Only used for UART operations
 uint8_t VIS_DETECTED = 0;
 uint8_t NIR_DETECTED = 0;
+#endif
 
-/*
- * todo:
- * 		- 	TEST THESE FUNCTIONS EH
- *
- * 		- 	Determine if the  SPI CltCallback in main.c are called from interrupt SPI
- * 			functions in here, or if they're needed in here / in SPI_IT.c [SOLVED]
- * 		- 	Find a way to send sensors into idle mode without erasing regs
- * 		  	otherwise save sensor regs somewhere in a struct.
- *		- 	Write functions to interface with sensor currently, but need to adapt to
- *		  	work with Ron's NAND Flash stuff.
- *
- */
-uint8_t total_image_num = 0; // This will cause issues with total num of images once board resets. todo: fix
 housekeeping_packet_t hk;
 char buf[128];
 
@@ -72,8 +64,7 @@ void take_image() {
            !get_bit(ARDUCHIP_TRIG, CAP_DONE_MASK, NIR_SENSOR)) {
     }
 
-    // DBG_PUT("Image capture complete");
-    // TODO: Take image data from camera and transport it to NAND fs
+    DBG_PUT("Image capture complete");
 }
 
 /**
@@ -84,7 +75,7 @@ void take_image() {
  */
 void get_image_count(uint8_t *image_count) {
     // TODO: Read number of images stored in NAND fs
-    return;
+    *(image_count) = 0;
 }
 
 /**
@@ -102,14 +93,17 @@ void get_image_length(uint32_t *image_length, uint8_t sensor_mode) {
 /**
  * @brief Sends Arducam sensors into an idle (re: powered off) state by turning off FET driver pin
  */
-void turn_off_sensors() { sensor_togglepower(SENSORS_OFF); }
+void turn_off_sensors() {
+    HAL_GPIO_WritePin(CAM_EN_GPIO_Port, CAM_EN_Pin, GPIO_PIN_RESET);
+    DBG_PUT("Sensor Power Disabled.\r\n");
+}
 
 /**
  * @brief Sends Arducam sensors into an active (re: powered on) state by turning on FET driver pin
  */
 void turn_on_sensors() {
-    sensor_togglepower(SENSORS_ON);
-    initalize_sensors();
+    HAL_GPIO_WritePin(CAM_EN_GPIO_Port, CAM_EN_Pin, GPIO_PIN_SET);
+    DBG_PUT("Sensor Power Enabled.\r\n");
 }
 
 /**
@@ -137,44 +131,35 @@ void flood_cam_spi() {
 /*
  * @brief Initializes sensors to our chosen defaults as defined in main.c
  */
-void initalize_sensors() {
-    uint8_t res = onboot_sensors(VIS_SENSOR);
+int initalize_sensors() {
+    int res;
+
+    res = onboot_sensors(VIS_SENSOR);
     if (res == 1) {
         program_sensor(format, VIS_SENSOR);
         DBG_PUT("VIS Camera Mode: JPEG\r\nI2C address: 0x3C\r\n\n");
+#ifdef UART_HANDLER
         VIS_DETECTED = 1;
-    }
-    if (res == -1) {
-        // need some error handling eh
-        DBG_PUT("VIS init failed./r/n");
-        return;
+#endif
+    } else {
+        DBG_PUT("VIS initialization failed./r/n");
+        return -1;
     }
 
-    res = 0;
     res = onboot_sensors(NIR_SENSOR);
     if (res == 1) {
         program_sensor(format, NIR_SENSOR);
         DBG_PUT("NIR Camera Mode: JPEG\r\nI2C address: 0x3D\r\n\n");
+#ifdef UART_HANDLER
         NIR_DETECTED = 1;
+#endif
+    } else {
+        DBG_PUT("NIR initialization failed.\r\n");
+        return -1;
     }
-    if (res == -1) {
-        // need some error handling eh
-        DBG_PUT("NIR init failed.\r\n");
-        return;
-    }
-    HAL_Delay(100);
-}
 
-/**
- * @brief Get the total image number
- *
- * @param hk 1 for integer return (what's used for hk); 0 for spi return
- * @return uint8_t
- */
-uint8_t get_image_num(uint8_t hk) {
-    if (hk) {
-        return total_image_num;
-    }
+    HAL_Delay(100);
+    return 0;
 }
 
 /*
@@ -182,7 +167,7 @@ uint8_t get_image_num(uint8_t hk) {
  *
  * @param sensor: Integer sensor identifier
  */
-uint8_t onboot_sensors(uint8_t sensor) {
+int onboot_sensors(uint8_t sensor) {
     // Reset the CPLD
 
     // Make sure camera is listening over SPI
@@ -212,7 +197,6 @@ uint8_t onboot_sensors(uint8_t sensor) {
     if (vid != 0x56 || pid != 0x42) {
         DBG_PUT("Camera %x I2C Address: Unknown\r\nVIS not available\r\n\n", sensor);
         return -1;
-
     } else {
         return 1;
     }
@@ -271,7 +255,7 @@ void get_rtc_time(Iris_Timestamp *timestamp) {
     timestamp->Month = gDate.Month;
     timestamp->Year = 1970 + gDate.Year;
 
-#ifdef SPI_DEBUG_UART_OUTPUT
+#ifdef DEBUG_OUTPUT
     /* Display time Format: hh:mm:ss */
     DBG_PUT("%02d:%02d:%02d\r\n", timestamp->Hour, timestamp->Minute, timestamp->Second);
     /* Display date Format: dd-mm-yy */
@@ -338,10 +322,10 @@ void uart_handle_command(char *cmd) {
         const char *p = next_token(cmd);
         switch (*(p + 1)) {
         case 'n':
-            sensor_active();
+            turn_on_sensors();
             break;
         case 'f':
-            sensor_idle();
+            turn_off_sensors();
             break;
         default:
             DBG_PUT("Use either on or off\r\n");

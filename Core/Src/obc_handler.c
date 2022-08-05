@@ -5,6 +5,7 @@
 #include "debug.h"
 #include "spi_obc.h"
 #include "iris_time.h"
+#include "spi_bitbang.h"
 
 extern SPI_HandleTypeDef hspi1;
 extern uint8_t cam_to_nand_transfer_flag;
@@ -119,6 +120,7 @@ int obc_verify_command(uint8_t obc_cmd) {
 int obc_handle_command(uint8_t obc_cmd) {
     uint8_t tx_data = 0x69;
     uint8_t tx_ack = 0xAA;
+    uint8_t tx_nack = 0x0F;
 
     switch (obc_cmd) {
     case IRIS_SEND_HOUSEKEEPING: {
@@ -135,8 +137,10 @@ int obc_handle_command(uint8_t obc_cmd) {
         return 0;
     }
     case IRIS_GET_IMAGE_COUNT: {
-        get_image_num(0);
-        obc_spi_transmit(&tx_data, 1);
+        uint8_t image_count;
+        get_image_count(&image_count);
+
+        obc_spi_transmit(&image_count, 1);
         return 0;
     }
     case IRIS_TRANSFER_IMAGE: {
@@ -145,15 +149,27 @@ int obc_handle_command(uint8_t obc_cmd) {
     }
     case IRIS_OFF_SENSORS: {
         turn_off_sensors();
-        DBG_PUT("Sensor de-activated\r\n");
+        DBG_PUT("Sensor deactivated\r\n");
+
         obc_spi_transmit(&tx_ack, 1);
         return 0;
     }
     case IRIS_ON_SENSORS: {
+        int ret = 0;
+
         turn_on_sensors();
         DBG_PUT("Sensor activated\r\n");
+        ret = initalize_sensors();
+        if (ret < 0) {
+            DBG_PUT("Sensor failed to initialized\r\n");
+            obc_spi_transmit(&tx_nack, 1);
+            return 0;
+        } else {
+            DBG_PUT("Sensor initialize\r\n");
+        }
         set_sensors_config();
         DBG_PUT("Sensors configured\r\n");
+
         obc_spi_transmit(&tx_ack, 1);
         return 0;
     }

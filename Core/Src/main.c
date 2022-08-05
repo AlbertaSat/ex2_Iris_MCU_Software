@@ -95,9 +95,6 @@ static void onboot_commands(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
-uint8_t spi_int_flag = 0;
-uint8_t cam_to_nand_transfer_flag = 0;
-
 enum {
     IDLE,
     LISTENING,
@@ -110,6 +107,8 @@ enum {
     receiving,
 } uart_state;
 
+uint8_t spi_int_flag = 0;
+uint8_t cam_to_nand_transfer_flag = 0;
 /* For future failure recovery mode */
 uint8_t can_bus_receive_flag = 0; // Needs to be set in can RX callback
 uint8_t i2c_bus_receive_flag = 0; // Needs to be set in i2c RX callback
@@ -152,19 +151,22 @@ int main(void) {
     MX_CRC_Init();
     MX_RTC_Init();
     /* USER CODE BEGIN 2 */
-    //    NAND_SPI_Init(&hspi2);
 
     onboot_commands();
-    //    init_filesystem();
-    uint8_t obc_cmd;
-
-    iris_state = LISTENING;
     /* USER CODE END 2 */
 
     /* Infinite loop */
     /* USER CODE BEGIN WHILE */
 
-#ifdef SPI_DEBUG
+#ifdef SPI_HANDLER
+
+    /******************************************************************************
+     *                      		SPI HANDLER
+     *****************************************************************************/
+    uint8_t obc_cmd;
+    iris_state = LISTENING;
+    int ret = 0;
+
     while (1) {
         /* USER CODE END WHILE */
 
@@ -199,12 +201,17 @@ int main(void) {
             break;
         }
     }
-#endif // SPI_DEBUG
-//       // //////////////////////////////////////////////////////////////////////////////////////////
-#ifdef UART_DEBUG
+#endif // SPI_HANDLER
+
+/******************************************************************************
+ *                      		UART HANDLER
+ *****************************************************************************/
+#ifdef UART_HANDLER
     char cmd[64];
     char buf[64];
     char *ptr = cmd;
+    int ret = 0;
+
     uart_state = idle;
     while (1) {
         switch (uart_state) {
@@ -246,7 +253,7 @@ int main(void) {
             break;
         }
     }
-#endif // UART_DEBUG
+#endif // UART_HANDLER
        /* USER CODE END 3 */
 }
 
@@ -721,8 +728,8 @@ static void init_filesystem() {
 
 static void onboot_commands(void) {
 
-#ifdef SPI_DEBUG
-#ifndef SPI_DEBUG_UART_OUTPUT
+#ifdef SPI_HANDLER
+#ifndef DEBUG_OUTPUT
     GPIO_InitTypeDef GPIO_InitStruct = {0};
     /*Configure GPIO pin */
     GPIO_InitStruct.Pin = ERR_Pin;
@@ -735,7 +742,6 @@ static void onboot_commands(void) {
 #endif
 
     HAL_TIM_Base_Start(&htim2);
-
     init_filesystem();
 
 #ifdef CURRENTSENSE_5V
@@ -744,25 +750,21 @@ static void onboot_commands(void) {
     // init_ina209(CURRENTSENSE_5V);
 
     HAL_Delay(500);
-
-#ifdef IRIS_PROTO
-    sensor_togglepower(1);
     flood_cam_spi();
-    initalize_sensors();
-#else
-    flood_cam_spi();
-#endif // IRIS_PROTO
 
-#ifdef UART_DEBUG
+#ifdef DEBUG_OUTPUT
+#ifdef UART_HANDLER
     DBG_PUT("-----------------------------------\r\n");
     DBG_PUT("Iris Electronics Test Software\r\n"
             "         UART Edition         \r\n");
     DBG_PUT("-----------------------------------\r\n");
-#else
+#endif
+#ifdef SPI_HANDLER
     DBG_PUT("-----------------------------------\r\n");
     DBG_PUT("Iris Electronics Test Software\r\n"
             "        SPI Edition         \r\n");
     DBG_PUT("-----------------------------------\r\n");
+#endif
 #endif
 }
 /* USER CODE END 4 */

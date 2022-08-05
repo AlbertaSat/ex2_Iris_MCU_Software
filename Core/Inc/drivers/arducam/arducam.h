@@ -76,6 +76,7 @@ void start_capture(uint8_t sensor);
 
 struct io_funcs;
 
+uint32_t read_fifo_length(uint8_t sensor);
 void arducam_capture_image(uint8_t sensor);
 int arducam_dump_image(uint8_t sensor, struct io_funcs *io_funcs);
 
