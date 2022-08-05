@@ -8,6 +8,7 @@
 #ifndef INC_COMMAND_HANDLER_H_
 #define INC_COMMAND_HANDLER_H_
 #include <iris_system.h>
+#include "iris_time.h"
 #include "arducam.h"
 #include "SPI_IT.h"
 #include "I2C.h"
@@ -38,6 +39,8 @@ void count_images();
 void sensor_reset(uint8_t sensor);
 void sensor_idle();
 void sensor_active();
+void set_time(uint32_t obc_unix_time);
+void get_time(Iris_Timestamp *timestamp);
 void get_housekeeping(housekeeping_packet_t *hk);
 void update_sensor_I2C_regs();
 void update_current_limits();

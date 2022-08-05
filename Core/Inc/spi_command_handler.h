@@ -20,10 +20,12 @@
 #define IRIS_SEND_HOUSEKEEPING 0x51
 #define IRIS_UPDATE_SENSOR_I2C_REG 0x60
 #define IRIS_UPDATE_CURRENT_LIMIT 0x70
+#define IRIS_SET_TIME 0x05
 #define IRIS_WDT_CHECK 0x80
 
 #define IRIS_IMAGE_TRANSFER_BLOCK_SIZE 512 // Will change once NAND flash is implemented
 #define IRIS_IMAGE_SIZE_WIDTH 3            // Image size represented in 3 bytes
+#define IRIS_UNIX_TIME_SIZE 4
 
 void spi_transmit(uint8_t *tx_data, uint16_t data_length);
 void spi_receive(uint8_t *rx_data, uint16_t data_length);

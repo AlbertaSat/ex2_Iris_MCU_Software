@@ -62,6 +62,8 @@ CRC_HandleTypeDef hcrc;
 I2C_HandleTypeDef hi2c1;
 I2C_HandleTypeDef hi2c2;
 
+RTC_HandleTypeDef hrtc;
+
 SPI_HandleTypeDef hspi1;
 SPI_HandleTypeDef hspi2;
 
@@ -83,6 +85,7 @@ static void MX_SPI2_Init(void);
 static void MX_USART1_UART_Init(void);
 static void MX_TIM2_Init(void);
 static void MX_CRC_Init(void);
+static void MX_RTC_Init(void);
 /* USER CODE BEGIN PFP */
 static void onboot_commands(void);
 /* USER CODE END PFP */
@@ -145,10 +148,13 @@ int main(void) {
     MX_USART1_UART_Init();
     MX_TIM2_Init();
     MX_CRC_Init();
+    MX_RTC_Init();
     /* USER CODE BEGIN 2 */
     //    NAND_SPI_Init(&hspi2);
 
     onboot_commands();
+    //    init_filesystem();
+    uint8_t obc_cmd;
 
     iris_state = LISTENING;
     /* USER CODE END 2 */
@@ -157,7 +163,6 @@ int main(void) {
     /* USER CODE BEGIN WHILE */
 
 #ifdef SPI_DEBUG
-    uint8_t obc_cmd;
     while (1) {
         /* USER CODE END WHILE */
 
@@ -258,8 +263,9 @@ void SystemClock_Config(void) {
     /** Initializes the RCC Oscillators according to the specified parameters
      * in the RCC_OscInitTypeDef structure.
      */
-    RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
+    RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_LSI | RCC_OSCILLATORTYPE_HSE;
     RCC_OscInitStruct.HSEState = RCC_HSE_BYPASS;
+    RCC_OscInitStruct.LSIState = RCC_LSI_ON;
     RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
     RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
     RCC_OscInitStruct.PLL.PLLMUL = RCC_PLLMUL_4;
@@ -280,9 +286,10 @@ void SystemClock_Config(void) {
     if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_1) != HAL_OK) {
         Error_Handler();
     }
-    PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_USART1 | RCC_PERIPHCLK_I2C1;
+    PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_USART1 | RCC_PERIPHCLK_I2C1 | RCC_PERIPHCLK_RTC;
     PeriphClkInit.Usart1ClockSelection = RCC_USART1CLKSOURCE_PCLK2;
     PeriphClkInit.I2c1ClockSelection = RCC_I2C1CLKSOURCE_PCLK1;
+    PeriphClkInit.RTCClockSelection = RCC_RTCCLKSOURCE_LSI;
     if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK) {
         Error_Handler();
     }
@@ -400,6 +407,71 @@ static void MX_I2C2_Init(void) {
     /* USER CODE BEGIN I2C2_Init 2 */
 
     /* USER CODE END I2C2_Init 2 */
+}
+
+/**
+ * @brief RTC Initialization Function
+ * @param None
+ * @retval None
+ */
+static void MX_RTC_Init(void) {
+
+    /* USER CODE BEGIN RTC_Init 0 */
+
+    /* USER CODE END RTC_Init 0 */
+
+    RTC_TimeTypeDef sTime = {0};
+    RTC_DateTypeDef sDate = {0};
+
+    /* USER CODE BEGIN RTC_Init 1 */
+
+    /* USER CODE END RTC_Init 1 */
+
+    /** Initialize RTC Only
+     */
+    hrtc.Instance = RTC;
+    hrtc.Init.HourFormat = RTC_HOURFORMAT_24;
+    hrtc.Init.AsynchPrediv = 127;
+    hrtc.Init.SynchPrediv = 255;
+    hrtc.Init.OutPut = RTC_OUTPUT_DISABLE;
+    hrtc.Init.OutPutRemap = RTC_OUTPUT_REMAP_NONE;
+    hrtc.Init.OutPutPolarity = RTC_OUTPUT_POLARITY_HIGH;
+    hrtc.Init.OutPutType = RTC_OUTPUT_TYPE_OPENDRAIN;
+    if (HAL_RTC_Init(&hrtc) != HAL_OK) {
+        Error_Handler();
+    }
+
+    /* USER CODE BEGIN Check_RTC_BKUP */
+
+    /* USER CODE END Check_RTC_BKUP */
+
+    /** Initialize RTC and set the Time and Date
+     */
+    sTime.Hours = 0x0;
+    sTime.Minutes = 0x0;
+    sTime.Seconds = 0x0;
+    sTime.DayLightSaving = RTC_DAYLIGHTSAVING_NONE;
+    sTime.StoreOperation = RTC_STOREOPERATION_RESET;
+    if (HAL_RTC_SetTime(&hrtc, &sTime, RTC_FORMAT_BCD) != HAL_OK) {
+        Error_Handler();
+    }
+    sDate.WeekDay = RTC_WEEKDAY_MONDAY;
+    sDate.Month = RTC_MONTH_JANUARY;
+    sDate.Date = 0x1;
+    sDate.Year = 0x0;
+
+    if (HAL_RTC_SetDate(&hrtc, &sDate, RTC_FORMAT_BCD) != HAL_OK) {
+        Error_Handler();
+    }
+
+    /** Enable the TimeStamp
+     */
+    if (HAL_RTCEx_SetTimeStamp_IT(&hrtc, RTC_TIMESTAMPEDGE_RISING, RTC_TIMESTAMPPIN_DEFAULT) != HAL_OK) {
+        Error_Handler();
+    }
+    /* USER CODE BEGIN RTC_Init 2 */
+
+    /* USER CODE END RTC_Init 2 */
 }
 
 /**
@@ -631,7 +703,9 @@ static void MX_GPIO_Init(void) {
 /* USER CODE BEGIN 4 */
 void HAL_SPI_RxCpltCallback(SPI_HandleTypeDef *hspi) {
     // Flag is set whenever OBC wants to communicate
-    spi_int_flag = 1;
+    if (iris_state != HANDLE_COMMAND) {
+        spi_int_flag = 1;
+    }
 }
 
 static void init_filesystem() {
@@ -685,11 +759,6 @@ static void onboot_commands(void) {
             "        SPI Edition         \r\n");
     DBG_PUT("-----------------------------------\r\n");
 #endif
-    return;
-
-    // Set resolution for both sensors
-    arducam_set_resolution(JPEG, 640, VIS_SENSOR);
-    arducam_set_resolution(JPEG, 640, NIR_SENSOR);
 }
 /* USER CODE END 4 */
 
