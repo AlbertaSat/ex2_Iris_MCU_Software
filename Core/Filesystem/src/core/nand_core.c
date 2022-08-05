@@ -247,11 +247,11 @@ NAND_ReturnType _NANDfs_core_erase_block(int block) {
     }
     NAND_ReturnType ret = NAND_Block_Erase(&addr);
     if (ret == Ret_EraseFailed) {
-        NAND_Mark_Bad_Block(block);
-        return Ret_EraseFailed;
 #if NAND_DEBUG
         DBG_PUT("failed to erase block %d, ret:%d\r\n", addr.block, ret);
 #endif
+        NAND_Mark_Bad_Block(block);
+        return Ret_EraseFailed;
     }
     return ret;
 }
@@ -448,7 +448,9 @@ int NANDfs_core_open(int fileid, FileHandle_t *file) {
     file->open = 1;
     file->node = node;
     if (node.start_block != addr.block) {
+#if NAND_DEBUG
         DBG_PUT("file %d start block mismatch %d != %d\r\n", fileid, node.start_block, addr.block);
+#endif
     }
 
     /* Move the current offset past the inode page */
