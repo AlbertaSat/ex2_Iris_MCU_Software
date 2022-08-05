@@ -354,9 +354,9 @@ int NANDfs_core_write(FileHandle_t *file, int size, void *buf) {
 #if NAND_DEBUG
             DBG_PUT("writing intermediate inode %d at <%d,%d>\r\n", node.id, seek->block, seek->page);
 #endif
-
-            if (NAND_Page_Program(seek, sizeof(inode_t), (uint8_t *)&node)) {
-                nand_errno = NAND_EFUBAR;
+            status = NAND_Page_Program(seek, sizeof(inode_t), (uint8_t *)&node);
+            if (status == Ret_Failed) {
+                nand_errno = NAND_EIO;
                 return -1;
             }
             _increment_seek(seek, PAGE_DATA_SIZE);
@@ -365,7 +365,7 @@ int NANDfs_core_write(FileHandle_t *file, int size, void *buf) {
 #endif
         }
 
-        if (NAND_Page_Program(seek, size, (uint8_t *)buf) != Ret_Success) {
+        if (NAND_Page_Program(seek, size, (uint8_t *)buf) == Ret_Failed) {
             nand_errno = NAND_EIO;
             return -1;
         }
