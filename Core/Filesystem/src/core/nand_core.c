@@ -33,7 +33,7 @@ static void _increment_seek(PhysicalAddrs *addr, int size);
 static void _increment_block(PhysicalAddrs *addr);
 static void find_good_block(PhysicalAddrs *addr);
 
-#define RESERVED_BLOCK_CNT 0
+#define RESERVED_BLOCK_CNT 1
 
 uint16_t _next_free_block(inode_t *inode) {
     if (inode->magic != MAGIC) {
@@ -577,7 +577,7 @@ static void _increment_block(PhysicalAddrs *addr) {
 static void find_good_block(PhysicalAddrs *addr) {
     do {
         _increment_block(addr);
-    } while (!NAND_is_Bad_Block(addr->block));
+    } while (NAND_is_Bad_Block(addr->block));
 }
 
 // Increments seek by one page
