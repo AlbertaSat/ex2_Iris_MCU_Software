@@ -33,7 +33,7 @@ static void _increment_seek(PhysicalAddrs *addr, int size);
 static void _increment_block(PhysicalAddrs *addr);
 static void find_good_block(PhysicalAddrs *addr);
 
-#define RESERVED_BLOCK_CNT 1
+#define RESERVED_BLOCK_CNT 2
 
 uint16_t _next_free_block(inode_t *inode) {
     if (inode->magic != MAGIC) {

@@ -764,6 +764,23 @@ static void onboot_commands(void) {
     DBG_PUT("-----------------------------------\r\n");
 #endif
 #endif
+
+    HAL_Delay(1000);
+    //
+    //    write_to_block_one();
+    //    for (int i = 0; i < 2048; i++) {
+    //    	read_from_block_one(i);
+    //    }
+
+    logger_create();
+
+    for (int i = 0; i < 1000; i++) {
+        sys_log("DD/MM/YYYY HH:MM:SS: Iris log stamp: Logging test %d\r\n", i);
+    }
+
+    for (int i = 0; i < 64; i++) {
+        read_from_block(i);
+    }
 }
 /* USER CODE END 4 */
 

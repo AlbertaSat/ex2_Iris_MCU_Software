@@ -79,16 +79,24 @@ int check_all_pages_in_block(int block, char c) {
     }
 }
 
-int write_all_pages_in_block(int block, char c) {
+int read_from_block_one(uint16_t page) {
     PhysicalAddrs addr = {0};
-    char buffer[PAGE_LEN];
-    memset(buffer, c, PAGE_LEN);
+    uint8_t buffer[PAGE_LEN];
+
+    uint8_t block = 0;
     addr.block = block;
-    for (int i = 0; i < NUM_PAGES_PER_BLOCK; i++) {
-        NAND_ReturnType ret = NAND_Page_Program(&addr, PAGE_LEN, buffer);
-        if (ret != Ret_Success) {
-            DBG_PUT("prog b %d p %d r %d\r\n", block, i, ret);
-            return ret;
+
+    NAND_ReturnType ret = NAND_Page_Read(&addr, PAGE_LEN, buffer);
+    if (ret != Ret_Success) {
+        DBG_PUT("read b %d p %d r %d\r\n", block, page, ret);
+        return ret;
+    }
+    for (int j = 0; j < PAGE_LEN; j++) {
+        if (buffer[j] != j) {
+            DBG_PUT("buff b %d p %d %d != %d\r\n", block, page, buffer[j], j);
+            return -1;
+        } else {
+            DBG_PUT("buff b %d p %d d %d\n\r", block, page, buffer[j]);
         }
     }
 }
