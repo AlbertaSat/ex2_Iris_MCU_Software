@@ -760,27 +760,24 @@ static void onboot_commands(void) {
 #ifdef SPI_HANDLER
     DBG_PUT("-----------------------------------\r\n");
     DBG_PUT("Iris Electronics Test Software\r\n"
-            "        SPI Edition         \r\n");
+            "        SPI (Aug 10) Edition         \r\n");
     DBG_PUT("-----------------------------------\r\n");
 #endif
 #endif
 
     HAL_Delay(1000);
-    //
-    //    write_to_block_one();
-    //    for (int i = 0; i < 2048; i++) {
-    //    	read_from_block_one(i);
-    //    }
 
     logger_create();
 
-    for (int i = 0; i < 1000; i++) {
-        sys_log("DD/MM/YYYY HH:MM:SS: Iris log stamp: Logging test %d\r\n", i);
+    for (int i = 0; i < 2048; i++) {
+        sys_log("DD/MM/YYYY HH:MM:SS: Iris log stamp: Logging %d test \n", i);
     }
 
-    for (int i = 0; i < 64; i++) {
-        read_from_block(i);
-    }
+    //    for (uint8_t j = 0; j < 2; j++) {
+    //    	for (uint16_t i = 0; i < 64; i++) {
+    //			read_from_block(j, i);
+    //		}
+    //    }
 }
 /* USER CODE END 4 */
 

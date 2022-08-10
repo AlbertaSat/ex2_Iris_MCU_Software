@@ -20,6 +20,7 @@ uint8_t image_file_infos_queue_iterator = 0;
 const uint8_t iris_commands[IRIS_NUM_COMMANDS] = {IRIS_TAKE_PIC,
                                                   IRIS_GET_IMAGE_LENGTH,
                                                   IRIS_TRANSFER_IMAGE,
+                                                  IRIS_TRANSFER_LOG,
                                                   IRIS_GET_IMAGE_COUNT,
                                                   IRIS_ON_SENSORS,
                                                   IRIS_OFF_SENSORS,
@@ -119,6 +120,10 @@ int obc_handle_command(uint8_t obc_cmd) {
             image_file_infos_queue_iterator = 0;
         }
 #endif
+        return 0;
+    }
+    case IRIS_TRANSFER_LOG: {
+        transfer_log_to_obc();
         return 0;
     }
     case IRIS_OFF_SENSORS: {
@@ -275,5 +280,27 @@ int transfer_images_to_obc_nand_method(uint8_t image_index) {
         return -1;
     }
 
+    return 0;
+}
+
+int transfer_log_to_obc() {
+    PhysicalAddrs addr = {0};
+    uint8_t buffer[2048];
+    uint8_t char_count = 0;
+    char str[128];
+
+    for (uint8_t blk = 0; blk < 2; blk++) {
+        for (uint8_t pg = 0; pg < 64; pg++) {
+            addr.block = blk;
+            addr.page = pg;
+
+            NAND_ReturnType ret = NAND_Page_Read(&addr, 2048, buffer);
+            if (ret != Ret_Success) {
+                DBG_PUT("read b %d p %d r %d\r\n", blk, pg, ret);
+                return ret;
+            }
+            obc_spi_transmit(buffer, IRIS_LOG_TRANSFER_BLOCK_SIZE);
+        }
+    }
     return 0;
 }
