@@ -28,13 +28,6 @@ const uint8_t iris_commands[IRIS_NUM_COMMANDS] = {IRIS_TAKE_PIC,
                                                   IRIS_SET_TIME,
                                                   IRIS_WDT_CHECK};
 
-/*
- * Refactor Iris
- * - No processing of command occurs, delegate it to command_handler.h
- * - spi drivers should be placed in the driver file **
- * - Only verification and facilitation of commands should happen hear
- */
-
 /**
  * @brief
  * 		Verifies if command from OBC is valid or not
