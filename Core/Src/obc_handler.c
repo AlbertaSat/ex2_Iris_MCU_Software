@@ -52,7 +52,6 @@ int obc_verify_command(uint8_t obc_cmd) {
     uint8_t ack = 0xAA;
     uint8_t nack = 0x0F;
     uint8_t transmit_ack;
-    uint8_t ret;
 
     transmit_ack = 0;
 
