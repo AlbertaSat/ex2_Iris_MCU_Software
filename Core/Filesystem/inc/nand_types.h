@@ -10,6 +10,8 @@
 
 #define MAGIC 0x50BAB10C
 
+#include "nand_m79a_lld.h"
+
 typedef struct {
     uint32_t magic;
     uint32_t id;

@@ -49,3 +49,7 @@ HAL_StatusTypeDef obc_spi_receive(uint8_t *rx_data, uint16_t data_length) {
 HAL_StatusTypeDef obc_spi_receive_blocking(uint8_t *rx_data, uint16_t data_length) {
     return HAL_SPI_Receive(&hspi1, rx_data, data_length, HAL_MAX_DELAY);
 }
+
+void obc_enable_spi_rx() { __HAL_SPI_ENABLE_IT(&hspi1, (SPI_IT_RXNE | SPI_IT_ERR)); }
+
+void obc_disable_spi_rx() { __HAL_SPI_DISABLE_IT(&hspi1, (SPI_IT_RXNE | SPI_IT_ERR)); }

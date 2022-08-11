@@ -7,6 +7,12 @@
 #include "iris_time.h"
 #include "spi_bitbang.h"
 
+#include "nand_types.h"
+#include "nandfs.h"
+#include "nand_m79a_lld.h"
+
+//#define DIRECT_METHOD
+
 extern SPI_HandleTypeDef hspi1;
 extern uint8_t cam_to_nand_transfer_flag;
 
@@ -82,6 +88,11 @@ int obc_handle_command(uint8_t obc_cmd) {
     }
     case IRIS_TAKE_PIC: {
         take_image();
+
+        obc_disable_spi_rx();
+        transfer_image_to_nand();
+        obc_enable_spi_rx();
+
         return 0;
     }
     case IRIS_GET_IMAGE_COUNT: {
@@ -92,7 +103,11 @@ int obc_handle_command(uint8_t obc_cmd) {
         return 0;
     }
     case IRIS_TRANSFER_IMAGE: {
-        transfer_image_to_obc();
+#ifdef DIRECT_METHOD
+        transfer_image_to_obc_direct_method();
+#else
+        transfer_image_to_obc_nand_method();
+#endif
         return 0;
     }
     case IRIS_OFF_SENSORS: {
@@ -181,7 +196,7 @@ int obc_handle_command(uint8_t obc_cmd) {
  *
  * TODO: Update data retrieval once NAND fs is intergrated
  */
-void transfer_image_to_obc() {
+void transfer_image_to_obc_direct_method() {
     uint8_t image_data[IRIS_IMAGE_TRANSFER_BLOCK_SIZE];
     uint16_t num_transfers;
     uint32_t image_length;
@@ -223,6 +238,83 @@ void transfer_image_to_obc() {
         DBG_PUT("DONE IMAGE TRANSFER (NIR_SENSOR)!\r\n");
         sensor_mode = 0;
     }
+}
+
+void transfer_image_to_nand() {
+
+    NANDfs_format();
+    // get image size
+    uint32_t image_size = read_fifo_length(VIS_SENSOR);
+    DBG_PUT("Image size: %d bytes\r\n", image_size);
+
+    //    char *data = (char *)malloc(PAGE_LEN);
+    char data[PAGE_DATA_SIZE];
+    char *sample = data;
+    NAND_FILE *fd = NANDfs_create();
+    int size_remaining;
+    uint8_t image[PAGE_DATA_SIZE];
+
+    spi_init_burst(VIS_SENSOR);
+    //    uint8_t prev = 0, curr = 0;
+    //    bool found_header = false;
+    uint32_t i = 0;
+
+    int chunks_to_write = ((image_size + (PAGE_DATA_SIZE - 1)) / PAGE_DATA_SIZE);
+
+    for (int j = 0; j < chunks_to_write; j++) {
+        DBG_PUT("Writing chunk %d / %d\r\n", j + 1, chunks_to_write);
+        for (i = 0; i < PAGE_DATA_SIZE; i++) {
+            image[i] = spi_read_burst(VIS_SENSOR);
+        }
+        size_remaining = i;
+        //		memcpy(image, sample, i);
+        sample += PAGE_DATA_SIZE;
+        while (size_remaining > 0) {
+            int size_to_write = size_remaining > PAGE_DATA_SIZE ? PAGE_DATA_SIZE : size_remaining;
+            NANDfs_write(fd, size_to_write, image);
+            //			memcpy(image, sample, size_to_write);
+            sample += size_to_write;
+            size_remaining -= size_to_write;
+        }
+    }
+
+    spi_init_burst(VIS_SENSOR);
+    NANDfs_close(fd);
+}
+
+void transfer_image_to_obc_nand_method() {
+    NAND_FILE *fd;
+    uint8_t page[PAGE_DATA_SIZE];
+
+    fd = NANDfs_open_latest();
+    if (!fd) {
+        DBG_PUT("open file %d failed: %d\r\n", fd, nand_errno);
+        return;
+    }
+
+    uint8_t to_send[IRIS_IMAGE_TRANSFER_BLOCK_SIZE];
+    int file_size = fd->node.file_size;
+    // DBG_PUT("File size: %d\r\n", file_size);
+    int page_cnt = ((file_size + (PAGE_DATA_SIZE - 1)) / PAGE_DATA_SIZE);
+
+    // below reads out a 2048 byte page, then splits it into 4 512 chunks to transmit over spi
+    for (int count = 0; count < page_cnt; count++) {
+        // DBG_PUT("Reading Page %d / %d.\r\n", count + 1, page_cnt);
+        memset(page, 0, PAGE_DATA_SIZE);
+        // read 2048B into buffer
+        NANDfs_read(fd, PAGE_DATA_SIZE, page);
+        for (int k = 0; k < 4; k++) {
+            // DBG_PUT("\tReading Page %d Block %d / 4\r\n", count + 1, k + 1);
+            for (int i = 0; i < IRIS_IMAGE_TRANSFER_BLOCK_SIZE; i++) {
+                to_send[i] = page[(IRIS_IMAGE_TRANSFER_BLOCK_SIZE * k) + i];
+                // DBG_PUT("0x%x\r\n", page[(512 * k) + i]);
+            }
+            obc_spi_transmit(to_send, IRIS_IMAGE_TRANSFER_BLOCK_SIZE);
+        }
+    }
+
+    DBG_PUT("Image transfer finished");
+    NANDfs_close(fd);
 }
 
 /**
