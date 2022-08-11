@@ -767,17 +767,18 @@ static void onboot_commands(void) {
 
     HAL_Delay(1000);
 
+    set_rtc_time(1660250589);
     logger_create();
 
-    for (int i = 0; i < 2048; i++) {
-        sys_log("DD/MM/YYYY HH:MM:SS: Iris log stamp: Logging %d test \n", i);
+    for (int i = 0; i < 32; i++) {
+        sys_log("Iris log stamp: Logging %d test", i);
     }
 
-    //    for (uint8_t j = 0; j < 2; j++) {
-    //    	for (uint16_t i = 0; i < 64; i++) {
-    //			read_from_block(j, i);
-    //		}
-    //    }
+    for (uint8_t j = 0; j < 2; j++) {
+        for (uint16_t i = 0; i < 64; i++) {
+            read_from_block(j, i);
+        }
+    }
 }
 /* USER CODE END 4 */
 

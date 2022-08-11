@@ -13,6 +13,7 @@
 #include "nandfs.h"
 #include "nand_m79a_lld.h"
 #include "debug.h"
+#include "iris_time.h"
 
 #define PAGE_LEN 2048
 
@@ -37,13 +38,43 @@ int logger_create() {
 }
 
 int sys_log(const char *log, ...) {
-    char output_array[LOG_MESSAGE_LENGTH + LOG_MESSAGE_FOOTER_LENGTH];
+    uint8_t output_array[128];
     memset(output_array, 0, 128);
+
+    uint8_t header_buffer[13];
+    uint8_t data_buffer[128 - 13 - 2];
+
+    Iris_Timestamp timestamp;
+
+    get_rtc_time(&timestamp);
+
+    // Create header
+    sprintf(&output_array[0], "%d", timestamp.Day);
+    output_array[1] = '/';
+    sprintf(&output_array[2], "%d", timestamp.Month);
+    output_array[3] = '/';
+    output_array[4] = (timestamp.Year >> (8 * 1)) & 0xff;
+    output_array[5] = (timestamp.Year >> (8 * 0)) & 0xff;
+    output_array[6] = ' ';
+    output_array[7] = timestamp.Hour;
+    output_array[8] = ':';
+    output_array[9] = timestamp.Minute;
+    output_array[10] = ':';
+    output_array[11] = timestamp.Second;
+    output_array[12] = ':';
+
+    // Create data
     va_list arg;
     va_start(arg, log);
-    int chars_written = vsnprintf(output_array, 128, log, arg);
-    output_array[LOG_MESSAGE_LENGTH + LOG_MESSAGE_FOOTER_LENGTH - 3] = '\r';
-    output_array[LOG_MESSAGE_LENGTH + LOG_MESSAGE_FOOTER_LENGTH - 2] = '\n';
+    vsnprintf(data_buffer, 114, log, arg);
+
+    // Combine all buffers
+    strcat(output_array, header_buffer);
+    strcat(output_array, data_buffer);
+
+    // Create footer
+    output_array[128 - 2] = '\n';
+    output_array[128 - 1] = '\0';
 
     _fill_buffer(output_array);
 }
