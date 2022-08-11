@@ -16,12 +16,17 @@ uint8_t sensor_mode = 0;
 void transfer_image_to_obc();
 int step_transfer();
 
-/*
- * Refactor Iris
- * - No processing of command occurs, delegate it to command_handler.h
- * - spi drivers should be placed in the driver file **
- * - Only verification and facilitation of commands should happen hear
- */
+const uint8_t iris_commands[IRIS_NUM_COMMANDS] = {IRIS_TAKE_PIC,
+                                                  IRIS_GET_IMAGE_LENGTH,
+                                                  IRIS_TRANSFER_IMAGE,
+                                                  IRIS_GET_IMAGE_COUNT,
+                                                  IRIS_ON_SENSORS,
+                                                  IRIS_OFF_SENSORS,
+                                                  IRIS_SEND_HOUSEKEEPING,
+                                                  IRIS_UPDATE_SENSOR_I2C_REG,
+                                                  IRIS_UPDATE_CURRENT_LIMIT,
+                                                  IRIS_SET_TIME,
+                                                  IRIS_WDT_CHECK};
 
 /**
  * @brief
@@ -118,7 +123,6 @@ int obc_verify_command(uint8_t obc_cmd) {
  * 		1 if valid command, 0 if not
  */
 int obc_handle_command(uint8_t obc_cmd) {
-    uint8_t tx_data = 0x69;
     uint8_t tx_ack = 0xAA;
     uint8_t tx_nack = 0x0F;
 
@@ -192,12 +196,12 @@ int obc_handle_command(uint8_t obc_cmd) {
     }
     case IRIS_UPDATE_SENSOR_I2C_REG: {
         // update_sensor_I2C_regs();
-        obc_spi_transmit(&tx_data, 1);
+        obc_spi_transmit(&tx_nack, 1);
         return 0;
     }
     case IRIS_UPDATE_CURRENT_LIMIT: {
         // update_current_limits();
-        obc_spi_transmit(&tx_data, 1);
+        obc_spi_transmit(&tx_nack, 1);
         return 0;
     }
     case IRIS_SET_TIME: {
