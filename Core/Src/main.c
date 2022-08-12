@@ -152,15 +152,9 @@ int main(void) {
     /* USER CODE BEGIN 2 */
     //    NAND_SPI_Init(&hspi2);
 
-    uint8_t can_header[CAN_HEADER_LEN];
-    uint8_t can_footer[CAN_FOOTER_LEN];
     onboot_commands();
     //    init_filesystem();
     uint8_t obc_cmd;
-
-    char cmd[64];
-    char buf[64];
-    char *ptr = cmd;
 
     iris_state = LISTENING;
     /* USER CODE END 2 */
@@ -169,7 +163,6 @@ int main(void) {
     /* USER CODE BEGIN WHILE */
 
 #ifdef SPI_DEBUG
-
     while (1) {
         /* USER CODE END WHILE */
 
@@ -193,8 +186,9 @@ int main(void) {
             spi_receive(&obc_cmd, 1);
             break;
         case HANDLE_COMMAND:
-            spi_verify_command(obc_cmd);
-            spi_handle_command(obc_cmd);
+            if (spi_verify_command(obc_cmd) == 0) {
+                spi_handle_command(obc_cmd);
+            }
             iris_state = FINISH;
             break;
         case FINISH:
@@ -205,6 +199,9 @@ int main(void) {
 #endif // SPI_DEBUG
 //       // //////////////////////////////////////////////////////////////////////////////////////////
 #ifdef UART_DEBUG
+    char cmd[64];
+    char buf[64];
+    char *ptr = cmd;
     uart_state = idle;
     while (1) {
         switch (uart_state) {
