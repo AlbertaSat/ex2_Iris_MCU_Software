@@ -13,6 +13,8 @@
 #include "IEB_TESTS.h"
 #include "iris_time.h"
 #include "time.h"
+#include "nandfs.h"
+#include "nand_types.h"
 
 extern uint8_t VIS_DETECTED;
 extern uint8_t NIR_DETECTED;
@@ -87,7 +89,19 @@ void get_image_count(uint8_t *image_count) {
  * it is desired to extract image lengths from NAND fs
  */
 void get_image_length(uint32_t *image_length, uint8_t sensor_mode) {
+#ifdef DIRECT_METHOD
     *(image_length) = (uint32_t)read_fifo_length(sensor_mode);
+#else
+    NAND_FILE *fd;
+    uint8_t page[PAGE_DATA_SIZE];
+
+    fd = NANDfs_open_latest();
+    if (!fd) {
+        DBG_PUT("open file %d failed: %d\r\n", fd, nand_errno);
+        return;
+    }
+    *(image_length) = fd->node.file_size;
+#endif
 }
 
 /**

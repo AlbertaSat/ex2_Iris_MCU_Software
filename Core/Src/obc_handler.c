@@ -305,15 +305,7 @@ void transfer_image_to_obc_nand_method() {
         memset(page, 0, PAGE_DATA_SIZE);
         // read 2048B into buffer
         NANDfs_read(fd, PAGE_DATA_SIZE, page);
-        //        for (int k = 0; k < 4; k++) {
-        //            // DBG_PUT("\tReading Page %d Block %d / 4\r\n", count + 1, k + 1);
-        //            for (int i = 0; i < IRIS_IMAGE_TRANSFER_BLOCK_SIZE; i++) {
-        //                to_send[i] = page[(IRIS_IMAGE_TRANSFER_BLOCK_SIZE * k) + i];
-        //                // DBG_PUT("0x%x\r\n", page[(512 * k) + i]);
-        //            }
-        //            obc_spi_transmit(to_send, IRIS_IMAGE_TRANSFER_BLOCK_SIZE);
-        //        }
-        obc_spi_transmit(page, PAGE_DATA_SIZE);
+        obc_spi_transmit(to_send, PAGE_DATA_SIZE);
     }
 
     DBG_PUT("Image transfer finished");
