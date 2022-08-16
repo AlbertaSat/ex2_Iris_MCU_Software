@@ -6,6 +6,7 @@
 #include "spi_obc.h"
 #include "iris_time.h"
 #include "spi_bitbang.h"
+#include "logger.h"
 
 #include "nand_types.h"
 #include "nandfs.h"
@@ -80,11 +81,12 @@ int obc_handle_command(uint8_t obc_cmd) {
         uint8_t buffer[sizeof(hk)];
         memcpy(buffer, &hk, sizeof(hk));
         obc_spi_transmit(buffer, sizeof(buffer));
-        sys_log("Done sending housekeeping data");
+        iris_log("Done sending housekeeping data");
         return 0;
     }
     case IRIS_TAKE_PIC: {
         take_image();
+        iris_log("Image captured\r\n");
 
         uint8_t cur_capture_timestamp_vis[CAPTURE_TIMESTAMP_SIZE];
         uint8_t cur_capture_timestamp_nir[CAPTURE_TIMESTAMP_SIZE];
@@ -126,10 +128,12 @@ int obc_handle_command(uint8_t obc_cmd) {
     case IRIS_TRANSFER_LOG: {
         clear_and_dump_buffer();
         transfer_log_to_obc();
+
         return 0;
     }
     case IRIS_OFF_SENSORS: {
         turn_off_sensors();
+        iris_log("Sensor deactivated\r\n");
         DBG_PUT("Sensor deactivated\r\n");
 
         obc_spi_transmit(&tx_ack, 1);
@@ -139,16 +143,20 @@ int obc_handle_command(uint8_t obc_cmd) {
         int ret = 0;
 
         turn_on_sensors();
+        iris_log("Sensor activated\r\n");
         DBG_PUT("Sensor activated\r\n");
         ret = initalize_sensors();
         if (ret < 0) {
+            iris_log("Sensor failed to initialized\r\n");
             DBG_PUT("Sensor failed to initialized\r\n");
             obc_spi_transmit(&tx_nack, 1);
             return -1;
         } else {
+            iris_log("Sensor initialized\r\n");
             DBG_PUT("Sensor initialize\r\n");
         }
         set_sensors_config();
+        iris_log("Sensor configured\r\n");
         DBG_PUT("Sensors configured\r\n");
 
         obc_spi_transmit(&tx_ack, 1);
@@ -221,6 +229,7 @@ int obc_handle_command(uint8_t obc_cmd) {
  * TODO: Update data retrieval once NAND fs is intergrated
  */
 void transfer_image_to_obc_direct_method() {
+    iris_log("Image delivery started (direct method)");
     uint8_t image_data[IRIS_IMAGE_TRANSFER_BLOCK_SIZE];
     uint16_t num_transfers;
     uint32_t image_length;
@@ -235,10 +244,12 @@ void transfer_image_to_obc_direct_method() {
             image_data[i] = (uint8_t)spi_read_burst(sensor);
         }
 
+        iris_log("Delivered %d image block to obc", j);
         obc_spi_transmit(image_data, IRIS_IMAGE_TRANSFER_BLOCK_SIZE);
     }
     spi_deinit_burst(sensor);
 
+    iris_log("Image delivery ended");
     // Once done capturing with current sensor switch to counterpart
     if (sensor == VIS_SENSOR) {
         DBG_PUT("DONE IMAGE TRANSFER (VIS_SENSOR)!\r\n");

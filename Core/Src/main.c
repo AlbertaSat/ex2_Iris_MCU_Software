@@ -770,15 +770,17 @@ static void onboot_commands(void) {
     set_rtc_time(1660250589);
     logger_create();
 
-    for (int i = 0; i < 32; i++) {
-        sys_log("Iris log stamp: Logging %d test", i);
-    }
+    iris_log("Iris initialized and ready!");
 
-    for (uint8_t j = 0; j < 2; j++) {
-        for (uint16_t i = 0; i < 64; i++) {
-            read_from_block(j, i);
-        }
-    }
+    //    for (int i = 0; i < 32; i++) {
+    //        iris_log("Iris log stamp: Logging %d test", i);
+    //    }
+    //
+    //    for (uint8_t j = 0; j < 2; j++) {
+    //        for (uint16_t i = 0; i < 64; i++) {
+    //            read_from_block(j, i);
+    //        }
+    //    }
 }
 /* USER CODE END 4 */
 

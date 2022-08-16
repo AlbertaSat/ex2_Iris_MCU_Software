@@ -36,5 +36,6 @@ int obc_handle_command(uint8_t cmd);
 
 void transfer_image_to_obc_direct_method();
 int transfer_images_to_obc_nand_method(uint8_t image_index);
+int transfer_log_to_obc();
 
 #endif /* INC_OBC_HANDLER_H_ */

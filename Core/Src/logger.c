@@ -42,7 +42,7 @@ int logger_create() {
     buffer_pointer = 0;
 }
 
-int sys_log(const char *log, ...) {
+int iris_log(const char *log_data, ...) {
     uint8_t output_array[LOG_TOTAL_LENGTH];
     memset(output_array, 0, LOG_TOTAL_LENGTH);
 
@@ -59,8 +59,8 @@ int sys_log(const char *log, ...) {
 
     // Create data
     va_list arg;
-    va_start(arg, log);
-    vsnprintf(data_buffer, LOG_DATA_LENGTH, log, arg);
+    va_start(arg, log_data);
+    vsnprintf(data_buffer, LOG_DATA_LENGTH, log_data, arg);
 
     // Create footer
     snprintf(footer_buffer, LOG_FOOTER_LENGTH, "\r\n");
