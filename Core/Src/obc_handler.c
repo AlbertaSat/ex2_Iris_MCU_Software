@@ -11,8 +11,6 @@
 #include "nandfs.h"
 #include "nand_m79a_lld.h"
 
-//#define DIRECT_METHOD
-
 extern SPI_HandleTypeDef hspi1;
 extern uint8_t cam_to_nand_transfer_flag;
 

@@ -15,6 +15,7 @@
 #include "time.h"
 #include "nandfs.h"
 #include "nand_types.h"
+#include "iris_system.h"
 
 extern uint8_t VIS_DETECTED;
 extern uint8_t NIR_DETECTED;

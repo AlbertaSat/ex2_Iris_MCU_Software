@@ -52,6 +52,8 @@ extern "C" {
 #define SPI_HANDLER
 #define DEBUG_OUTPUT
 
+//#define DIRECT_METHOD
+
 /* USER CODE END EM */
 
 /* Exported functions prototypes ---------------------------------------------*/
