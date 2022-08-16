@@ -18,18 +18,26 @@
 #include "iris_time.h"
 #include "command_handler.h"
 
+extern SPI_HandleTypeDef hspi1;
+
 uint8_t logger_buffer[PAGE_DATA_SIZE];
 uint16_t buffer_pointer;
 PhysicalAddrs logger_addr = {0};
 
-uint8_t curr_logger_block = 0;
-uint8_t curr_logger_page = 0;
+uint8_t curr_logger_block;
+uint8_t curr_logger_page;
+
+int _fill_buffer(uint8_t *data);
+int _logger_write();
 
 int logger_create() {
     NANDfs_format();
 
-    logger_addr.block = 0;
-    logger_addr.page = 0;
+    curr_logger_block = 0;
+    curr_logger_page = 0;
+
+    logger_addr.block = curr_logger_block;
+    logger_addr.page = curr_logger_page;
 
     buffer_pointer = 0;
 }
@@ -46,8 +54,8 @@ int sys_log(const char *log, ...) {
     get_rtc_time(&timestamp);
 
     // Create header
-    snprintf(output_array, LOG_DATA_LENGTH, "%d/%d/%d %d:%d:%d: ", timestamp.Day, timestamp.Month, timestamp.Year,
-             timestamp.Hour, timestamp.Minute, timestamp.Second);
+    snprintf(header_buffer, LOG_HEADER_LENGTH, "%d/%d/%d %d:%d:%d: ", timestamp.Day, timestamp.Month,
+             timestamp.Year, timestamp.Hour, timestamp.Minute, timestamp.Second);
 
     // Create data
     va_list arg;
@@ -63,13 +71,11 @@ int sys_log(const char *log, ...) {
     _fill_buffer(output_array);
 }
 
-int _fill_buffer(char *data) {
+int _fill_buffer(uint8_t *data) {
     uint8_t count = 0;
 
     if (buffer_pointer >= PAGE_DATA_SIZE) {
-        _logger_write();
-        buffer_pointer = 0;
-        memset(logger_buffer, 0, PAGE_DATA_SIZE);
+        clear_and_dump_buffer();
     }
 
     for (int i = buffer_pointer; i < (buffer_pointer + LOG_TOTAL_LENGTH); i++) {
@@ -81,9 +87,10 @@ int _fill_buffer(char *data) {
 }
 
 int _logger_write() {
+    __HAL_SPI_DISABLE_IT(&hspi1, SPI_IT_RXNE);
     NAND_ReturnType ret = NAND_Page_Program(&logger_addr, PAGE_DATA_SIZE, logger_buffer);
     if (ret != Ret_Success) {
-        DBG_PUT("prog b %d p %d r %d\r\n", logger_addr.block, logger_addr.page, ret);
+        DBG_PUT("Error: prog b %d p %d r %d\r\n", logger_addr.block, logger_addr.page, ret);
         return ret;
     }
 
@@ -105,6 +112,13 @@ int _logger_write() {
     }
 
     logger_addr.page = curr_logger_page;
+    __HAL_SPI_ENABLE_IT(&hspi1, SPI_IT_RXNE);
+}
+
+int clear_and_dump_buffer() {
+    _logger_write();
+    buffer_pointer = 0;
+    memset(logger_buffer, 0, PAGE_DATA_SIZE);
 }
 
 int read_from_block(uint8_t block, uint16_t page) {

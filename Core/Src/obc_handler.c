@@ -52,9 +52,11 @@ int obc_verify_command(uint8_t obc_cmd) {
     }
 
     if (transmit_ack != 0) {
+        // sys_log("Command %d acknowledged");
         obc_spi_transmit(&ack, 2);
         return 0;
     } else {
+        // sys_log("Command %d not found");
         obc_spi_transmit(&nack, 1);
         return -1;
     }
@@ -74,6 +76,7 @@ int obc_handle_command(uint8_t obc_cmd) {
 
     switch (obc_cmd) {
     case IRIS_SEND_HOUSEKEEPING: {
+        sys_log("Sending housekeeping data");
         housekeeping_packet_t hk;
         get_housekeeping(&hk);
 
@@ -284,6 +287,8 @@ int transfer_images_to_obc_nand_method(uint8_t image_index) {
 }
 
 int transfer_log_to_obc() {
+    clear_and_dump_buffer();
+
     PhysicalAddrs addr = {0};
     uint8_t buffer[2048];
     uint8_t char_count = 0;
