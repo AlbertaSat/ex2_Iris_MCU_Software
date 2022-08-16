@@ -52,11 +52,9 @@ int obc_verify_command(uint8_t obc_cmd) {
     }
 
     if (transmit_ack != 0) {
-        // sys_log("Command %d acknowledged");
         obc_spi_transmit(&ack, 2);
         return 0;
     } else {
-        // sys_log("Command %d not found");
         obc_spi_transmit(&nack, 1);
         return -1;
     }
@@ -76,13 +74,13 @@ int obc_handle_command(uint8_t obc_cmd) {
 
     switch (obc_cmd) {
     case IRIS_SEND_HOUSEKEEPING: {
-        sys_log("Sending housekeeping data");
         housekeeping_packet_t hk;
         get_housekeeping(&hk);
 
         uint8_t buffer[sizeof(hk)];
         memcpy(buffer, &hk, sizeof(hk));
         obc_spi_transmit(buffer, sizeof(buffer));
+        sys_log("Done sending housekeeping data");
         return 0;
     }
     case IRIS_TAKE_PIC: {
@@ -126,6 +124,7 @@ int obc_handle_command(uint8_t obc_cmd) {
         return 0;
     }
     case IRIS_TRANSFER_LOG: {
+        clear_and_dump_buffer();
         transfer_log_to_obc();
         return 0;
     }

@@ -87,7 +87,6 @@ int _fill_buffer(uint8_t *data) {
 }
 
 int _logger_write() {
-    __HAL_SPI_DISABLE_IT(&hspi1, SPI_IT_RXNE);
     NAND_ReturnType ret = NAND_Page_Program(&logger_addr, PAGE_DATA_SIZE, logger_buffer);
     if (ret != Ret_Success) {
         DBG_PUT("Error: prog b %d p %d r %d\r\n", logger_addr.block, logger_addr.page, ret);
@@ -112,7 +111,6 @@ int _logger_write() {
     }
 
     logger_addr.page = curr_logger_page;
-    __HAL_SPI_ENABLE_IT(&hspi1, SPI_IT_RXNE);
 }
 
 int clear_and_dump_buffer() {
