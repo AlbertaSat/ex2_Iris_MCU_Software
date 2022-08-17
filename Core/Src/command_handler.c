@@ -94,7 +94,6 @@ void get_image_length(uint32_t *image_length, uint8_t sensor_mode) {
     *(image_length) = (uint32_t)read_fifo_length(sensor_mode);
 #else
     NAND_FILE *fd;
-    uint8_t page[PAGE_DATA_SIZE];
 
     fd = NANDfs_open_latest();
     if (!fd) {

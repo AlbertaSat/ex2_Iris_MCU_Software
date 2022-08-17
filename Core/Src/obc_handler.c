@@ -32,6 +32,11 @@ const uint8_t iris_commands[IRIS_NUM_COMMANDS] = {IRIS_TAKE_PIC,
                                                   IRIS_SET_TIME,
                                                   IRIS_WDT_CHECK};
 
+static uint32_t image_file_ids[20];
+uint8_t image_count = 0;
+uint8_t image_request_counter = 0;
+uint8_t image_transfer_request_counter = 0;
+
 /**
  * @brief
  * 		Verifies if command from OBC is valid or not
@@ -89,16 +94,13 @@ int obc_handle_command(uint8_t obc_cmd) {
 
 #ifndef DIRECT_METHOD
         obc_disable_spi_rx();
-        transfer_image_to_nand();
+        transfer_image_to_nand(VIS_SENSOR);
+        transfer_image_to_nand(NIR_SENSOR);
         obc_enable_spi_rx();
 #endif
-
         return 0;
     }
     case IRIS_GET_IMAGE_COUNT: {
-        uint8_t image_count;
-        get_image_count(&image_count);
-
         obc_spi_transmit(&image_count, 1);
         return 0;
     }
@@ -106,7 +108,16 @@ int obc_handle_command(uint8_t obc_cmd) {
 #ifdef DIRECT_METHOD
         transfer_image_to_obc_direct_method();
 #else
-        transfer_image_to_obc_nand_method();
+        transfer_images_to_obc_nand_method(image_request_counter);
+        // TODO: What to do with files once delivered?
+        //        NANDfs_delete(image_file_ids[image_request_counter]);
+        //        image_file_ids[image_request_counter] = 0xFF;
+
+        if (image_request_counter + 1 >= image_count) {
+            image_request_counter = 0;
+        } else {
+            image_request_counter += 1;
+        }
 #endif
         return 0;
     }
@@ -140,12 +151,22 @@ int obc_handle_command(uint8_t obc_cmd) {
         uint32_t image_length;
         uint8_t packet[3];
 
-        if (sensor_mode == 0) {
-            get_image_length(&image_length, VIS_SENSOR);
-        } else {
-            get_image_length(&image_length, NIR_SENSOR);
+#ifdef DIRECT_METHOD
+//        if (sensor_mode == 0) {
+//            get_image_length(&image_length, VIS_SENSOR);
+//        } else {
+//            get_image_length(&image_length, NIR_SENSOR);
+//        }
+#else
+        NAND_FILE *fd;
+        fd = NANDfs_open(image_file_ids[image_request_counter]);
+        if (!fd) {
+            DBG_PUT("open file %d failed: %d\r\n", fd, nand_errno);
+            return -1;
         }
-
+        image_length = fd->node.file_size;
+        NANDfs_close(fd);
+#endif
         packet[0] = (image_length >> (8 * 2)) & 0xff;
         packet[1] = (image_length >> (8 * 1)) & 0xff;
         packet[2] = (image_length >> (8 * 0)) & 0xff;
@@ -240,91 +261,60 @@ void transfer_image_to_obc_direct_method() {
     }
 }
 
-void transfer_image_to_nand() {
+int transfer_image_to_nand(uint8_t sensor) {
+    int ret = 0;
+    HAL_Delay(100);
+    uint32_t image_size;
 
-    NANDfs_format();
-    // get image size
-    uint32_t image_size = read_fifo_length(VIS_SENSOR);
-    DBG_PUT("Image size: %d bytes\r\n", image_size);
+    image_size = read_fifo_length(sensor);
 
-    //    char *data = (char *)malloc(PAGE_LEN);
-    char data[PAGE_DATA_SIZE];
-    char *sample = data;
-    NAND_FILE *fd = NANDfs_create();
+    NAND_FILE *image_file = NANDfs_create();
     int size_remaining;
     uint8_t image[PAGE_DATA_SIZE];
-
-    spi_init_burst(VIS_SENSOR);
-    //    uint8_t prev = 0, curr = 0;
-    //    bool found_header = false;
     uint32_t i = 0;
-
     int chunks_to_write = ((image_size + (PAGE_DATA_SIZE - 1)) / PAGE_DATA_SIZE);
 
+    spi_init_burst(sensor);
     for (int j = 0; j < chunks_to_write; j++) {
         DBG_PUT("Writing chunk %d / %d\r\n", j + 1, chunks_to_write);
         for (i = 0; i < PAGE_DATA_SIZE; i++) {
-            image[i] = spi_read_burst(VIS_SENSOR);
+            image[i] = spi_read_burst(sensor);
         }
         size_remaining = i;
-        //		memcpy(image, sample, i);
-        sample += PAGE_DATA_SIZE;
         while (size_remaining > 0) {
             int size_to_write = size_remaining > PAGE_DATA_SIZE ? PAGE_DATA_SIZE : size_remaining;
-            NANDfs_write(fd, size_to_write, image);
-            //			memcpy(image, sample, size_to_write);
-            sample += size_to_write;
+            ret = NANDfs_write(image_file, size_to_write, image);
+            if (ret < 0) {
+                DBG_PUT("NAND flash write fail");
+                return -1;
+            }
             size_remaining -= size_to_write;
         }
     }
+    spi_deinit_burst(sensor);
 
-    spi_init_burst(VIS_SENSOR);
-    NANDfs_close(fd);
+    image_file_ids[image_count] = image_file->node.id;
+    image_size = image_file->node.file_size;
+    DBG_PUT("Image size (VIS): %d bytes\r\n", image_size);
+    NANDfs_close(image_file);
+    image_count += 1;
 }
 
-void transfer_image_to_obc_nand_method() {
-    NAND_FILE *fd;
+void transfer_images_to_obc_nand_method(uint8_t image_index) {
     uint8_t page[PAGE_DATA_SIZE];
+    NAND_FILE *fd;
 
-    fd = NANDfs_open_latest();
-    if (!fd) {
-        DBG_PUT("open file %d failed: %d\r\n", fd, nand_errno);
-        return;
-    }
+    fd = NANDfs_open(image_file_ids[image_index]);
 
-    uint8_t to_send[IRIS_IMAGE_TRANSFER_BLOCK_SIZE];
     int file_size = fd->node.file_size;
-    // DBG_PUT("File size: %d\r\n", file_size);
     int page_cnt = ((file_size + (PAGE_DATA_SIZE - 1)) / PAGE_DATA_SIZE);
 
     // below reads out a 2048 byte page, then splits it into 4 512 chunks to transmit over spi
     for (int count = 0; count < page_cnt; count++) {
-        // DBG_PUT("Reading Page %d / %d.\r\n", count + 1, page_cnt);
-        memset(page, 0, PAGE_DATA_SIZE);
-        // read 2048B into buffer
         NANDfs_read(fd, PAGE_DATA_SIZE, page);
-        obc_spi_transmit(to_send, PAGE_DATA_SIZE);
+        obc_spi_transmit(page, PAGE_DATA_SIZE);
     }
 
-    DBG_PUT("Image transfer finished");
+    DBG_PUT("Image transfer %d/%d completed", image_index + 1, image_count);
     NANDfs_close(fd);
-}
-
-/**
- * @brief
- * 		Dummy function to represent task for transferring
- * 		image data from camera to NAND flash
- * @return
- * 		1 if loop completed, 0 if not
- */
-int step_transfer() {
-
-    while (count != 0) {
-        HAL_Delay(10);
-        --count;
-        return 0;
-    }
-
-    cam_to_nand_transfer_flag = 0;
-    return 1;
 }

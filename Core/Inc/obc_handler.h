@@ -31,9 +31,8 @@
 int obc_verify_command(uint8_t cmd);
 int obc_handle_command(uint8_t cmd);
 
-void transfer_image_to_nand();
+int transfer_image_to_nand(uint8_t sensor);
 void transfer_image_to_obc_direct_method();
-void transfer_image_to_obc_nand_method();
-int step_transfer(); // For testing "idle task" running on Iris
+void transfer_images_to_obc_nand_method(uint8_t image_index);
 
 #endif /* INC_OBC_HANDLER_H_ */

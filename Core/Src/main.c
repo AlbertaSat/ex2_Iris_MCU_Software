@@ -177,7 +177,6 @@ int main(void) {
                 iris_state = HANDLE_COMMAND;
                 spi_int_flag = 0;
             } else if (cam_to_nand_transfer_flag != 0) {
-                step_transfer();
                 // Transfer images from camera to flash task
             } else if (can_bus_receive_flag != 0) {
                 // Placeholder for future failure mode recovery
