@@ -10,6 +10,12 @@
 
 #include <stdio.h>
 
+typedef struct {
+    uint32_t file_id;
+    uint8_t *file_name;
+    uint32_t file_size;
+} FileInfo_t;
+
 /* Iris commands */
 #define IRIS_TAKE_PIC 0x10
 #define IRIS_GET_IMAGE_LENGTH 0x20

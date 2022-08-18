@@ -29,6 +29,8 @@ typedef struct __attribute__((__packed__)) currentsense_packet_s {
 #define SENSORS_OFF 0
 #define SENSORS_ON 1
 
+#define FILE_TIMESTAMP_SIZE 24 // In bytes
+
 void get_housekeeping(housekeeping_packet_t *hk);
 void take_image();
 void get_image_count(uint8_t *image_count);
@@ -40,6 +42,7 @@ int initalize_sensors();
 int onboot_sensors(uint8_t sensor);
 void set_rtc_time(uint32_t obc_unix_time);
 void get_rtc_time(Iris_Timestamp *timestamp);
+void get_file_timestamp(uint8_t *file_timestamp);
 void flood_cam_spi();
 
 // uart

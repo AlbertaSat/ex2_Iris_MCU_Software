@@ -32,7 +32,8 @@ const uint8_t iris_commands[IRIS_NUM_COMMANDS] = {IRIS_TAKE_PIC,
                                                   IRIS_SET_TIME,
                                                   IRIS_WDT_CHECK};
 
-static uint32_t image_file_ids[20];
+// static uint32_t image_file_ids[20];
+static FileInfo_t image_file_infos[20];
 uint8_t image_count = 0;
 uint8_t image_request_counter = 0;
 uint8_t image_transfer_request_counter = 0;
@@ -159,7 +160,9 @@ int obc_handle_command(uint8_t obc_cmd) {
 //        }
 #else
         NAND_FILE *fd;
-        fd = NANDfs_open(image_file_ids[image_request_counter]);
+        // fd = NANDfs_open(image_file_ids[image_request_counter]);
+        fd = NANDfs_open(image_file_infos[image_request_counter].file_id);
+
         if (!fd) {
             DBG_PUT("open file %d failed: %d\r\n", fd, nand_errno);
             return -1;
@@ -264,8 +267,8 @@ void transfer_image_to_obc_direct_method() {
 int transfer_image_to_nand(uint8_t sensor) {
     int ret = 0;
     HAL_Delay(100);
-    uint32_t image_size;
 
+    uint32_t image_size;
     image_size = read_fifo_length(sensor);
 
     NAND_FILE *image_file = NANDfs_create();
@@ -273,6 +276,7 @@ int transfer_image_to_nand(uint8_t sensor) {
     uint8_t image[PAGE_DATA_SIZE];
     uint32_t i = 0;
     int chunks_to_write = ((image_size + (PAGE_DATA_SIZE - 1)) / PAGE_DATA_SIZE);
+    uint8_t file_timestamp[FILE_TIMESTAMP_SIZE];
 
     spi_init_burst(sensor);
     for (int j = 0; j < chunks_to_write; j++) {
@@ -293,9 +297,18 @@ int transfer_image_to_nand(uint8_t sensor) {
     }
     spi_deinit_burst(sensor);
 
-    image_file_ids[image_count] = image_file->node.id;
-    image_size = image_file->node.file_size;
-    DBG_PUT("Image size (VIS): %d bytes\r\n", image_size);
+    // image_file_ids[image_count] = image_file->node.id;
+
+    image_file_infos[image_count].file_id = image_file->node.id;
+    get_file_timestamp(file_timestamp);
+    image_file_infos[image_count].file_name = file_timestamp;
+    image_file_infos[image_count].file_size = image_file->node.file_size;
+
+    DBG_PUT("Image size (VIS): %d bytes\r\n", image_file_infos[image_count].file_size);
+
+    DBG_PUT("%d|%s|%d", image_file_infos[image_count].file_id, image_file_infos[image_count].file_name,
+            image_file_infos[image_count].file_size);
+
     NANDfs_close(image_file);
     image_count += 1;
 }
@@ -304,7 +317,8 @@ void transfer_images_to_obc_nand_method(uint8_t image_index) {
     uint8_t page[PAGE_DATA_SIZE];
     NAND_FILE *fd;
 
-    fd = NANDfs_open(image_file_ids[image_index]);
+    // fd = NANDfs_open(image_file_ids[image_index]);
+    fd = NANDfs_open(image_file_infos[image_index].file_id);
 
     int file_size = fd->node.file_size;
     int page_cnt = ((file_size + (PAGE_DATA_SIZE - 1)) / PAGE_DATA_SIZE);

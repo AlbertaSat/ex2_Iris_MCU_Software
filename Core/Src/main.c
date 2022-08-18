@@ -108,7 +108,6 @@ enum {
 } uart_state;
 
 uint8_t spi_int_flag = 0;
-uint8_t cam_to_nand_transfer_flag = 0;
 /* For future failure recovery mode */
 uint8_t can_bus_receive_flag = 0; // Needs to be set in can RX callback
 uint8_t i2c_bus_receive_flag = 0; // Needs to be set in i2c RX callback
@@ -176,8 +175,6 @@ int main(void) {
             if (spi_int_flag != 0) {
                 iris_state = HANDLE_COMMAND;
                 spi_int_flag = 0;
-            } else if (cam_to_nand_transfer_flag != 0) {
-                // Transfer images from camera to flash task
             } else if (can_bus_receive_flag != 0) {
                 // Placeholder for future failure mode recovery
             } else if (i2c_bus_receive_flag != 0) {

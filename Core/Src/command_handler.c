@@ -280,6 +280,17 @@ void get_rtc_time(Iris_Timestamp *timestamp) {
 #endif
 }
 
+/*
+ * @brief Get timestamp for image file
+ */
+void get_file_timestamp(uint8_t *file_timestamp) {
+    Iris_Timestamp timestamp = {0};
+    get_rtc_time(&timestamp);
+
+    snprintf(file_timestamp, FILE_TIMESTAMP_SIZE, "%d_%d_%d_%d_%d_%d.jpg", timestamp.Hour, timestamp.Minute,
+             timestamp.Second, timestamp.Day, timestamp.Month, timestamp.Year);
+}
+
 /******************************************************************************
  *                      UART Operations (Not used in flight)
  *****************************************************************************/
