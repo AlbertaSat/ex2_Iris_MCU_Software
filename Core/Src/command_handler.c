@@ -141,8 +141,11 @@ int initalize_sensors() {
 #ifdef UART_HANDLER
         VIS_DETECTED = 1;
 #endif
-    } else {
-        DBG_PUT("VIS initialization failed./r/n");
+    }
+    if (res == -1) {
+        // need some error handling eh
+        iterate_error_num();
+        DBG_PUT("VIS init failed./r/n");
         return -1;
     }
 
