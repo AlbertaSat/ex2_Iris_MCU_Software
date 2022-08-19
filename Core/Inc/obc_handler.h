@@ -9,12 +9,7 @@
 #define INC_OBC_HANDLER_H_
 
 #include <stdio.h>
-
-typedef struct {
-    uint32_t file_id;
-    uint8_t *file_name;
-    uint32_t file_size;
-} FileInfo_t;
+#include <command_handler.h>
 
 /* Iris commands */
 #define IRIS_TAKE_PIC 0x10
@@ -37,8 +32,7 @@ typedef struct {
 int obc_verify_command(uint8_t cmd);
 int obc_handle_command(uint8_t cmd);
 
-int transfer_image_to_nand(uint8_t sensor);
 void transfer_image_to_obc_direct_method();
-void transfer_images_to_obc_nand_method(uint8_t image_index);
+int transfer_images_to_obc_nand_method(uint8_t image_index);
 
 #endif /* INC_OBC_HANDLER_H_ */

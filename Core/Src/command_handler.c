@@ -38,6 +38,9 @@ uint8_t NIR_DETECTED = 0;
 housekeeping_packet_t hk;
 char buf[128];
 
+FileInfo_t image_file_infos_queue[20];
+uint8_t image_count = 0;
+
 /******************************************************************************
  *                      		SPI Operations
  *****************************************************************************/
@@ -76,32 +79,34 @@ void take_image() {
  * @param image_count: Pointer to variable containing number of images in NAND fs
  * Untested
  */
-void get_image_count(uint8_t *image_count) {
-    // TODO: Read number of images stored in NAND fs
-    *(image_count) = 0;
-}
+void get_image_count(uint8_t *cnt) { *(cnt) = image_count; }
 
 /**
- * @brief Get the image length
+ * @brief Get the image length fr
  *
  * @param image_length: Pointer to variable containing length of image
  *
  * Currently image length is directly obtained from Arducam registers, although
  * it is desired to extract image lengths from NAND fs
  */
-void get_image_length(uint32_t *image_length, uint8_t sensor_mode) {
-#ifdef DIRECT_METHOD
-    *(image_length) = (uint32_t)read_fifo_length(sensor_mode);
-#else
-    NAND_FILE *fd;
+int get_image_length(uint32_t *image_length, uint8_t index) {
+    int ret;
+    NAND_FILE *file;
+    file = NANDfs_open(image_file_infos_queue[index].file_id);
 
-    fd = NANDfs_open_latest();
-    if (!fd) {
-        DBG_PUT("open file %d failed: %d\r\n", fd, nand_errno);
-        return;
+    if (!file) {
+        DBG_PUT("open file %d failed: %d\r\n", file, nand_errno);
+        return -1;
     }
-    *(image_length) = fd->node.file_size;
-#endif
+    *(image_length) = file->node.file_size;
+
+    ret = NANDfs_close(file);
+    if (ret < 0) {
+        DBG_PUT("not able to close file %d failed: %d\r\n", file, nand_errno);
+        return -1;
+    }
+
+    return 0;
 }
 
 /**
@@ -126,8 +131,8 @@ void turn_on_sensors() {
  */
 void set_sensors_config() {
     // Set resolution for both sensors
-    arducam_set_resolution(JPEG, 1024, VIS_SENSOR);
-    arducam_set_resolution(JPEG, 1024, NIR_SENSOR);
+    arducam_set_resolution(JPEG, 2592, VIS_SENSOR);
+    arducam_set_resolution(JPEG, 2592, NIR_SENSOR);
 
     HAL_Delay(500);
 }
@@ -280,15 +285,91 @@ void get_rtc_time(Iris_Timestamp *timestamp) {
 #endif
 }
 
+int transfer_image_to_nand(uint8_t sensor) {
+    int ret = 0;
+    HAL_Delay(100);
+
+    uint32_t image_size;
+    image_size = read_fifo_length(sensor);
+
+    NAND_FILE *file = NANDfs_create();
+    if (!file) {
+        DBG_PUT("not able to create file %d failed: %d\r\n", file, nand_errno);
+        return -1;
+    }
+
+    int size_remaining;
+    uint8_t image[PAGE_DATA_SIZE];
+    uint32_t i = 0;
+    int chunks_to_write = ((image_size + (PAGE_DATA_SIZE - 1)) / PAGE_DATA_SIZE);
+    uint8_t file_timestamp[FILE_TIMESTAMP_SIZE];
+
+    spi_init_burst(sensor);
+    for (int j = 0; j < chunks_to_write; j++) {
+        DBG_PUT("Writing chunk %d / %d\r\n", j + 1, chunks_to_write);
+        for (i = 0; i < PAGE_DATA_SIZE; i++) {
+            image[i] = spi_read_burst(sensor);
+        }
+        size_remaining = i;
+        while (size_remaining > 0) {
+            int size_to_write = size_remaining > PAGE_DATA_SIZE ? PAGE_DATA_SIZE : size_remaining;
+            ret = NANDfs_write(file, size_to_write, image);
+            if (ret < 0) {
+                DBG_PUT("not able to write to file %d failed: %d\r\n", file, nand_errno);
+                return -1;
+            }
+            size_remaining -= size_to_write;
+        }
+    }
+    spi_deinit_burst(sensor);
+
+    image_file_infos_queue[image_count].file_id = file->node.id;
+    set_file_timestamp(file_timestamp, sensor);
+    image_file_infos_queue[image_count].file_name = file_timestamp;
+    image_file_infos_queue[image_count].file_size = file->node.file_size;
+
+    DBG_PUT("Image size (VIS): %d bytes\r\n", image_file_infos_queue[image_count].file_size);
+
+    DBG_PUT("%d|%s|%d", image_file_infos_queue[image_count].file_id, image_file_infos_queue[image_count].file_name,
+            image_file_infos_queue[image_count].file_size);
+
+    ret = NANDfs_close(file);
+    if (ret < 0) {
+        DBG_PUT("not able to close file %d failed: %d\r\n", file, nand_errno);
+        return -1;
+    }
+
+    image_count += 1;
+    return 0;
+}
+
+int delete_image_file_from_queue(uint16_t index) {
+    image_file_infos_queue[index].file_id = 0xFF;
+    return NANDfs_delete(image_file_infos_queue[index].file_id);
+}
+
+NAND_FILE *get_image_file_from_queue(uint8_t index) {
+    NAND_FILE *file = NANDfs_open(image_file_infos_queue[index].file_id);
+    if (!file) {
+        DBG_PUT("not able to open file %d failed: %d\r\n", file, nand_errno);
+    }
+    return file;
+}
+
 /*
  * @brief Get timestamp for image file
  */
-void get_file_timestamp(uint8_t *file_timestamp) {
+void set_file_timestamp(uint8_t *file_timestamp, uint8_t sensor) {
     Iris_Timestamp timestamp = {0};
     get_rtc_time(&timestamp);
 
-    snprintf(file_timestamp, FILE_TIMESTAMP_SIZE, "%d_%d_%d_%d_%d_%d.jpg", timestamp.Hour, timestamp.Minute,
-             timestamp.Second, timestamp.Day, timestamp.Month, timestamp.Year);
+    if (sensor == VIS_SENSOR) {
+        snprintf(file_timestamp, FILE_TIMESTAMP_SIZE, "%d_%d_%d_%d_%d_%d_vis.jpg", timestamp.Hour,
+                 timestamp.Minute, timestamp.Second, timestamp.Day, timestamp.Month, timestamp.Year);
+    } else if (sensor == NIR_SENSOR) {
+        snprintf(file_timestamp, FILE_TIMESTAMP_SIZE, "%d_%d_%d_%d_%d_%d_nir.jpg", timestamp.Hour,
+                 timestamp.Minute, timestamp.Second, timestamp.Day, timestamp.Month, timestamp.Year);
+    }
 }
 
 /******************************************************************************

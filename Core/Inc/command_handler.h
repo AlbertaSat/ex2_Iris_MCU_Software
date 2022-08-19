@@ -13,6 +13,7 @@
 #include "I2C.h"
 #include "housekeeping.h"
 #include "iris_time.h"
+#include "nand_types.h"
 
 #define REG_SYS_CTL0 0x3008 /* System Control */
 
@@ -26,15 +27,22 @@ typedef struct __attribute__((__packed__)) currentsense_packet_s {
     uint16_t value;
 } currentsense_packet_t;
 
+typedef struct {
+    uint32_t file_id;
+    uint8_t *file_name;
+    uint32_t file_size;
+} FileInfo_t;
+
 #define SENSORS_OFF 0
 #define SENSORS_ON 1
 
-#define FILE_TIMESTAMP_SIZE 24 // In bytes
+#define MAX_IMAGE_FILES 20     // Maximum images that can be stored on NAND
+#define FILE_TIMESTAMP_SIZE 33 // In bytes
 
 void get_housekeeping(housekeeping_packet_t *hk);
 void take_image();
-void get_image_count(uint8_t *image_count);
-void get_image_length(uint32_t *image_length, uint8_t sensor_mode);
+void get_image_count(uint8_t *cnt);
+int get_image_length(uint32_t *image_length, uint8_t index);
 void turn_off_sensors();
 void turn_on_sensors();
 void set_sensors_config();
@@ -42,7 +50,10 @@ int initalize_sensors();
 int onboot_sensors(uint8_t sensor);
 void set_rtc_time(uint32_t obc_unix_time);
 void get_rtc_time(Iris_Timestamp *timestamp);
-void get_file_timestamp(uint8_t *file_timestamp);
+int transfer_image_to_nand(uint8_t sensor);
+int delete_image_file_from_queue(uint16_t index);
+NAND_FILE *get_image_file_from_queue(uint8_t index);
+void set_file_timestamp(uint8_t *file_timestamp, uint8_t sensor);
 void flood_cam_spi();
 
 // uart

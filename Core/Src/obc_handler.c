@@ -12,13 +12,9 @@
 #include "nand_m79a_lld.h"
 
 extern SPI_HandleTypeDef hspi1;
-extern uint8_t cam_to_nand_transfer_flag;
 
-static uint32_t count = 0x0FFF0000;
-uint8_t sensor_mode = 0;
-
-void transfer_image_to_obc();
-int step_transfer();
+uint8_t sensor = VIS_SENSOR; // VIS or NIR, used exclusively in direct transfer mode
+uint8_t image_request_counter = 0;
 
 const uint8_t iris_commands[IRIS_NUM_COMMANDS] = {IRIS_TAKE_PIC,
                                                   IRIS_GET_IMAGE_LENGTH,
@@ -31,12 +27,6 @@ const uint8_t iris_commands[IRIS_NUM_COMMANDS] = {IRIS_TAKE_PIC,
                                                   IRIS_UPDATE_CURRENT_LIMIT,
                                                   IRIS_SET_TIME,
                                                   IRIS_WDT_CHECK};
-
-// static uint32_t image_file_ids[20];
-static FileInfo_t image_file_infos[20];
-uint8_t image_count = 0;
-uint8_t image_request_counter = 0;
-uint8_t image_transfer_request_counter = 0;
 
 /**
  * @brief
@@ -102,7 +92,9 @@ int obc_handle_command(uint8_t obc_cmd) {
         return 0;
     }
     case IRIS_GET_IMAGE_COUNT: {
-        obc_spi_transmit(&image_count, 1);
+        uint8_t cnt;
+        get_image_count(&cnt);
+        obc_spi_transmit(&cnt, 1);
         return 0;
     }
     case IRIS_TRANSFER_IMAGE: {
@@ -110,15 +102,8 @@ int obc_handle_command(uint8_t obc_cmd) {
         transfer_image_to_obc_direct_method();
 #else
         transfer_images_to_obc_nand_method(image_request_counter);
-        // TODO: What to do with files once delivered?
-        //        NANDfs_delete(image_file_ids[image_request_counter]);
-        //        image_file_ids[image_request_counter] = 0xFF;
-
-        if (image_request_counter + 1 >= image_count) {
-            image_request_counter = 0;
-        } else {
-            image_request_counter += 1;
-        }
+        // delete_image_file_from_queue(image_request_counter);
+        image_request_counter += 1;
 #endif
         return 0;
     }
@@ -153,22 +138,9 @@ int obc_handle_command(uint8_t obc_cmd) {
         uint8_t packet[3];
 
 #ifdef DIRECT_METHOD
-//        if (sensor_mode == 0) {
-//            get_image_length(&image_length, VIS_SENSOR);
-//        } else {
-//            get_image_length(&image_length, NIR_SENSOR);
-//        }
+        image_length = (uint32_t)read_fifo_length(sensor);
 #else
-        NAND_FILE *fd;
-        // fd = NANDfs_open(image_file_ids[image_request_counter]);
-        fd = NANDfs_open(image_file_infos[image_request_counter].file_id);
-
-        if (!fd) {
-            DBG_PUT("open file %d failed: %d\r\n", fd, nand_errno);
-            return -1;
-        }
-        image_length = fd->node.file_size;
-        NANDfs_close(fd);
+        get_image_length(&image_length, image_request_counter);
 #endif
         packet[0] = (image_length >> (8 * 2)) & 0xff;
         packet[1] = (image_length >> (8 * 1)) & 0xff;
@@ -225,110 +197,62 @@ void transfer_image_to_obc_direct_method() {
     uint16_t num_transfers;
     uint32_t image_length;
 
-    if (sensor_mode == 0) {
-        get_image_length(&image_length, VIS_SENSOR);
-    } else {
-        get_image_length(&image_length, NIR_SENSOR);
-    }
+    image_length = (uint32_t)read_fifo_length(sensor);
     num_transfers =
         (uint16_t)((image_length + (IRIS_IMAGE_TRANSFER_BLOCK_SIZE - 1)) / IRIS_IMAGE_TRANSFER_BLOCK_SIZE);
 
-    if (sensor_mode == 0) {
-        spi_init_burst(VIS_SENSOR);
-    } else {
-        spi_init_burst(NIR_SENSOR);
-    }
+    spi_init_burst(sensor);
     for (int j = 0; j < num_transfers; j++) {
         for (int i = 0; i < IRIS_IMAGE_TRANSFER_BLOCK_SIZE; i++) {
-            if (sensor_mode == 0) {
-                image_data[i] = (uint8_t)spi_read_burst(VIS_SENSOR);
-            } else {
-                image_data[i] = (uint8_t)spi_read_burst(NIR_SENSOR);
-            }
+            image_data[i] = (uint8_t)spi_read_burst(sensor);
         }
 
         obc_spi_transmit(image_data, IRIS_IMAGE_TRANSFER_BLOCK_SIZE);
     }
-    if (sensor_mode == 0) {
-        spi_deinit_burst(VIS_SENSOR);
-    } else {
-        spi_deinit_burst(NIR_SENSOR);
-    }
-
-    if (sensor_mode == 0) {
-        DBG_PUT("DONE IMAGE TRANSFER (VIS_SENSOR)!\r\n");
-        sensor_mode = 1;
-    } else {
-        DBG_PUT("DONE IMAGE TRANSFER (NIR_SENSOR)!\r\n");
-        sensor_mode = 0;
-    }
-}
-
-int transfer_image_to_nand(uint8_t sensor) {
-    int ret = 0;
-    HAL_Delay(100);
-
-    uint32_t image_size;
-    image_size = read_fifo_length(sensor);
-
-    NAND_FILE *image_file = NANDfs_create();
-    int size_remaining;
-    uint8_t image[PAGE_DATA_SIZE];
-    uint32_t i = 0;
-    int chunks_to_write = ((image_size + (PAGE_DATA_SIZE - 1)) / PAGE_DATA_SIZE);
-    uint8_t file_timestamp[FILE_TIMESTAMP_SIZE];
-
-    spi_init_burst(sensor);
-    for (int j = 0; j < chunks_to_write; j++) {
-        DBG_PUT("Writing chunk %d / %d\r\n", j + 1, chunks_to_write);
-        for (i = 0; i < PAGE_DATA_SIZE; i++) {
-            image[i] = spi_read_burst(sensor);
-        }
-        size_remaining = i;
-        while (size_remaining > 0) {
-            int size_to_write = size_remaining > PAGE_DATA_SIZE ? PAGE_DATA_SIZE : size_remaining;
-            ret = NANDfs_write(image_file, size_to_write, image);
-            if (ret < 0) {
-                DBG_PUT("NAND flash write fail");
-                return -1;
-            }
-            size_remaining -= size_to_write;
-        }
-    }
     spi_deinit_burst(sensor);
 
-    // image_file_ids[image_count] = image_file->node.id;
-
-    image_file_infos[image_count].file_id = image_file->node.id;
-    get_file_timestamp(file_timestamp);
-    image_file_infos[image_count].file_name = file_timestamp;
-    image_file_infos[image_count].file_size = image_file->node.file_size;
-
-    DBG_PUT("Image size (VIS): %d bytes\r\n", image_file_infos[image_count].file_size);
-
-    DBG_PUT("%d|%s|%d", image_file_infos[image_count].file_id, image_file_infos[image_count].file_name,
-            image_file_infos[image_count].file_size);
-
-    NANDfs_close(image_file);
-    image_count += 1;
+    // Once done capturing with current sensor switch to counterpart
+    if (sensor == VIS_SENSOR) {
+        DBG_PUT("DONE IMAGE TRANSFER (VIS_SENSOR)!\r\n");
+        sensor = NIR_SENSOR;
+    } else {
+        DBG_PUT("DONE IMAGE TRANSFER (NIR_SENSOR)!\r\n");
+        sensor = VIS_SENSOR;
+    }
 }
 
-void transfer_images_to_obc_nand_method(uint8_t image_index) {
+int transfer_images_to_obc_nand_method(uint8_t image_index) {
     uint8_t page[PAGE_DATA_SIZE];
-    NAND_FILE *fd;
+    int ret;
 
-    // fd = NANDfs_open(image_file_ids[image_index]);
-    fd = NANDfs_open(image_file_infos[image_index].file_id);
+    NAND_FILE *file = get_image_file_from_queue(image_index);
+    if (!file) {
+        DBG_PUT("not able to open file %d failed: %d\r\n", file, nand_errno);
+        return -1;
+    }
 
-    int file_size = fd->node.file_size;
+    int file_size = file->node.file_size;
     int page_cnt = ((file_size + (PAGE_DATA_SIZE - 1)) / PAGE_DATA_SIZE);
 
     // below reads out a 2048 byte page, then splits it into 4 512 chunks to transmit over spi
     for (int count = 0; count < page_cnt; count++) {
-        NANDfs_read(fd, PAGE_DATA_SIZE, page);
+        ret = NANDfs_read(file, PAGE_DATA_SIZE, page);
+        if (ret < 0) {
+            DBG_PUT("not able to read file %d failed: %d\r\n", file, nand_errno);
+            return -1;
+        }
         obc_spi_transmit(page, PAGE_DATA_SIZE);
     }
 
-    DBG_PUT("Image transfer %d/%d completed", image_index + 1, image_count);
-    NANDfs_close(fd);
+    uint8_t cnt;
+    get_image_count(&cnt);
+    DBG_PUT("Image transfer %d/%d completed", image_index + 1, cnt);
+
+    ret = NANDfs_close(file);
+    if (ret < 0) {
+        DBG_PUT("not able to close file %d failed: %d\r\n", file, nand_errno);
+        return -1;
+    }
+
+    return 0;
 }
