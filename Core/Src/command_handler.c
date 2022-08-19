@@ -79,7 +79,19 @@ void take_image() {
  * @param image_count: Pointer to variable containing number of images in NAND fs
  * Untested
  */
-void get_image_count(uint8_t *cnt) { *(cnt) = image_count; }
+void get_image_count(uint8_t *cnt) {
+    *(cnt) = 0;
+
+    NAND_DIR *cur_dir = NANDfs_opendir();
+    int ret = 0;
+    do {
+        ret = NANDfs_nextdir(cur_dir);
+        if (ret < -1) {
+            break;
+        }
+        *(cnt) += 1;
+    } while (ret == 0);
+}
 
 /**
  * @brief Get the image length fr
