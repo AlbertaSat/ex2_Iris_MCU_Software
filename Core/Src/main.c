@@ -769,6 +769,7 @@ static void onboot_commands(void) {
 
     set_rtc_time(1660250589);
     logger_create();
+    logger_clear();
 
     iris_log("Iris initialized and ready!");
 

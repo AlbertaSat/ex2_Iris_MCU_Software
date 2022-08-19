@@ -17,6 +17,7 @@
 #include "nand_types.h"
 #include "iris_system.h"
 #include "nand_errno.h"
+#include "logger.h"
 
 extern uint8_t VIS_DETECTED;
 extern uint8_t NIR_DETECTED;
@@ -296,6 +297,7 @@ int transfer_image_to_nand(uint8_t sensor, uint8_t *file_timestamp) {
     NAND_FILE *file = NANDfs_create();
     if (!file) {
         DBG_PUT("not able to create file %d failed: %d\r\n", file, nand_errno);
+        iris_log("not able to create file %d failed: %d", file, nand_errno);
         return -1;
     }
 
@@ -307,6 +309,7 @@ int transfer_image_to_nand(uint8_t sensor, uint8_t *file_timestamp) {
     spi_init_burst(sensor);
     for (int j = 0; j < chunks_to_write; j++) {
         DBG_PUT("Writing chunk %d / %d\r\n", j + 1, chunks_to_write);
+        // iris_log("Writing chunk %d / %d", j + 1, chunks_to_write);
         for (i = 0; i < PAGE_DATA_SIZE; i++) {
             image[i] = spi_read_burst(sensor);
         }
@@ -316,6 +319,7 @@ int transfer_image_to_nand(uint8_t sensor, uint8_t *file_timestamp) {
             ret = NANDfs_write(file, size_to_write, image);
             if (ret < 0) {
                 DBG_PUT("not able to write to file %d failed: %d\r\n", file, nand_errno);
+                iris_log("not able to write to file %d failed: %d", file, nand_errno);
                 return -1;
             }
             size_remaining -= size_to_write;
@@ -331,13 +335,14 @@ int transfer_image_to_nand(uint8_t sensor, uint8_t *file_timestamp) {
     ret = NANDfs_close(file);
     if (ret < 0) {
         DBG_PUT("not able to close file %d failed: %d\r\n", file, nand_errno);
+        iris_log("not able to close file %d failed: %d", file, nand_errno);
         return -1;
     }
 
-    DBG_PUT("Image size: %d bytes\r\n", image_file_infos_queue[image_count].file_size);
-
     DBG_PUT("%d|%s|%d", image_file_infos_queue[image_count].file_id, image_file_infos_queue[image_count].file_name,
             image_file_infos_queue[image_count].file_size);
+    iris_log("%d|%s|%d", image_file_infos_queue[image_count].file_id,
+             image_file_infos_queue[image_count].file_name, image_file_infos_queue[image_count].file_size);
 
     image_count += 1;
     return 0;

@@ -261,12 +261,15 @@ void transfer_image_to_obc_direct_method() {
 }
 
 int transfer_images_to_obc_nand_method(uint8_t image_index) {
+    iris_log("Image delivery started (NAND method)");
+
     uint8_t page[PAGE_DATA_SIZE];
     int ret;
 
     NAND_FILE *file = get_image_file_from_queue(image_index);
     if (!file) {
         DBG_PUT("not able to open file %d failed: %d\r\n", file, nand_errno);
+        iris_log("not able to open file %d failed: %d\r\n", file, nand_errno);
         return -1;
     }
 
@@ -286,6 +289,7 @@ int transfer_images_to_obc_nand_method(uint8_t image_index) {
     uint8_t cnt;
     get_image_count(&cnt);
     DBG_PUT("Image transfer %d/%d completed", image_index + 1, cnt);
+    iris_log("Image transfer %d/%d completed", image_index + 1, cnt);
 
     ret = NANDfs_close(file);
     if (ret < 0) {
@@ -293,6 +297,7 @@ int transfer_images_to_obc_nand_method(uint8_t image_index) {
         return -1;
     }
 
+    iris_log("Image delivery ended");
     return 0;
 }
 
@@ -300,16 +305,14 @@ int transfer_log_to_obc() {
     clear_and_dump_buffer();
 
     PhysicalAddrs addr = {0};
-    uint8_t buffer[2048];
-    uint8_t char_count = 0;
-    char str[128];
+    uint8_t buffer[PAGE_DATA_SIZE];
 
     for (uint8_t blk = 0; blk < 2; blk++) {
         for (uint8_t pg = 0; pg < 64; pg++) {
             addr.block = blk;
             addr.page = pg;
 
-            NAND_ReturnType ret = NAND_Page_Read(&addr, 2048, buffer);
+            NAND_ReturnType ret = NAND_Page_Read(&addr, PAGE_DATA_SIZE, buffer);
             if (ret != Ret_Success) {
                 DBG_PUT("read b %d p %d r %d\r\n", blk, pg, ret);
                 return ret;

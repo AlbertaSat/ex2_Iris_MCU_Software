@@ -27,12 +27,10 @@ PhysicalAddrs logger_addr = {0};
 uint8_t curr_logger_block;
 uint8_t curr_logger_page;
 
-int _fill_buffer(uint8_t *data);
+void _fill_buffer(uint8_t *data);
 int _logger_write();
 
-int logger_create() {
-    NANDfs_format();
-
+void logger_create() {
     curr_logger_block = 0;
     curr_logger_page = 0;
 
@@ -42,7 +40,7 @@ int logger_create() {
     buffer_pointer = 0;
 }
 
-int iris_log(const char *log_data, ...) {
+void iris_log(const char *log_data, ...) {
     uint8_t output_array[LOG_TOTAL_LENGTH];
     memset(output_array, 0, LOG_TOTAL_LENGTH);
 
@@ -71,7 +69,7 @@ int iris_log(const char *log_data, ...) {
     _fill_buffer(output_array);
 }
 
-int _fill_buffer(uint8_t *data) {
+void _fill_buffer(uint8_t *data) {
     uint8_t count = 0;
 
     if (buffer_pointer >= PAGE_DATA_SIZE) {
@@ -111,12 +109,37 @@ int _logger_write() {
     }
 
     logger_addr.page = curr_logger_page;
+    return 0;
 }
 
 int clear_and_dump_buffer() {
-    _logger_write();
+    int ret;
+    ret = _logger_write();
+
+    if (ret != 0) {
+        return -1;
+    }
+
     buffer_pointer = 0;
     memset(logger_buffer, 0, PAGE_DATA_SIZE);
+
+    return 0;
+}
+
+int logger_clear() {
+    PhysicalAddrs addr = {0};
+
+    for (uint8_t blk = LOG_BLOCK_LOW; blk <= LOG_BLOCK_HIGH; blk++) {
+        addr.block = blk;
+        addr.page = 0;
+
+        NAND_ReturnType ret = NAND_Block_Erase(&addr);
+        if (ret != Ret_Success) {
+            DBG_PUT("Error in deleting block b %d p %d r %d\r\n", addr.block, addr.page, ret);
+            return ret;
+        }
+    }
+    return 0;
 }
 
 int read_from_block(uint8_t block, uint16_t page) {
@@ -143,4 +166,6 @@ int read_from_block(uint8_t block, uint16_t page) {
             memset(str, 0, 128);
         }
     }
+
+    return 0;
 }
