@@ -340,16 +340,16 @@ int transfer_image_to_nand(uint8_t sensor) {
     image_file_infos_queue[image_count].file_name = file_timestamp;
     image_file_infos_queue[image_count].file_size = file->node.file_size;
 
-    DBG_PUT("Image size (VIS): %d bytes\r\n", image_file_infos_queue[image_count].file_size);
-
-    DBG_PUT("%d|%s|%d", image_file_infos_queue[image_count].file_id, image_file_infos_queue[image_count].file_name,
-            image_file_infos_queue[image_count].file_size);
-
     ret = NANDfs_close(file);
     if (ret < 0) {
         DBG_PUT("not able to close file %d failed: %d\r\n", file, nand_errno);
         return -1;
     }
+
+    DBG_PUT("Image size: %d bytes\r\n", image_file_infos_queue[image_count].file_size);
+
+    DBG_PUT("%d|%s|%d", image_file_infos_queue[image_count].file_id, image_file_infos_queue[image_count].file_name,
+            image_file_infos_queue[image_count].file_size);
 
     image_count += 1;
     return 0;
