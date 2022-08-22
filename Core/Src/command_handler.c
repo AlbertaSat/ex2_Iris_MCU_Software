@@ -38,7 +38,7 @@ uint8_t NIR_DETECTED = 0;
 housekeeping_packet_t hk;
 char buf[128];
 
-FileInfo_t image_file_infos_queue[20];
+FileInfo_t image_file_infos_queue[20] = {0};
 uint8_t image_count = 0;
 
 /******************************************************************************
@@ -86,11 +86,11 @@ void get_image_count(uint8_t *cnt) {
     int ret = 0;
     do {
         ret = NANDfs_nextdir(cur_dir);
-        if (ret < -1) {
+        if (ret < 0) {
             break;
         }
         *(cnt) += 1;
-    } while (ret == 0);
+    } while (ret != 0);
 }
 
 /**

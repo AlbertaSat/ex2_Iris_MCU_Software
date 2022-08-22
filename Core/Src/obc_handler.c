@@ -12,6 +12,7 @@
 #include "nand_m79a_lld.h"
 
 extern SPI_HandleTypeDef hspi1;
+extern uint8_t image_count;
 
 uint8_t sensor = VIS_SENSOR; // VIS or NIR, used exclusively in direct transfer mode
 uint8_t image_request_counter = 0;
@@ -104,6 +105,7 @@ int obc_handle_command(uint8_t obc_cmd) {
         transfer_images_to_obc_nand_method(image_request_counter);
         // delete_image_file_from_queue(image_request_counter);
         image_request_counter += 1;
+        image_count -= 1;
 #endif
         return 0;
     }
