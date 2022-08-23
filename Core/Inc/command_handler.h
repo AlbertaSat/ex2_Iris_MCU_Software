@@ -36,8 +36,8 @@ typedef struct {
 #define SENSORS_OFF 0
 #define SENSORS_ON 1
 
-#define MAX_IMAGE_FILES 20     // Maximum images that can be stored on NAND
-#define FILE_TIMESTAMP_SIZE 33 // In bytes
+#define MAX_IMAGE_FILES 20        // Maximum images that can be stored on NAND
+#define CAPTURE_TIMESTAMP_SIZE 33 // In bytes
 
 void get_housekeeping(housekeeping_packet_t *hk);
 void take_image();
@@ -50,10 +50,10 @@ int initalize_sensors();
 int onboot_sensors(uint8_t sensor);
 void set_rtc_time(uint32_t obc_unix_time);
 void get_rtc_time(Iris_Timestamp *timestamp);
-int transfer_image_to_nand(uint8_t sensor);
+int transfer_image_to_nand(uint8_t sensor, uint8_t *file_timestamp);
 int delete_image_file_from_queue(uint16_t index);
 NAND_FILE *get_image_file_from_queue(uint8_t index);
-void set_file_timestamp(uint8_t *file_timestamp, uint8_t sensor);
+void set_capture_timestamp(uint8_t *file_timestamp, uint8_t sensor);
 void flood_cam_spi();
 
 // uart

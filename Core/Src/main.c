@@ -39,6 +39,10 @@
 #include "tmp421.h"
 #include "microtar.h"
 #include "spi_obc.h"
+#include "nand_errno.h"
+
+extern FileInfo_t image_file_infos_queue[MAX_IMAGE_FILES];
+extern uint8_t image_count;
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -90,6 +94,7 @@ static void MX_CRC_Init(void);
 static void MX_RTC_Init(void);
 /* USER CODE BEGIN PFP */
 static void onboot_commands(void);
+static int store_file_infos_in_buffer();
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -720,6 +725,7 @@ static void init_filesystem() {
     DBG_PUT("Initializing file system\r\n");
     NAND_SPI_Init(&hspi2);
     NANDfs_init();
+    store_file_infos_in_buffer();
 }
 
 static void onboot_commands(void) {
@@ -762,6 +768,50 @@ static void onboot_commands(void) {
     DBG_PUT("-----------------------------------\r\n");
 #endif
 #endif
+}
+
+/*
+ * @brief Store information from existing files from NAND to
+ * 		  RAM (buffer)
+ *
+ * 		  The purpose of transferring file info (file_id, file_name,
+ * 		  file_size) from NAND to RAM during on-boot is to set up a
+ * 		  quick lookup table for image transfer APIs to quickly
+ * 		  extract file information, instead of accessing NAND structures
+ * 		  directly.
+ */
+static int store_file_infos_in_buffer() {
+    uint8_t index;
+    DIRENT *cur_node;
+    NAND_DIR *cur_dir;
+    int ret = 0;
+
+    index = 0;
+    cur_dir = NANDfs_opendir();
+
+    do {
+        cur_node = NANDfs_getdir(cur_dir);
+        if (!cur_node) {
+            DBG_PUT("Invalid inode entry");
+        }
+        image_file_infos_queue[index].file_id = cur_node->id;
+        image_file_infos_queue[index].file_name = cur_node->file_name;
+        image_file_infos_queue[index].file_size = cur_node->file_size;
+
+        ret = NANDfs_nextdir(cur_dir);
+        if (ret < 0) {
+            if (nand_errno == NAND_EBADF) {
+                DBG_PUT("Reached end of last inode. Total image files: %d\r\n", image_count);
+            } else {
+                DBG_PUT("Moving to next directory entry failed: %d\r\n", nand_errno);
+            }
+        }
+
+        image_count++;
+        index += 1;
+    } while (ret != 0);
+
+    return 0;
 }
 /* USER CODE END 4 */
 

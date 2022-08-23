@@ -38,7 +38,7 @@ uint8_t NIR_DETECTED = 0;
 housekeeping_packet_t hk;
 char buf[128];
 
-FileInfo_t image_file_infos_queue[20] = {0};
+FileInfo_t image_file_infos_queue[MAX_IMAGE_FILES] = {0};
 uint8_t image_count = 0;
 
 /******************************************************************************
@@ -79,19 +79,7 @@ void take_image() {
  * @param image_count: Pointer to variable containing number of images in NAND fs
  * Untested
  */
-void get_image_count(uint8_t *cnt) {
-    *(cnt) = 0;
-
-    NAND_DIR *cur_dir = NANDfs_opendir();
-    int ret = 0;
-    do {
-        ret = NANDfs_nextdir(cur_dir);
-        if (ret < 0) {
-            break;
-        }
-        *(cnt) += 1;
-    } while (ret != 0);
-}
+void get_image_count(uint8_t *cnt) { *(cnt) = image_count; }
 
 /**
  * @brief Get the image length fr
@@ -297,7 +285,7 @@ void get_rtc_time(Iris_Timestamp *timestamp) {
 #endif
 }
 
-int transfer_image_to_nand(uint8_t sensor) {
+int transfer_image_to_nand(uint8_t sensor, uint8_t *file_timestamp) {
     int ret = 0;
     HAL_Delay(100);
 
@@ -314,7 +302,6 @@ int transfer_image_to_nand(uint8_t sensor) {
     uint8_t image[PAGE_DATA_SIZE];
     uint32_t i = 0;
     int chunks_to_write = ((image_size + (PAGE_DATA_SIZE - 1)) / PAGE_DATA_SIZE);
-    uint8_t file_timestamp[FILE_TIMESTAMP_SIZE];
 
     spi_init_burst(sensor);
     for (int j = 0; j < chunks_to_write; j++) {
@@ -334,10 +321,10 @@ int transfer_image_to_nand(uint8_t sensor) {
         }
     }
     spi_deinit_burst(sensor);
+    file->node.file_name = file_timestamp;
 
     image_file_infos_queue[image_count].file_id = file->node.id;
-    set_file_timestamp(file_timestamp, sensor);
-    image_file_infos_queue[image_count].file_name = file_timestamp;
+    image_file_infos_queue[image_count].file_name = file->node.file_name;
     image_file_infos_queue[image_count].file_size = file->node.file_size;
 
     ret = NANDfs_close(file);
@@ -369,17 +356,17 @@ NAND_FILE *get_image_file_from_queue(uint8_t index) {
 }
 
 /*
- * @brief Get timestamp for image file
+ * @brief Get timestamp for image capture
  */
-void set_file_timestamp(uint8_t *file_timestamp, uint8_t sensor) {
+void set_capture_timestamp(uint8_t *capture_timestamp, uint8_t sensor) {
     Iris_Timestamp timestamp = {0};
     get_rtc_time(&timestamp);
 
     if (sensor == VIS_SENSOR) {
-        snprintf(file_timestamp, FILE_TIMESTAMP_SIZE, "%d_%d_%d_%d_%d_%d_vis.jpg", timestamp.Hour,
+        snprintf(capture_timestamp, CAPTURE_TIMESTAMP_SIZE, "%d_%d_%d_%d_%d_%d_vis.jpg", timestamp.Hour,
                  timestamp.Minute, timestamp.Second, timestamp.Day, timestamp.Month, timestamp.Year);
     } else if (sensor == NIR_SENSOR) {
-        snprintf(file_timestamp, FILE_TIMESTAMP_SIZE, "%d_%d_%d_%d_%d_%d_nir.jpg", timestamp.Hour,
+        snprintf(capture_timestamp, CAPTURE_TIMESTAMP_SIZE, "%d_%d_%d_%d_%d_%d_nir.jpg", timestamp.Hour,
                  timestamp.Minute, timestamp.Second, timestamp.Day, timestamp.Month, timestamp.Year);
     }
 }

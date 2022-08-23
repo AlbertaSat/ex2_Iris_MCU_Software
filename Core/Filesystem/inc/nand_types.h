@@ -18,6 +18,7 @@ typedef struct {
     uint32_t file_size;
     uint16_t start_block;
     uint8_t isfirst;
+    uint8_t *file_name;
 } inode_t;
 
 typedef inode_t DIRENT;

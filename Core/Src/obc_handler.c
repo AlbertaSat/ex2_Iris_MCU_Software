@@ -84,10 +84,16 @@ int obc_handle_command(uint8_t obc_cmd) {
     case IRIS_TAKE_PIC: {
         take_image();
 
+        uint8_t cur_capture_timestamp_vis[CAPTURE_TIMESTAMP_SIZE];
+        uint8_t cur_capture_timestamp_nir[CAPTURE_TIMESTAMP_SIZE];
+
+        set_capture_timestamp(cur_capture_timestamp_vis, VIS_SENSOR);
+        set_capture_timestamp(cur_capture_timestamp_nir, NIR_SENSOR);
+
 #ifndef DIRECT_METHOD
         obc_disable_spi_rx();
-        transfer_image_to_nand(VIS_SENSOR);
-        transfer_image_to_nand(NIR_SENSOR);
+        transfer_image_to_nand(VIS_SENSOR, cur_capture_timestamp_vis);
+        transfer_image_to_nand(NIR_SENSOR, cur_capture_timestamp_nir);
         obc_enable_spi_rx();
 #endif
         return 0;
@@ -104,8 +110,8 @@ int obc_handle_command(uint8_t obc_cmd) {
 #else
         transfer_images_to_obc_nand_method(image_request_counter);
         // delete_image_file_from_queue(image_request_counter);
+        // image_count -= 1;
         image_request_counter += 1;
-        image_count -= 1;
 #endif
         return 0;
     }
