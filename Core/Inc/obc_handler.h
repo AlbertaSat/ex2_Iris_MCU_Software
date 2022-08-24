@@ -26,6 +26,7 @@
 #define IRIS_IMAGE_TRANSFER_BLOCK_SIZE 512 // Will change once NAND flash is implemented
 #define IRIS_IMAGE_SIZE_WIDTH 3            // Image size represented in 3 bytes
 #define IRIS_UNIX_TIME_SIZE 4
+#define IRIS_NUM_COMMANDS 11
 
 int obc_verify_command(uint8_t cmd);
 int obc_handle_command(uint8_t cmd);
