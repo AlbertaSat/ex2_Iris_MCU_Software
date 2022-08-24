@@ -721,6 +721,8 @@ static void init_filesystem() {
     DBG_PUT("Initializing file system\r\n");
     NAND_SPI_Init(&hspi2);
     NANDfs_init();
+
+    logger_create();
     store_file_infos_in_buffer();
 }
 
@@ -760,16 +762,15 @@ static void onboot_commands(void) {
 #ifdef SPI_HANDLER
     DBG_PUT("-----------------------------------\r\n");
     DBG_PUT("Iris Electronics Test Software\r\n"
-            "        SPI (Aug 10) Edition         \r\n");
+            "        SPI Edition         \r\n");
     DBG_PUT("-----------------------------------\r\n");
 #endif
 #endif
 
     HAL_Delay(1000);
 
-    set_rtc_time(1660250589);
-    logger_create();
-    logger_clear();
+    set_rtc_time(1661284290);
+    // logger_clear();
 
     iris_log("Iris initialized and ready!");
 
@@ -782,6 +783,54 @@ static void onboot_commands(void) {
     //            read_from_block(j, i);
     //        }
     //    }
+}
+
+/*
+ * @brief Store information from existing files from NAND to
+ * 		  RAM (buffer)
+ *
+ * 		  The purpose of transferring file info (file_id, file_name,
+ * 		  file_size) from NAND to RAM during on-boot is to set up a
+ * 		  quick lookup table for image transfer APIs to quickly
+ * 		  extract file information, instead of accessing NAND structures
+ * 		  directly.
+ */
+static int store_file_infos_in_buffer() {
+    uint8_t index;
+    DIRENT *cur_node;
+    NAND_DIR *cur_dir;
+    int ret = 0;
+
+    index = 0;
+    cur_dir = NANDfs_opendir();
+
+    do {
+        cur_node = NANDfs_getdir(cur_dir);
+        if (!cur_node) {
+            DBG_PUT("Invalid inode entry");
+            iris_log("Invalid inode entry");
+        }
+
+        ret = NANDfs_nextdir(cur_dir);
+        if (ret < 0) {
+            if (nand_errno == NAND_EBADF) {
+                DBG_PUT("Reached end of last inode. Total image files: %d\r\n", image_count);
+                return 0;
+            } else {
+                DBG_PUT("Moving to next directory entry failed: %d\r\n", nand_errno);
+                return -1;
+            }
+        }
+
+        image_file_infos_queue[index].file_id = cur_node->id;
+        image_file_infos_queue[index].file_name = cur_node->file_name;
+        image_file_infos_queue[index].file_size = cur_node->file_size;
+
+        image_count++;
+        index += 1;
+    } while (ret != 0);
+
+    return 0;
 }
 /* USER CODE END 4 */
 

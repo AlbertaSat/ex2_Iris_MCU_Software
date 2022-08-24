@@ -71,8 +71,6 @@ void take_image() {
     while (!get_bit(ARDUCHIP_TRIG, CAP_DONE_MASK, VIS_SENSOR) &&
            !get_bit(ARDUCHIP_TRIG, CAP_DONE_MASK, NIR_SENSOR)) {
     }
-
-    DBG_PUT("Image capture complete");
 }
 
 /**
@@ -159,6 +157,7 @@ int initalize_sensors() {
     if (res == 1) {
         program_sensor(format, VIS_SENSOR);
         DBG_PUT("VIS Camera Mode: JPEG\r\nI2C address: 0x3C\r\n\n");
+        iris_log("VIS Camera Mode: JPEG\r\nI2C address: 0x3C");
 #ifdef UART_HANDLER
         VIS_DETECTED = 1;
 #endif
@@ -166,7 +165,8 @@ int initalize_sensors() {
     if (res == -1) {
         // need some error handling eh
         iterate_error_num();
-        DBG_PUT("VIS init failed./r/n");
+        DBG_PUT("VIS init failed.\r\n");
+        iris_log("VIS init failed.");
         return -1;
     }
 
@@ -174,11 +174,20 @@ int initalize_sensors() {
     if (res == 1) {
         program_sensor(format, NIR_SENSOR);
         DBG_PUT("NIR Camera Mode: JPEG\r\nI2C address: 0x3D\r\n\n");
+        iris_log("NIR Camera Mode: JPEG\r\nI2C address: 0x3D");
 #ifdef UART_HANDLER
         NIR_DETECTED = 1;
 #endif
     } else {
         DBG_PUT("NIR initialization failed.\r\n");
+        iris_log("NIR initialization failed.");
+        return -1;
+    }
+    if (res == -1) {
+        // need some error handling eh
+        iterate_error_num();
+        DBG_PUT("NIR init failed.\r\n");
+        iris_log("NIR init failed.");
         return -1;
     }
 
@@ -205,8 +214,10 @@ int onboot_sensors(uint8_t sensor) {
 
     if (!arducam_wait_for_ready(sensor)) {
         DBG_PUT("Camera %x: SPI Unavailable\r\n", sensor);
+        iris_log("Camera %x: SPI Unavailable", sensor);
     } else {
         DBG_PUT("Camera %x: SPI Initialized\r\n", sensor);
+        iris_log("Camera %x: SPI Initialized", sensor);
     }
 
     // Change MCU mode
@@ -220,6 +231,7 @@ int onboot_sensors(uint8_t sensor) {
 
     if (vid != 0x56 || pid != 0x42) {
         DBG_PUT("Camera %x I2C Address: Unknown\r\nVIS not available\r\n\n", sensor);
+        iris_log("Camera %x I2C Address: Unknown\r\nVIS not available\r\n\n", sensor);
         return -1;
     } else {
         return 1;
@@ -339,8 +351,8 @@ int transfer_image_to_nand(uint8_t sensor, uint8_t *file_timestamp) {
         return -1;
     }
 
-    DBG_PUT("%d|%s|%d", image_file_infos_queue[image_count].file_id, image_file_infos_queue[image_count].file_name,
-            image_file_infos_queue[image_count].file_size);
+    DBG_PUT("%d|%s|%d\n", image_file_infos_queue[image_count].file_id,
+            image_file_infos_queue[image_count].file_name, image_file_infos_queue[image_count].file_size);
     iris_log("%d|%s|%d", image_file_infos_queue[image_count].file_id,
              image_file_infos_queue[image_count].file_name, image_file_infos_queue[image_count].file_size);
 

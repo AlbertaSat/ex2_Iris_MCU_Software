@@ -86,6 +86,7 @@ int obc_handle_command(uint8_t obc_cmd) {
     }
     case IRIS_TAKE_PIC: {
         take_image();
+        DBG_PUT("Image capture complete");
         iris_log("Image captured\r\n");
 
         uint8_t cur_capture_timestamp_vis[CAPTURE_TIMESTAMP_SIZE];
