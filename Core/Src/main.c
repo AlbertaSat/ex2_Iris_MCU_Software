@@ -794,18 +794,21 @@ static int store_file_infos_in_buffer() {
         if (!cur_node) {
             DBG_PUT("Invalid inode entry");
         }
-        image_file_infos_queue[index].file_id = cur_node->id;
-        image_file_infos_queue[index].file_name = cur_node->file_name;
-        image_file_infos_queue[index].file_size = cur_node->file_size;
 
         ret = NANDfs_nextdir(cur_dir);
         if (ret < 0) {
             if (nand_errno == NAND_EBADF) {
                 DBG_PUT("Reached end of last inode. Total image files: %d\r\n", image_count);
+                return 0;
             } else {
                 DBG_PUT("Moving to next directory entry failed: %d\r\n", nand_errno);
+                return -1;
             }
         }
+
+        image_file_infos_queue[index].file_id = cur_node->id;
+        image_file_infos_queue[index].file_name = cur_node->file_name;
+        image_file_infos_queue[index].file_size = cur_node->file_size;
 
         image_count++;
         index += 1;
