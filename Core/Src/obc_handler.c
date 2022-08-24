@@ -135,7 +135,7 @@ int obc_handle_command(uint8_t obc_cmd) {
     case IRIS_OFF_SENSORS: {
         turn_off_sensors();
         iris_log("Sensor deactivated\r\n");
-        DBG_PUT("Sensor deactivated\r\n");
+        DBG_PUT("Sensor deactivated");
 
         obc_spi_transmit(&tx_ack, 1);
         return 0;
@@ -145,20 +145,20 @@ int obc_handle_command(uint8_t obc_cmd) {
 
         turn_on_sensors();
         iris_log("Sensor activated\r\n");
-        DBG_PUT("Sensor activated\r\n");
+        DBG_PUT("Sensor activated");
         ret = initalize_sensors();
         if (ret < 0) {
             iris_log("Sensor failed to initialized\r\n");
-            DBG_PUT("Sensor failed to initialized\r\n");
+            DBG_PUT("Sensor failed to initialized");
             obc_spi_transmit(&tx_nack, 1);
             return -1;
         } else {
             iris_log("Sensor initialized\r\n");
-            DBG_PUT("Sensor initialize\r\n");
+            DBG_PUT("Sensor initialize");
         }
         set_sensors_config();
         iris_log("Sensor configured\r\n");
-        DBG_PUT("Sensors configured\r\n");
+        DBG_PUT("Sensors configured");
 
         obc_spi_transmit(&tx_ack, 1);
         return 0;
@@ -270,7 +270,7 @@ int transfer_images_to_obc_nand_method(uint8_t image_index) {
     NAND_FILE *file = get_image_file_from_queue(image_index);
     if (!file) {
         DBG_PUT("not able to open file %d failed: %d\r\n", file, nand_errno);
-        iris_log("not able to open file %d failed: %d\r\n", file, nand_errno);
+        iris_log("not able to open file %d failed: %d", file, nand_errno);
         return -1;
     }
 
