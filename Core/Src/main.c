@@ -770,19 +770,8 @@ static void onboot_commands(void) {
     HAL_Delay(1000);
 
     set_rtc_time(1661284290);
-    // logger_clear();
 
     iris_log("Iris initialized and ready!");
-
-    //    for (int i = 0; i < 32; i++) {
-    //        iris_log("Iris log stamp: Logging %d test", i);
-    //    }
-    //
-    //    for (uint8_t j = 0; j < 2; j++) {
-    //        for (uint16_t i = 0; i < 64; i++) {
-    //            read_from_block(j, i);
-    //        }
-    //    }
 }
 
 /*
