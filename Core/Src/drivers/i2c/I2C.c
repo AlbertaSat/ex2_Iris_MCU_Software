@@ -154,7 +154,7 @@ void hi2c_write16_8(I2C_HandleTypeDef hi2c, uint8_t addr, uint16_t register_poin
     if (status != HAL_OK) {
         char buf[64];
         sprintf(buf, "I2C16_8 write to 0x%x register 0x%x failed\r\n", addr, register_pointer);
-        DBG_PUT(buf);
+        iris_log(buf);
     }
 }
 
@@ -172,7 +172,7 @@ void hi2c_read8_8(I2C_HandleTypeDef hi2c, uint8_t addr, uint8_t register_pointer
     if (status != HAL_OK) {
         char buf[64];
         sprintf(buf, "I2C8_8 read from 0x%x register 0x%x failed\r\n", addr, register_pointer);
-        DBG_PUT(buf);
+        iris_log(buf);
     }
 }
 
@@ -193,7 +193,7 @@ void hi2c_write8_8(I2C_HandleTypeDef hi2c, uint8_t addr, uint8_t register_pointe
     if (status != HAL_OK) {
         char buf[64];
         sprintf(buf, "I2C8_8 write to 0x%x failed: 0x%x\r\n", addr, register_pointer);
-        DBG_PUT(buf);
+        iris_log(buf);
     }
 }
 
@@ -211,7 +211,7 @@ void hi2c_read8_16(I2C_HandleTypeDef hi2c, uint8_t addr, uint8_t register_pointe
     if (status != HAL_OK) {
         char buf[64];
         sprintf(buf, "I2C8_16 read from 0x%x register 0x%x failed\r\n", addr, register_pointer);
-        DBG_PUT(buf);
+        iris_log(buf);
     }
     return;
 }
@@ -233,6 +233,6 @@ void hi2c_write8_16(I2C_HandleTypeDef hi2c, uint8_t addr, uint8_t register_point
     if (status != HAL_OK) {
         char buf[64];
         sprintf(buf, "I2C8_16 write to 0x%x failed: 0x%x\r\n", addr, register_pointer);
-        DBG_PUT(buf);
+        iris_log(buf);
     }
 }

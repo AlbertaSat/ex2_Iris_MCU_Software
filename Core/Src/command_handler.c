@@ -95,14 +95,14 @@ int get_image_length(uint32_t *image_length, uint8_t index) {
     file = NANDfs_open(image_file_infos_queue[index].file_id);
 
     if (!file) {
-        DBG_PUT("open file %d failed: %d\r\n", file, nand_errno);
+        iris_log("open file %d failed: %d\r\n", file, nand_errno);
         return -1;
     }
     *(image_length) = file->node.file_size;
 
     ret = NANDfs_close(file);
     if (ret < 0) {
-        DBG_PUT("not able to close file %d failed: %d\r\n", file, nand_errno);
+        iris_log("not able to close file %d failed: %d\r\n", file, nand_errno);
         return -1;
     }
 
@@ -114,7 +114,7 @@ int get_image_length(uint32_t *image_length, uint8_t index) {
  */
 void turn_off_sensors() {
     HAL_GPIO_WritePin(CAM_EN_GPIO_Port, CAM_EN_Pin, GPIO_PIN_RESET);
-    DBG_PUT("Sensor Power Disabled.\r\n");
+    iris_log("Sensor Power Disabled.\r\n");
 }
 
 /**
@@ -122,7 +122,7 @@ void turn_off_sensors() {
  */
 void turn_on_sensors() {
     HAL_GPIO_WritePin(CAM_EN_GPIO_Port, CAM_EN_Pin, GPIO_PIN_SET);
-    DBG_PUT("Sensor Power Enabled.\r\n");
+    iris_log("Sensor Power Enabled.\r\n");
 }
 
 /**
@@ -156,7 +156,6 @@ int initalize_sensors() {
     res = onboot_sensors(VIS_SENSOR);
     if (res == 1) {
         program_sensor(format, VIS_SENSOR);
-        DBG_PUT("VIS Camera Mode: JPEG\r\nI2C address: 0x3C\r\n\n");
         iris_log("VIS Camera Mode: JPEG\r\nI2C address: 0x3C");
 #ifdef UART_HANDLER
         VIS_DETECTED = 1;
@@ -165,7 +164,6 @@ int initalize_sensors() {
     if (res == -1) {
         // need some error handling eh
         iterate_error_num();
-        DBG_PUT("VIS init failed.\r\n");
         iris_log("VIS init failed.");
         return -1;
     }
@@ -173,20 +171,17 @@ int initalize_sensors() {
     res = onboot_sensors(NIR_SENSOR);
     if (res == 1) {
         program_sensor(format, NIR_SENSOR);
-        DBG_PUT("NIR Camera Mode: JPEG\r\nI2C address: 0x3D\r\n\n");
         iris_log("NIR Camera Mode: JPEG\r\nI2C address: 0x3D");
 #ifdef UART_HANDLER
         NIR_DETECTED = 1;
 #endif
     } else {
-        DBG_PUT("NIR initialization failed.\r\n");
         iris_log("NIR initialization failed.");
         return -1;
     }
     if (res == -1) {
         // need some error handling eh
         iterate_error_num();
-        DBG_PUT("NIR init failed.\r\n");
         iris_log("NIR init failed.");
         return -1;
     }
@@ -213,10 +208,8 @@ int onboot_sensors(uint8_t sensor) {
     HAL_Delay(100);
 
     if (!arducam_wait_for_ready(sensor)) {
-        DBG_PUT("Camera %x: SPI Unavailable\r\n", sensor);
         iris_log("Camera %x: SPI Unavailable", sensor);
     } else {
-        DBG_PUT("Camera %x: SPI Initialized\r\n", sensor);
         iris_log("Camera %x: SPI Initialized", sensor);
     }
 
@@ -230,7 +223,6 @@ int onboot_sensors(uint8_t sensor) {
     rdSensorReg16_8(OV5642_CHIPID_LOW, &pid, sensor);
 
     if (vid != 0x56 || pid != 0x42) {
-        DBG_PUT("Camera %x I2C Address: Unknown\r\nVIS not available\r\n\n", sensor);
         iris_log("Camera %x I2C Address: Unknown\r\nVIS not available\r\n\n", sensor);
         return -1;
     } else {
@@ -293,9 +285,9 @@ void get_rtc_time(Iris_Timestamp *timestamp) {
 
 #ifdef DEBUG_OUTPUT
     /* Display time Format: hh:mm:ss */
-    DBG_PUT("%02d:%02d:%02d\r\n", timestamp->Hour, timestamp->Minute, timestamp->Second);
+    iris_log("%02d:%02d:%02d\r\n", timestamp->Hour, timestamp->Minute, timestamp->Second);
     /* Display date Format: dd-mm-yy */
-    DBG_PUT("%02d-%02d-%2d\r\n", timestamp->Day, timestamp->Month, timestamp->Year);
+    iris_log("%02d-%02d-%2d\r\n", timestamp->Day, timestamp->Month, timestamp->Year);
 #endif
 }
 
@@ -308,7 +300,6 @@ int transfer_image_to_nand(uint8_t sensor, uint8_t *file_timestamp) {
 
     NAND_FILE *file = NANDfs_create();
     if (!file) {
-        DBG_PUT("not able to create file %d failed: %d\r\n", file, nand_errno);
         iris_log("not able to create file %d failed: %d", file, nand_errno);
         return -1;
     }
@@ -328,7 +319,6 @@ int transfer_image_to_nand(uint8_t sensor, uint8_t *file_timestamp) {
             int size_to_write = size_remaining > PAGE_DATA_SIZE ? PAGE_DATA_SIZE : size_remaining;
             ret = NANDfs_write(file, size_to_write, image);
             if (ret < 0) {
-                DBG_PUT("not able to write to file %d failed: %d\r\n", file, nand_errno);
                 iris_log("not able to write to file %d failed: %d", file, nand_errno);
                 return -1;
             }
@@ -344,13 +334,12 @@ int transfer_image_to_nand(uint8_t sensor, uint8_t *file_timestamp) {
 
     ret = NANDfs_close(file);
     if (ret < 0) {
-        DBG_PUT("not able to close file %d failed: %d\r\n", file, nand_errno);
         iris_log("not able to close file %d failed: %d", file, nand_errno);
         return -1;
     }
 
-    DBG_PUT("%d|%s|%d\n", image_file_infos_queue[image_count].file_id,
-            image_file_infos_queue[image_count].file_name, image_file_infos_queue[image_count].file_size);
+    iris_log("%d|%s|%d\n", image_file_infos_queue[image_count].file_id,
+             image_file_infos_queue[image_count].file_name, image_file_infos_queue[image_count].file_size);
     iris_log("%d|%s|%d", image_file_infos_queue[image_count].file_id,
              image_file_infos_queue[image_count].file_name, image_file_infos_queue[image_count].file_size);
 
@@ -363,7 +352,7 @@ int delete_image_file_from_queue(uint16_t index) {
 
     ret = NANDfs_delete(image_file_infos_queue[index].file_id);
     if (ret < 0) {
-        DBG_PUT("not able to delete file %d failed: %d\r\n", image_file_infos_queue[index].file_id, nand_errno);
+        iris_log("not able to delete file %d failed: %d\r\n", image_file_infos_queue[index].file_id, nand_errno);
         return -1;
     }
     image_file_infos_queue[index].file_id = -1;
@@ -373,7 +362,7 @@ int delete_image_file_from_queue(uint16_t index) {
 NAND_FILE *get_image_file_from_queue(uint8_t index) {
     NAND_FILE *file = NANDfs_open(image_file_infos_queue[index].file_id);
     if (!file) {
-        DBG_PUT("not able to open file %d failed: %d\r\n", file, nand_errno);
+        iris_log("not able to open file %d failed: %d\r\n", file, nand_errno);
     }
     return file;
 }
@@ -419,10 +408,10 @@ int store_file_infos_in_buffer() {
         ret = NANDfs_nextdir(cur_dir);
         if (ret < 0) {
             if (nand_errno == NAND_EBADF) {
-                DBG_PUT("Reached end of last inode. Total image files: %d\r\n", image_count);
+                iris_log("Reached end of last inode. Total image files: %d\r\n", image_count);
                 return 0;
             } else {
-                DBG_PUT("Moving to next directory entry failed: %d\r\n", nand_errno);
+                iris_log("Moving to next directory entry failed: %d\r\n", nand_errno);
                 return -1;
             }
         }
@@ -487,7 +476,7 @@ void uart_handle_command(char *cmd) {
                 uart_handle_saturation_cmd(c, NIR_SENSOR);
                 break;
             default:
-                DBG_PUT("Target Error\r\n");
+                iris_log("Target Error\r\n");
                 break;
             }
         } break;
@@ -503,7 +492,7 @@ void uart_handle_command(char *cmd) {
             turn_off_sensors();
             break;
         default:
-            DBG_PUT("Use either on or off\r\n");
+            iris_log("Use either on or off\r\n");
             break;
         }
     } break;
