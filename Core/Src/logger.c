@@ -20,27 +20,24 @@
 
 extern SPI_HandleTypeDef hspi1;
 
-uint8_t logger_buffer[PAGE_DATA_SIZE];
-uint16_t buffer_pointer;
-PhysicalAddrs logger_addr = {0};
+static int fill_buffer(uint8_t *data);
+static int write_to_nand();
 
-uint8_t curr_logger_block;
-uint8_t curr_logger_page;
-
-void _fill_buffer(uint8_t *data);
-int _logger_write();
+struct {
+    uint8_t buffer[PAGE_DATA_SIZE];
+    uint16_t buffer_pointer;
+    PhysicalAddrs addr;
+} logger;
 
 void logger_create() {
-    curr_logger_block = 0;
-    curr_logger_page = 0;
-
-    logger_addr.block = curr_logger_block;
-    logger_addr.page = curr_logger_page;
-
-    buffer_pointer = 0;
+    logger.addr.block = 0;
+    logger.addr.page = 0;
+    logger.buffer_pointer = 0;
 }
 
-void iris_log(const char *log_data, ...) {
+int iris_log(const char *log_data, ...) {
+    int ret;
+
     uint8_t output_array[LOG_TOTAL_LENGTH];
     memset(output_array, 0, LOG_TOTAL_LENGTH);
 
@@ -66,62 +63,67 @@ void iris_log(const char *log_data, ...) {
     // Combine footer
     snprintf(output_array, LOG_TOTAL_LENGTH, "%s%s%s", header_buffer, data_buffer, footer_buffer);
 
-    _fill_buffer(output_array);
+    ret = fill_buffer(output_array);
+    if (ret < 0) {
+        return -1;
+    }
+    return 0;
 }
 
-void _fill_buffer(uint8_t *data) {
+static int fill_buffer(uint8_t *data) {
     uint8_t count = 0;
+    int ret;
 
-    if (buffer_pointer >= PAGE_DATA_SIZE) {
-        clear_and_dump_buffer();
-    }
-
-    for (int i = buffer_pointer; i < (buffer_pointer + LOG_TOTAL_LENGTH); i++) {
-        logger_buffer[i] = data[count];
-        count++;
-    }
-
-    buffer_pointer += LOG_TOTAL_LENGTH;
-}
-
-int _logger_write() {
-    NAND_ReturnType ret = NAND_Page_Program(&logger_addr, PAGE_DATA_SIZE, logger_buffer);
-    if (ret != Ret_Success) {
-        DBG_PUT("Error: prog b %d p %d r %d\r\n", logger_addr.block, logger_addr.page, ret);
-        return ret;
-    }
-
-    DBG_PUT("prog b %d p %d r %d\r\n", logger_addr.block, logger_addr.page, ret);
-
-    curr_logger_page++;
-
-    if (curr_logger_page >= NUM_PAGES_PER_BLOCK) {
-        curr_logger_block = curr_logger_block ^ LOG_BLOCK_SWITCH_MASK;
-        curr_logger_page = 0;
-
-        logger_addr.block = curr_logger_block;
-
-        ret = NAND_Block_Erase(&logger_addr);
-        if (ret != Ret_Success) {
-            DBG_PUT("Erase block %d failed", logger_addr.block);
-            return ret;
+    if (logger.buffer_pointer >= PAGE_DATA_SIZE) {
+        ret = clear_and_dump_buffer();
+        if (ret < 0) {
+            return -1;
         }
     }
 
-    logger_addr.page = curr_logger_page;
+    for (int i = logger.buffer_pointer; i < (logger.buffer_pointer + LOG_TOTAL_LENGTH); i++) {
+        logger.buffer[i] = data[count];
+        count++;
+    }
+
+    logger.buffer_pointer += LOG_TOTAL_LENGTH;
+    return 0;
+}
+
+static int write_to_nand() {
+    NAND_ReturnType ret = NAND_Page_Program(&logger.addr, PAGE_DATA_SIZE, logger.buffer);
+    if (ret != Ret_Success) {
+        DBG_PUT("Error: prog b %d p %d r %d\r\n", logger.addr.block, logger.addr.page, ret);
+        return ret;
+    }
+
+    // DBG_PUT("prog b %d p %d r %d\r\n", logger.addr.block, logger.addr.page, ret);
+
+    logger.addr.page++;
+
+    if (logger.addr.page >= NUM_PAGES_PER_BLOCK) {
+        logger.addr.block = logger.addr.block ^ LOG_BLOCK_SWITCH_MASK;
+        logger.addr.page = 0;
+
+        ret = NAND_Block_Erase(&logger.addr);
+        if (ret != Ret_Success) {
+            DBG_PUT("Erase block %d failed", logger.addr.block);
+            return ret;
+        }
+    }
     return 0;
 }
 
 int clear_and_dump_buffer() {
     int ret;
-    ret = _logger_write();
+    ret = write_to_nand();
 
     if (ret != 0) {
         return -1;
     }
 
-    buffer_pointer = 0;
-    memset(logger_buffer, 0, PAGE_DATA_SIZE);
+    logger.buffer_pointer = 0;
+    memset(logger.buffer, 0, PAGE_DATA_SIZE);
 
     return 0;
 }
@@ -139,33 +141,5 @@ int logger_clear() {
             return ret;
         }
     }
-    return 0;
-}
-
-int read_from_block(uint8_t block, uint16_t page) {
-    PhysicalAddrs addr = {0};
-    uint8_t buffer[PAGE_DATA_SIZE];
-    uint8_t char_count = 0;
-    char str[128];
-
-    addr.block = block;
-    addr.page = page;
-
-    NAND_ReturnType ret = NAND_Page_Read(&addr, PAGE_DATA_SIZE, buffer);
-    if (ret != Ret_Success) {
-        DBG_PUT("read b %d p %d r %d\r\n", block, page, ret);
-        return ret;
-    }
-    for (int j = 0; j < PAGE_DATA_SIZE; j++) {
-        if (char_count < 127) {
-            str[char_count] = buffer[j];
-            char_count++;
-        } else {
-            DBG_PUT(str);
-            char_count = 0;
-            memset(str, 0, 128);
-        }
-    }
-
     return 0;
 }

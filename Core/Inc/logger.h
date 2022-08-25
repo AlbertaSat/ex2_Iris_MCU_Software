@@ -24,7 +24,7 @@
 #define LOG_BLOCK_SWITCH_MASK 0x01
 
 void logger_create();
-void iris_log(const char *log_data, ...);
+int iris_log(const char *log_data, ...);
 int clear_and_dump_buffer();
 
 #endif /* INC_LOGGER_H_ */
