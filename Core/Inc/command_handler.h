@@ -54,6 +54,7 @@ int transfer_image_to_nand(uint8_t sensor, uint8_t *file_timestamp);
 int delete_image_file_from_queue(uint16_t index);
 NAND_FILE *get_image_file_from_queue(uint8_t index);
 void set_capture_timestamp(uint8_t *file_timestamp, uint8_t sensor);
+int store_file_infos_in_buffer();
 void flood_cam_spi();
 
 // uart

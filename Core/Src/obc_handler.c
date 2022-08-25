@@ -15,7 +15,7 @@ extern SPI_HandleTypeDef hspi1;
 extern uint8_t image_count;
 
 uint8_t sensor = VIS_SENSOR; // VIS or NIR, used exclusively in direct transfer mode
-uint8_t image_request_counter = 0;
+uint8_t image_file_infos_queue_iterator = 0;
 
 const uint8_t iris_commands[IRIS_NUM_COMMANDS] = {IRIS_TAKE_PIC,
                                                   IRIS_GET_IMAGE_LENGTH,
@@ -108,10 +108,16 @@ int obc_handle_command(uint8_t obc_cmd) {
 #ifdef DIRECT_METHOD
         transfer_image_to_obc_direct_method();
 #else
-        transfer_images_to_obc_nand_method(image_request_counter);
-        // delete_image_file_from_queue(image_request_counter);
-        // image_count -= 1;
-        image_request_counter += 1;
+        transfer_images_to_obc_nand_method(image_file_infos_queue_iterator);
+        delete_image_file_from_queue(image_file_infos_queue_iterator);
+        image_count -= 1;
+        image_file_infos_queue_iterator += 1;
+
+        // Once all images are transferred to OBC, image count should
+        // be 0, and image_file_infos_queue_iterator will be re-initialize to 0
+        if (image_count == 0) {
+            image_file_infos_queue_iterator = 0;
+        }
 #endif
         return 0;
     }
@@ -131,7 +137,7 @@ int obc_handle_command(uint8_t obc_cmd) {
         if (ret < 0) {
             DBG_PUT("Sensor failed to initialized\r\n");
             obc_spi_transmit(&tx_nack, 1);
-            return 0;
+            return -1;
         } else {
             DBG_PUT("Sensor initialize\r\n");
         }
@@ -143,12 +149,19 @@ int obc_handle_command(uint8_t obc_cmd) {
     }
     case IRIS_GET_IMAGE_LENGTH: {
         uint32_t image_length;
-        uint8_t packet[3];
+        uint8_t packet[IRIS_IMAGE_SIZE_WIDTH];
+        memset(packet, 0, IRIS_IMAGE_SIZE_WIDTH);
+        int ret;
 
 #ifdef DIRECT_METHOD
         image_length = (uint32_t)read_fifo_length(sensor);
 #else
-        get_image_length(&image_length, image_request_counter);
+        ret = get_image_length(&image_length, image_file_infos_queue_iterator);
+        if (ret < 0) {
+            DBG_PUT("Failed to get image length");
+            obc_spi_transmit(packet, IRIS_IMAGE_SIZE_WIDTH);
+            return -1;
+        }
 #endif
         packet[0] = (image_length >> (8 * 2)) & 0xff;
         packet[1] = (image_length >> (8 * 1)) & 0xff;
@@ -181,13 +194,13 @@ int obc_handle_command(uint8_t obc_cmd) {
 
         Iris_Timestamp tm = {0};
         get_rtc_time(&tm);
+        return 0;
     }
     case IRIS_WDT_CHECK: {
         return 0;
     }
     default:
         iterate_error_num();
-        // sys_log("Oh shit! We failed to handle a command!");
         return -1;
     }
 }

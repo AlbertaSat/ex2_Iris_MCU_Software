@@ -16,6 +16,7 @@
 #include "nandfs.h"
 #include "nand_types.h"
 #include "iris_system.h"
+#include "nand_errno.h"
 
 extern uint8_t VIS_DETECTED;
 extern uint8_t NIR_DETECTED;
@@ -82,7 +83,7 @@ void take_image() {
 void get_image_count(uint8_t *cnt) { *(cnt) = image_count; }
 
 /**
- * @brief Get the image length fr
+ * @brief Get the image length
  *
  * @param image_length: Pointer to variable containing length of image
  *
@@ -343,8 +344,15 @@ int transfer_image_to_nand(uint8_t sensor, uint8_t *file_timestamp) {
 }
 
 int delete_image_file_from_queue(uint16_t index) {
-    image_file_infos_queue[index].file_id = 0xFF;
-    return NANDfs_delete(image_file_infos_queue[index].file_id);
+    int ret;
+
+    ret = NANDfs_delete(image_file_infos_queue[index].file_id);
+    if (ret < 0) {
+        DBG_PUT("not able to delete file %d failed: %d\r\n", image_file_infos_queue[index].file_id, nand_errno);
+        return -1;
+    }
+    image_file_infos_queue[index].file_id = -1;
+    return 0;
 }
 
 NAND_FILE *get_image_file_from_queue(uint8_t index) {
@@ -369,6 +377,50 @@ void set_capture_timestamp(uint8_t *capture_timestamp, uint8_t sensor) {
         snprintf(capture_timestamp, CAPTURE_TIMESTAMP_SIZE, "%d_%d_%d_%d_%d_%d_nir.jpg", timestamp.Hour,
                  timestamp.Minute, timestamp.Second, timestamp.Day, timestamp.Month, timestamp.Year);
     }
+}
+
+/*
+ * @brief Store information from existing files from NAND to
+ * 		  RAM (buffer)
+ *
+ * 		  The purpose of transferring file info (file_id, file_name,
+ * 		  file_size) from NAND to RAM during on-boot is to set up a
+ * 		  quick lookup table for image transfer APIs to quickly
+ * 		  extract file information, instead of accessing NAND structures
+ * 		  directly.
+ */
+int store_file_infos_in_buffer() {
+    uint8_t index;
+    DIRENT cur_node;
+    NAND_DIR *cur_dir;
+    int ret = 0;
+
+    index = 0;
+    cur_dir = NANDfs_opendir();
+
+    do {
+        cur_node = *(NANDfs_getdir(cur_dir));
+
+        ret = NANDfs_nextdir(cur_dir);
+        if (ret < 0) {
+            if (nand_errno == NAND_EBADF) {
+                DBG_PUT("Reached end of last inode. Total image files: %d\r\n", image_count);
+                return 0;
+            } else {
+                DBG_PUT("Moving to next directory entry failed: %d\r\n", nand_errno);
+                return -1;
+            }
+        }
+
+        image_file_infos_queue[index].file_id = cur_node.id;
+        image_file_infos_queue[index].file_name = cur_node.file_name;
+        image_file_infos_queue[index].file_size = cur_node.file_size;
+
+        image_count++;
+        index += 1;
+    } while (ret != 0);
+
+    return 0;
 }
 
 /******************************************************************************
