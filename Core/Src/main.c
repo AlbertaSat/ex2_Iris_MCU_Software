@@ -39,6 +39,8 @@
 #include "tmp421.h"
 #include "microtar.h"
 #include "spi_obc.h"
+#include "logger.h"
+
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -108,7 +110,6 @@ enum {
 } uart_state;
 
 uint8_t spi_int_flag = 0;
-uint8_t cam_to_nand_transfer_flag = 0;
 /* For future failure recovery mode */
 uint8_t can_bus_receive_flag = 0; // Needs to be set in can RX callback
 uint8_t i2c_bus_receive_flag = 0; // Needs to be set in i2c RX callback
@@ -176,9 +177,6 @@ int main(void) {
             if (spi_int_flag != 0) {
                 iris_state = HANDLE_COMMAND;
                 spi_int_flag = 0;
-            } else if (cam_to_nand_transfer_flag != 0) {
-                step_transfer();
-                // Transfer images from camera to flash task
             } else if (can_bus_receive_flag != 0) {
                 // Placeholder for future failure mode recovery
             } else if (i2c_bus_receive_flag != 0) {
@@ -216,7 +214,7 @@ int main(void) {
     while (1) {
         switch (uart_state) {
         case idle:
-            DBG_PUT("\r:>> ");
+            iris_log("\r:>> ");
             uart_state = receiving;
             break;
         case receiving:;
@@ -228,21 +226,21 @@ int main(void) {
             if (rc != HAL_OK) {
                 if (rc != HAL_TIMEOUT) {
                     sprintf(buf, "UART read error: %x\r\n", rc);
-                    DBG_PUT(buf);
+                    iris_log(buf);
                 }
                 continue;
             }
             /* Command is complete when we get EOL of some sort */
             if (*ptr == '\n' || *ptr == '\r') {
                 *ptr = 0;
-                DBG_PUT("\r\n");
+                iris_log("\r\n");
                 uart_handle_command(cmd);
                 ptr = cmd;
                 uart_state = idle;
 
             } else {
                 *(ptr + 1) = 0;
-                DBG_PUT(ptr);
+                iris_log(ptr);
 
                 if (*ptr == 0x7f) { // handle backspace
                     if (ptr > cmd)
@@ -540,7 +538,7 @@ static void MX_SPI2_Init(void) {
     hspi2.Init.CLKPolarity = SPI_POLARITY_LOW;
     hspi2.Init.CLKPhase = SPI_PHASE_1EDGE;
     hspi2.Init.NSS = SPI_NSS_SOFT;
-    hspi2.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_32;
+    hspi2.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_4;
     hspi2.Init.FirstBit = SPI_FIRSTBIT_MSB;
     hspi2.Init.TIMode = SPI_TIMODE_DISABLE;
     hspi2.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
@@ -721,9 +719,12 @@ void HAL_SPI_RxCpltCallback(SPI_HandleTypeDef *hspi) {
 }
 
 static void init_filesystem() {
-    DBG_PUT("Initializing file system\r\n");
+    iris_log("Initializing file system\r\n");
     NAND_SPI_Init(&hspi2);
     NANDfs_init();
+
+    logger_create();
+    store_file_infos_in_buffer();
 }
 
 static void onboot_commands(void) {
@@ -754,18 +755,19 @@ static void onboot_commands(void) {
 
 #ifdef DEBUG_OUTPUT
 #ifdef UART_HANDLER
-    DBG_PUT("-----------------------------------\r\n");
-    DBG_PUT("Iris Electronics Test Software\r\n"
-            "         UART Edition         \r\n");
-    DBG_PUT("-----------------------------------\r\n");
+    iris_log("-----------------------------------\r\n");
+    iris_log("Iris Electronics Test Software\r\n"
+             "         UART Edition         \r\n");
+    iris_log("-----------------------------------\r\n");
 #endif
 #ifdef SPI_HANDLER
-    DBG_PUT("-----------------------------------\r\n");
-    DBG_PUT("Iris Electronics Test Software\r\n"
-            "        SPI Edition         \r\n");
-    DBG_PUT("-----------------------------------\r\n");
+    iris_log("-----------------------------------\r\n");
+    iris_log("Iris Electronics Test Software\r\n"
+             "        SPI Edition         \r\n");
+    iris_log("-----------------------------------\r\n");
 #endif
 #endif
+    iris_log("Iris initialized and ready!");
 }
 /* USER CODE END 4 */
 

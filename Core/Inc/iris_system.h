@@ -50,7 +50,9 @@ extern "C" {
 
 // #define UART_HANDLER
 #define SPI_HANDLER
-#define DEBUG_OUTPUT
+//#define DEBUG_OUTPUT
+
+//#define DIRECT_METHOD
 
 /* USER CODE END EM */
 

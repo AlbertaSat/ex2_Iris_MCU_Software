@@ -30,8 +30,8 @@ extern "C" {
 
 int nand_errno = 0;
 
-FileHandle_t handles[FILEHANDLE_COUNT];
-DirHandle_t dir_handles[DIRHANDLE_COUNT];
+FileHandle_t handles[FILEHANDLE_COUNT] = {0};
+DirHandle_t dir_handles[DIRHANDLE_COUNT] = {0};
 
 /*
  * Private function. Returns pointer to unopened file handle
