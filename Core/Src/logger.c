@@ -17,8 +17,10 @@
 #include "debug.h"
 #include "iris_time.h"
 #include "command_handler.h"
+#include "stm32l0xx_hal.h"
 
 extern SPI_HandleTypeDef hspi1;
+extern UART_HandleTypeDef huart1;
 
 static int fill_buffer(uint8_t *data);
 static int write_to_nand();
@@ -35,7 +37,16 @@ void logger_create() {
     logger.buffer_pointer = 0;
 }
 
-int iris_log(const char *log_data, ...) {
+void iris_log(const char *log_data, ...) {
+
+#ifdef DEBUG_OUTPUT
+    static char output_array[128];
+    va_list arg;
+    va_start(arg, format);
+    int chars_written = vsnprintf(output_array, 128, format, arg);
+    HAL_UART_Transmit(&huart1, (uint8_t *)output_array, chars_written, 100);
+    va_end(arg);
+#else
     int ret;
 
     uint8_t output_array[LOG_TOTAL_LENGTH];
@@ -63,11 +74,8 @@ int iris_log(const char *log_data, ...) {
     // Combine footer
     snprintf(output_array, LOG_TOTAL_LENGTH, "%s%s%s", header_buffer, data_buffer, footer_buffer);
 
-    ret = fill_buffer(output_array);
-    if (ret < 0) {
-        return -1;
-    }
-    return 0;
+    fill_buffer(output_array);
+#endif
 }
 
 static int fill_buffer(uint8_t *data) {
@@ -93,7 +101,6 @@ static int fill_buffer(uint8_t *data) {
 static int write_to_nand() {
     NAND_ReturnType ret = NAND_Page_Program(&logger.addr, PAGE_DATA_SIZE, logger.buffer);
     if (ret != Ret_Success) {
-        DBG_PUT("Error: prog b %d p %d r %d\r\n", logger.addr.block, logger.addr.page, ret);
         return ret;
     }
 
@@ -107,7 +114,6 @@ static int write_to_nand() {
 
         ret = NAND_Block_Erase(&logger.addr);
         if (ret != Ret_Success) {
-            DBG_PUT("Erase block %d failed", logger.addr.block);
             return ret;
         }
     }
@@ -137,7 +143,6 @@ int logger_clear() {
 
         NAND_ReturnType ret = NAND_Block_Erase(&addr);
         if (ret != Ret_Success) {
-            DBG_PUT("Error in deleting block b %d p %d r %d\r\n", addr.block, addr.page, ret);
             return ret;
         }
     }

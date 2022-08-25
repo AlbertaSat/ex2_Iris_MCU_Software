@@ -287,11 +287,6 @@ int transfer_images_to_obc_nand_method(uint8_t image_index) {
         obc_spi_transmit(page, PAGE_DATA_SIZE);
     }
 
-    uint8_t cnt;
-    get_image_count(&cnt);
-    DBG_PUT("Image transfer %d/%d completed", image_index + 1, cnt);
-    iris_log("Image transfer %d/%d completed", image_index + 1, cnt);
-
     ret = NANDfs_close(file);
     if (ret < 0) {
         DBG_PUT("not able to close file %d failed: %d\r\n", file, nand_errno);

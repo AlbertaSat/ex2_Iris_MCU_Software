@@ -320,8 +320,6 @@ int transfer_image_to_nand(uint8_t sensor, uint8_t *file_timestamp) {
 
     spi_init_burst(sensor);
     for (int j = 0; j < chunks_to_write; j++) {
-        DBG_PUT("Writing chunk %d / %d\r\n", j + 1, chunks_to_write);
-        // iris_log("Writing chunk %d / %d", j + 1, chunks_to_write);
         for (i = 0; i < PAGE_DATA_SIZE; i++) {
             image[i] = spi_read_burst(sensor);
         }
