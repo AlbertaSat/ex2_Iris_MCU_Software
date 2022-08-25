@@ -6,6 +6,7 @@
 #include "spi_obc.h"
 #include "iris_time.h"
 #include "spi_bitbang.h"
+#include "logger.h"
 
 #include "nand_types.h"
 #include "nandfs.h"
@@ -20,6 +21,7 @@ uint8_t image_file_infos_queue_iterator = 0;
 const uint8_t iris_commands[IRIS_NUM_COMMANDS] = {IRIS_TAKE_PIC,
                                                   IRIS_GET_IMAGE_LENGTH,
                                                   IRIS_TRANSFER_IMAGE,
+                                                  IRIS_TRANSFER_LOG,
                                                   IRIS_GET_IMAGE_COUNT,
                                                   IRIS_ON_SENSORS,
                                                   IRIS_OFF_SENSORS,
@@ -79,10 +81,12 @@ int obc_handle_command(uint8_t obc_cmd) {
         uint8_t buffer[sizeof(hk)];
         memcpy(buffer, &hk, sizeof(hk));
         obc_spi_transmit(buffer, sizeof(buffer));
+        iris_log("Done sending housekeeping data");
         return 0;
     }
     case IRIS_TAKE_PIC: {
         take_image();
+        iris_log("Image capture complete");
 
         uint8_t cur_capture_timestamp_vis[CAPTURE_TIMESTAMP_SIZE];
         uint8_t cur_capture_timestamp_nir[CAPTURE_TIMESTAMP_SIZE];
@@ -121,9 +125,15 @@ int obc_handle_command(uint8_t obc_cmd) {
 #endif
         return 0;
     }
+    case IRIS_TRANSFER_LOG: {
+        clear_and_dump_buffer();
+        transfer_log_to_obc();
+
+        return 0;
+    }
     case IRIS_OFF_SENSORS: {
         turn_off_sensors();
-        DBG_PUT("Sensor deactivated\r\n");
+        iris_log("Sensor deactivated");
 
         obc_spi_transmit(&tx_ack, 1);
         return 0;
@@ -132,17 +142,17 @@ int obc_handle_command(uint8_t obc_cmd) {
         int ret = 0;
 
         turn_on_sensors();
-        DBG_PUT("Sensor activated\r\n");
+        iris_log("Sensor activated");
         ret = initalize_sensors();
         if (ret < 0) {
-            DBG_PUT("Sensor failed to initialized\r\n");
+            iris_log("Sensor failed to initialized");
             obc_spi_transmit(&tx_nack, 1);
             return -1;
         } else {
-            DBG_PUT("Sensor initialize\r\n");
+            iris_log("Sensor initialize");
         }
         set_sensors_config();
-        DBG_PUT("Sensors configured\r\n");
+        iris_log("Sensors configured");
 
         obc_spi_transmit(&tx_ack, 1);
         return 0;
@@ -158,7 +168,7 @@ int obc_handle_command(uint8_t obc_cmd) {
 #else
         ret = get_image_length(&image_length, image_file_infos_queue_iterator);
         if (ret < 0) {
-            DBG_PUT("Failed to get image length");
+            iris_log("Failed to get image length");
             obc_spi_transmit(packet, IRIS_IMAGE_SIZE_WIDTH);
             return -1;
         }
@@ -214,6 +224,7 @@ int obc_handle_command(uint8_t obc_cmd) {
  * TODO: Update data retrieval once NAND fs is intergrated
  */
 void transfer_image_to_obc_direct_method() {
+    iris_log("Image delivery started (direct method)");
     uint8_t image_data[IRIS_IMAGE_TRANSFER_BLOCK_SIZE];
     uint16_t num_transfers;
     uint32_t image_length;
@@ -228,27 +239,31 @@ void transfer_image_to_obc_direct_method() {
             image_data[i] = (uint8_t)spi_read_burst(sensor);
         }
 
+        iris_log("Delivered %d image block to obc", j);
         obc_spi_transmit(image_data, IRIS_IMAGE_TRANSFER_BLOCK_SIZE);
     }
     spi_deinit_burst(sensor);
 
+    iris_log("Image delivery ended");
     // Once done capturing with current sensor switch to counterpart
     if (sensor == VIS_SENSOR) {
-        DBG_PUT("DONE IMAGE TRANSFER (VIS_SENSOR)!\r\n");
+        iris_log("DONE IMAGE TRANSFER (VIS_SENSOR)!\r\n");
         sensor = NIR_SENSOR;
     } else {
-        DBG_PUT("DONE IMAGE TRANSFER (NIR_SENSOR)!\r\n");
+        iris_log("DONE IMAGE TRANSFER (NIR_SENSOR)!\r\n");
         sensor = VIS_SENSOR;
     }
 }
 
 int transfer_images_to_obc_nand_method(uint8_t image_index) {
+    iris_log("Image delivery started (NAND method)");
+
     uint8_t page[PAGE_DATA_SIZE];
     int ret;
 
     NAND_FILE *file = get_image_file_from_queue(image_index);
     if (!file) {
-        DBG_PUT("not able to open file %d failed: %d\r\n", file, nand_errno);
+        iris_log("not able to open file %d failed: %d", file, nand_errno);
         return -1;
     }
 
@@ -259,21 +274,40 @@ int transfer_images_to_obc_nand_method(uint8_t image_index) {
     for (int count = 0; count < page_cnt; count++) {
         ret = NANDfs_read(file, PAGE_DATA_SIZE, page);
         if (ret < 0) {
-            DBG_PUT("not able to read file %d failed: %d\r\n", file, nand_errno);
+            iris_log("not able to read file %d failed: %d\r\n", file, nand_errno);
             return -1;
         }
         obc_spi_transmit(page, PAGE_DATA_SIZE);
     }
 
-    uint8_t cnt;
-    get_image_count(&cnt);
-    DBG_PUT("Image transfer %d/%d completed", image_index + 1, cnt);
-
     ret = NANDfs_close(file);
     if (ret < 0) {
-        DBG_PUT("not able to close file %d failed: %d\r\n", file, nand_errno);
+        iris_log("not able to close file %d failed: %d\r\n", file, nand_errno);
         return -1;
     }
 
+    iris_log("Image delivery ended");
+    return 0;
+}
+
+int transfer_log_to_obc() {
+    clear_and_dump_buffer();
+
+    PhysicalAddrs addr = {0};
+    uint8_t buffer[PAGE_DATA_SIZE];
+
+    for (uint8_t blk = 0; blk < 2; blk++) {
+        for (uint8_t pg = 0; pg < 64; pg++) {
+            addr.block = blk;
+            addr.page = pg;
+
+            NAND_ReturnType ret = NAND_Page_Read(&addr, PAGE_DATA_SIZE, buffer);
+            if (ret != Ret_Success) {
+                iris_log("read b %d p %d r %d\r\n", blk, pg, ret);
+                return ret;
+            }
+            obc_spi_transmit(buffer, IRIS_LOG_TRANSFER_BLOCK_SIZE);
+        }
+    }
     return 0;
 }

@@ -8,6 +8,9 @@
 #ifndef NAND_TYPES_H_
 #define NAND_TYPES_H_
 
+#include <stdint.h>
+#include "nand_m79a_lld.h"
+
 #define MAGIC 0x50BAB10C
 
 #include "nand_m79a_lld.h"

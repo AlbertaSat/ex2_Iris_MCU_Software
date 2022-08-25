@@ -39,6 +39,7 @@
 #include "tmp421.h"
 #include "microtar.h"
 #include "spi_obc.h"
+#include "logger.h"
 
 /* USER CODE END Includes */
 
@@ -213,7 +214,7 @@ int main(void) {
     while (1) {
         switch (uart_state) {
         case idle:
-            DBG_PUT("\r:>> ");
+            iris_log("\r:>> ");
             uart_state = receiving;
             break;
         case receiving:;
@@ -225,21 +226,21 @@ int main(void) {
             if (rc != HAL_OK) {
                 if (rc != HAL_TIMEOUT) {
                     sprintf(buf, "UART read error: %x\r\n", rc);
-                    DBG_PUT(buf);
+                    iris_log(buf);
                 }
                 continue;
             }
             /* Command is complete when we get EOL of some sort */
             if (*ptr == '\n' || *ptr == '\r') {
                 *ptr = 0;
-                DBG_PUT("\r\n");
+                iris_log("\r\n");
                 uart_handle_command(cmd);
                 ptr = cmd;
                 uart_state = idle;
 
             } else {
                 *(ptr + 1) = 0;
-                DBG_PUT(ptr);
+                iris_log(ptr);
 
                 if (*ptr == 0x7f) { // handle backspace
                     if (ptr > cmd)
@@ -718,9 +719,11 @@ void HAL_SPI_RxCpltCallback(SPI_HandleTypeDef *hspi) {
 }
 
 static void init_filesystem() {
-    DBG_PUT("Initializing file system\r\n");
+    iris_log("Initializing file system\r\n");
     NAND_SPI_Init(&hspi2);
     NANDfs_init();
+
+    logger_create();
     store_file_infos_in_buffer();
 }
 
@@ -752,18 +755,19 @@ static void onboot_commands(void) {
 
 #ifdef DEBUG_OUTPUT
 #ifdef UART_HANDLER
-    DBG_PUT("-----------------------------------\r\n");
-    DBG_PUT("Iris Electronics Test Software\r\n"
-            "         UART Edition         \r\n");
-    DBG_PUT("-----------------------------------\r\n");
+    iris_log("-----------------------------------\r\n");
+    iris_log("Iris Electronics Test Software\r\n"
+             "         UART Edition         \r\n");
+    iris_log("-----------------------------------\r\n");
 #endif
 #ifdef SPI_HANDLER
-    DBG_PUT("-----------------------------------\r\n");
-    DBG_PUT("Iris Electronics Test Software\r\n"
-            "        SPI Edition         \r\n");
-    DBG_PUT("-----------------------------------\r\n");
+    iris_log("-----------------------------------\r\n");
+    iris_log("Iris Electronics Test Software\r\n"
+             "        SPI Edition         \r\n");
+    iris_log("-----------------------------------\r\n");
 #endif
 #endif
+    iris_log("Iris initialized and ready!");
 }
 /* USER CODE END 4 */
 

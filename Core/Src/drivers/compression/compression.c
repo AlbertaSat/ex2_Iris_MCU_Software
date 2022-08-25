@@ -38,28 +38,28 @@ unsigned int rle_compress(unsigned char *arr, unsigned int insize, unsigned char
         if (outsize > 0) {
             RLE_Uncompress(buf, out, outsize);
             /* Show compression result */
-            DBG_PUT("\n  Compression: Output: %d / input : %d bytes \r\n", outsize, insize);
+            iris_log("\n  Compression: Output: %d / input : %d bytes \r\n", outsize, insize);
 
             /* Compare input / output data */
             for (k = 0; k < insize; ++k) {
                 if (in[k] != out[k]) {
                     if (err_count == 0)
-                        DBG_PUT("\n");
+                        iris_log("\n");
                     if (err_count == 30)
-                        DBG_PUT("    ...\n");
+                        iris_log("    ...\n");
                     else if (err_count < 30) {
-                        DBG_PUT("    0x%x: 0x%x != 0x%x\n", k, out[k], in[k]);
+                        iris_log("    0x%x: 0x%x != 0x%x\n", k, out[k], in[k]);
                     }
                     ++err_count;
                 }
             }
             /* Did it work? */
             if (err_count == 0) {
-                DBG_PUT(" - OK!\n");
+                iris_log(" - OK!\n");
             } else {
-                DBG_PUT("    *******************************\n");
-                DBG_PUT("    ERROR: %d faulty bytes\n", err_count);
-                DBG_PUT("    *******************************\n");
+                iris_log("    *******************************\n");
+                iris_log("    ERROR: %d faulty bytes\n", err_count);
+                iris_log("    *******************************\n");
             }
         }
     }
@@ -98,28 +98,28 @@ void _test_compression(unsigned char *arr, unsigned int insize) {
 
     if (outsize > 0) {
         /* Show compression result */
-        DBG_PUT("\n  Compression: Output: %d / input : %d bytes \r\n", outsize, insize);
+        iris_log("\n  Compression: Output: %d / input : %d bytes \r\n", outsize, insize);
 
         /* Compare input / output data */
         for (k = 0; k < insize; ++k) {
             if (in[k] != out[k]) {
                 if (err_count == 0)
-                    DBG_PUT("\n");
+                    iris_log("\n");
                 if (err_count == 30)
-                    DBG_PUT("    ...\n");
+                    iris_log("    ...\n");
                 else if (err_count < 30) {
-                    DBG_PUT("    0x%x: 0x%x != 0x%x\n", k, out[k], in[k]);
+                    iris_log("    0x%x: 0x%x != 0x%x\n", k, out[k], in[k]);
                 }
                 ++err_count;
             }
         }
         /* Did we have success? */
         if (err_count == 0) {
-            DBG_PUT(" - OK!\n");
+            iris_log(" - OK!\n");
         } else {
-            DBG_PUT("    *******************************\n");
-            DBG_PUT("    ERROR: %d faulty bytes\n", err_count);
-            DBG_PUT("    *******************************\n");
+            iris_log("    *******************************\n");
+            iris_log("    ERROR: %d faulty bytes\n", err_count);
+            iris_log("    *******************************\n");
         }
     }
 

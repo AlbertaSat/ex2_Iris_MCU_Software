@@ -33,7 +33,7 @@ static void _increment_seek(PhysicalAddrs *addr, int size);
 static void _increment_block(PhysicalAddrs *addr);
 static void find_good_block(PhysicalAddrs *addr);
 
-#define RESERVED_BLOCK_CNT 1
+#define RESERVED_BLOCK_CNT 2
 
 uint16_t _next_free_block(inode_t *inode) {
     if (inode->magic != MAGIC) {
@@ -109,7 +109,7 @@ int _find_lowest_inode(inode_t *inode) {
     }
     if (found_valid_file) {
 #if NAND_DEBUG
-        DBG_PUT("lowest inode id %d, start %d\r\n", inode->id, inode->start_block);
+        iris_log("lowest inode id %d, start %d\r\n", inode->id, inode->start_block);
 #endif
         return lowest;
     }
@@ -141,7 +141,7 @@ int _find_highest_inode(inode_t *inode) {
     }
     if (found_valid_file) {
 #if NAND_DEBUG
-        DBG_PUT("highest inode id %d, start %d\r\n", inode->id, inode->start_block);
+        iris_log("highest inode id %d, start %d\r\n", inode->id, inode->start_block);
 #endif
         return highest;
     }
@@ -199,7 +199,7 @@ int NANDfs_core_create(FileHandle_t *handle) {
          * we have wrapped around and are encountering old files. Erase the
          * block and reuse its starting block.
          */
-        DBG_PUT("erasing file %d at block %d\r\n", node.id, node.start_block);
+        iris_log("erasing file %d at block %d\r\n", node.id, node.start_block);
 
         addr.block = node.start_block;
         if ((rc = NANDfs_core_erase(&node))) {
@@ -234,7 +234,7 @@ int NANDfs_core_create(FileHandle_t *handle) {
         lowest_inode = node;
     }
 #if NAND_DEBUG
-    DBG_PUT("Creating file %d at block %d\r\n", handle->node.id, handle->node.start_block);
+    iris_log("Creating file %d at block %d\r\n", handle->node.id, handle->node.start_block);
 #endif
     return 0;
 }
@@ -248,7 +248,7 @@ NAND_ReturnType _NANDfs_core_erase_block(int block) {
     NAND_ReturnType ret = NAND_Block_Erase(&addr);
     if (ret == Ret_EraseFailed) {
 #if NAND_DEBUG
-        DBG_PUT("failed to erase block %d, ret:%d\r\n", addr.block, ret);
+        iris_log("failed to erase block %d, ret:%d\r\n", addr.block, ret);
 #endif
         NAND_Mark_Bad_Block(block);
         return Ret_EraseFailed;
@@ -352,7 +352,7 @@ int NANDfs_core_write(FileHandle_t *file, int size, void *buf) {
             node = file->node;
             node.isfirst = 0;
 #if NAND_DEBUG
-            DBG_PUT("writing intermediate inode %d at <%d,%d>\r\n", node.id, seek->block, seek->page);
+            iris_log("writing intermediate inode %d at <%d,%d>\r\n", node.id, seek->block, seek->page);
 #endif
             status = NAND_Page_Program(seek, sizeof(inode_t), (uint8_t *)&node);
             if (status == Ret_Failed) {
@@ -361,7 +361,7 @@ int NANDfs_core_write(FileHandle_t *file, int size, void *buf) {
             }
             _increment_seek(seek, PAGE_DATA_SIZE);
 #if NAND_DEBUG
-            DBG_PUT("first seek of new block: <%d,%d>\r\n", seek->block, seek->page);
+            iris_log("first seek of new block: <%d,%d>\r\n", seek->block, seek->page);
 #endif
         }
 
@@ -449,7 +449,7 @@ int NANDfs_core_open(int fileid, FileHandle_t *file) {
     file->node = node;
     if (node.start_block != addr.block) {
 #if NAND_DEBUG
-        DBG_PUT("file %d start block mismatch %d != %d\r\n", fileid, node.start_block, addr.block);
+        iris_log("file %d start block mismatch %d != %d\r\n", fileid, node.start_block, addr.block);
 #endif
     }
 
@@ -486,7 +486,7 @@ int NANDfs_core_close_wronly(FileHandle_t *file) {
     // We are closing a file that was just created. Update its first inode with the information.
     PhysicalAddrs addr = {.block = file->node.start_block};
 #if NAND_DEBUG
-    DBG_PUT("closing file %d at block %d\r\n", file->node.id, addr.block);
+    iris_log("closing file %d at block %d\r\n", file->node.id, addr.block);
 #endif
 
     NAND_ReturnType status = NAND_Page_Program(&addr, sizeof(inode_t), (uint8_t *)&file->node);
@@ -498,14 +498,14 @@ int NANDfs_core_close_wronly(FileHandle_t *file) {
     if (file->node.id == highest_inode.id) {
         // Update highest inode with size, etc.
 #if NAND_DEBUG
-        DBG_PUT("updating highest_inode to id %d\r\n", file->node.id);
+        iris_log("updating highest_inode to id %d\r\n", file->node.id);
 #endif
         highest_inode = file->node;
     }
     if (file->node.id == lowest_inode.id) {
         // Update lowest inode with size, etc.
 #if NAND_DEBUG
-        DBG_PUT("updating lowest_inode to id %d\r\n", file->node.id);
+        iris_log("updating lowest_inode to id %d\r\n", file->node.id);
 #endif
         lowest_inode = file->node;
     }
@@ -549,8 +549,8 @@ int NANDfs_Core_nextdir(DirHandle_t *dir) {
     /* addr should be the inode of the next file */
     PhysicalAddrs addr = {.block = _next_free_block(&dir->current)};
 #if NAND_DEBUG
-    DBG_PUT("nextdir: id %d, block %d, size %d; next inode at %d\r\n", dir->current.id, dir->current.start_block,
-            dir->current.file_size, addr.block);
+    iris_log("nextdir: id %d, block %d, size %d; next inode at %d\r\n", dir->current.id, dir->current.start_block,
+             dir->current.file_size, addr.block);
 #endif
     inode_t node = {0};
     NAND_ReturnType status = NAND_Page_Read(&addr, sizeof(inode_t), (uint8_t *)&node);
@@ -560,7 +560,7 @@ int NANDfs_Core_nextdir(DirHandle_t *dir) {
     }
     if (node.magic != MAGIC || !node.isfirst) {
 #if NAND_DEBUG
-        DBG_PUT("no inode at %d, magic %x\r\n", addr.block, node.magic);
+        iris_log("no inode at %d, magic %x\r\n", addr.block, node.magic);
 #endif
         nand_errno = NAND_EFUBAR;
         return -1;
