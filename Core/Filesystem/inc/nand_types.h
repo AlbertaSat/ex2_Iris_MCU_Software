@@ -8,7 +8,12 @@
 #ifndef NAND_TYPES_H_
 #define NAND_TYPES_H_
 
+#include <stdint.h>
+#include "nand_m79a_lld.h"
+
 #define MAGIC 0x50BAB10C
+
+#include "nand_m79a_lld.h"
 
 typedef struct {
     uint32_t magic;
@@ -16,6 +21,7 @@ typedef struct {
     uint32_t file_size;
     uint16_t start_block;
     uint8_t isfirst;
+    uint8_t *file_name;
 } inode_t;
 
 typedef inode_t DIRENT;

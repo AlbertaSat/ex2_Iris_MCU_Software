@@ -1,6 +1,8 @@
+#include <stdio.h>
+
 #include "stm32l0xx_hal.h"
 #include "arducam.h"
-#include <iris_system.h>
+#include "iris_system.h"
 #include "ov5642_regs.h"
 #include "flash_cmds.h"
 #include "I2C.h"
@@ -122,7 +124,7 @@ int arducam_set_resolution(int format, int width, uint8_t sensor) {
     switch (width) {
     case 320:
         if (format == RAW) {
-            DBG_PUT("320x240 not supported for RAW");
+            iris_log("320x240 not supported for RAW");
             rc = 0;
         } else
             wrSensorRegs16_8(ov5642_320x240, sensor);
@@ -135,7 +137,7 @@ int arducam_set_resolution(int format, int width, uint8_t sensor) {
         break;
     case 1024:
         if (format == RAW) {
-            DBG_PUT("1024x768 not supported for RAW");
+            iris_log("1024x768 not supported for RAW");
             rc = 0;
         } else
             wrSensorRegs16_8(ov5642_1024x768, sensor);
@@ -155,7 +157,7 @@ int arducam_set_resolution(int format, int width, uint8_t sensor) {
         if (format == RAW)
             arducam_raw_init(1920, 1080, sensor);
         else {
-            DBG_PUT("1920X1080 not supported");
+            iris_log("1920X1080 not supported");
             rc = 0;
         }
         break;
@@ -172,7 +174,7 @@ int arducam_set_resolution(int format, int width, uint8_t sensor) {
         }
         break;
     default:
-        DBG_PUT("unsupported width\r\n");
+        iris_log("unsupported width\r\n");
         rc = 0;
         break;
     }
@@ -328,7 +330,7 @@ int arducam_get_saturation(uint8_t sensor) {
 void arducam_capture_image(uint8_t sensor) {
     char msg[64];
     sprintf(msg, "Single Capture on sensor %d\r\n", sensor);
-    DBG_PUT(msg);
+    iris_log(msg);
 
     write_reg(ARDUCHIP_TIM, VSYNC_LEVEL_MASK, sensor); // VSYNC is active HIGH
 
@@ -339,7 +341,7 @@ void arducam_capture_image(uint8_t sensor) {
     while (!get_bit(ARDUCHIP_TRIG, CAP_DONE_MASK, sensor)) {
     }
 
-    DBG_PUT("Capture complete\r\n");
+    iris_log("Capture complete\r\n");
 }
 
 static inline uint32_t min(uint32_t a, uint32_t b) { return (a <= b) ? a : b; }
@@ -605,12 +607,12 @@ void SingleCapTransfer(int format, uint8_t sensor) {
     uint32_t length;
 
     sprintf(buf, "Single Capture Transfer type %x\r\n", format);
-    DBG_PUT(buf);
+    iris_log(buf);
     write_reg(ARDUCHIP_TIM, VSYNC_LEVEL_MASK, sensor); // VSYNC is active HIGH
     uint8_t val;
     rdSensorReg16_8(REG_FORMAT_CTL, &val, sensor);
     sprintf(buf, "format reg: 0x%02x\r\n", val);
-    DBG_PUT(buf);
+    iris_log(buf);
 
     flush_fifo(sensor);
     clear_fifo_flag(sensor);
@@ -621,10 +623,10 @@ void SingleCapTransfer(int format, uint8_t sensor) {
 
     length = read_fifo_length(sensor);
     sprintf(buf, "Capture complete! FIFO len 0x%lx\r\n", length);
-    DBG_PUT(buf);
-    DBG_PUT("JPG");
+    iris_log(buf);
+    iris_log("JPG");
     dump_uart_jpg_burst(length, sensor);
-    DBG_PUT("\04");
+    iris_log("\04");
 }
 
 void set_image_num(uint8_t num) { image_number = num; }

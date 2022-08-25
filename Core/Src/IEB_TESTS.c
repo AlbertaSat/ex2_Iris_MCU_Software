@@ -4,7 +4,7 @@
  *  Created on: Mar. 21, 2022
  *      Author: Liam
  */
-#include <iris_system.h>
+#include "iris_system.h"
 #include "IEB_TESTS.h"
 #include "tmp421.h"
 #include "command_handler.h"
@@ -20,42 +20,42 @@ static void testTempSensor(void);
 void CHECK_LED_I2C_SPI_TS(void) {
 
     // Blink IO LED
-    DBG_PUT("--------------------\r\n");
-    DBG_PUT("Blinking LED\r\n");
+    iris_log("--------------------\r\n");
+    iris_log("Blinking LED\r\n");
 
     for (int i = 0; i < 10; i++) {
         _toggleLED();
         HAL_Delay(150);
     }
-    DBG_PUT("--------------------\r\n\n");
+    iris_log("--------------------\r\n\n");
 
     // Scan I2C Bus
-    DBG_PUT("--------------------\r\n");
-    DBG_PUT("Testing internal I2C bus\r\n");
+    iris_log("--------------------\r\n");
+    iris_log("Testing internal I2C bus\r\n");
     _testScanI2C();
-    DBG_PUT("--------------------\r\n\n");
+    iris_log("--------------------\r\n\n");
 
     // Test SPI
-    DBG_PUT("--------------------\r\n");
-    DBG_PUT("Ensuring sensors are powered\r\n");
+    iris_log("--------------------\r\n");
+    iris_log("Ensuring sensors are powered\r\n");
     sensor_active();
-    DBG_PUT("Testing VIS SPI\r\n");
+    iris_log("Testing VIS SPI\r\n");
 
     _testArducamSensor(VIS_SENSOR);
-    DBG_PUT("Testing NIR SPI\r\n");
+    iris_log("Testing NIR SPI\r\n");
 
     _testArducamSensor(NIR_SENSOR);
-    DBG_PUT("--------------------\r\n\n");
+    iris_log("--------------------\r\n\n");
 
     // Temperature Sensor stuff
-    DBG_PUT("--------------------\r\n");
-    DBG_PUT("Testing Temperature Sensors\r\n");
+    iris_log("--------------------\r\n");
+    iris_log("Testing Temperature Sensors\r\n");
     testTempSensor();
-    DBG_PUT("--------------------\r\n");
+    iris_log("--------------------\r\n");
 
     // NAND Flash
-    DBG_PUT("--------------------\r\n");
-    DBG_PUT("Testing NAND Flash\r\n");
+    iris_log("--------------------\r\n");
+    iris_log("Testing NAND Flash\r\n");
 
     // TODO: Test nand
 
@@ -82,15 +82,15 @@ void _testArducamSensor(uint8_t sensor) {
     HAL_Delay(100);
     if (!arducam_wait_for_ready(sensor)) {
         if (sensor == VIS_SENSOR) {
-            DBG_PUT("TEST FAILED: VIS Camera: SPI Error\r\n");
+            iris_log("TEST FAILED: VIS Camera: SPI Error\r\n");
         } else {
-            DBG_PUT("TEST:FAILED: NIR Camera: SPI Error\r\n");
+            iris_log("TEST:FAILED: NIR Camera: SPI Error\r\n");
         }
     } else {
         if (sensor == VIS_SENSOR) {
-            DBG_PUT("TEST PASSED: VIS SPI Initialized\r\n");
+            iris_log("TEST PASSED: VIS SPI Initialized\r\n");
         } else {
-            DBG_PUT("TEST PASSED: NIR SPI Initialized\r\n");
+            iris_log("TEST PASSED: NIR SPI Initialized\r\n");
         }
     }
 }
@@ -111,14 +111,14 @@ void _testScanI2C() {
                 deviceFound = 1; // Janky but works for asserting that I2C bus is operational
             }
             sprintf(buf, "I2C address found: 0x%X\r\n", (uint16_t)(i));
-            DBG_PUT(buf);
+            iris_log(buf);
         }
     }
-    DBG_PUT("Scan Complete.\r\n");
+    iris_log("Scan Complete.\r\n");
     if (deviceFound == 1) {
-        DBG_PUT("TEST PASSED: I2C Operational\r\n");
+        iris_log("TEST PASSED: I2C Operational\r\n");
     } else {
-        DBG_PUT("TEST FAILED: I2C Unoperational\r\n");
+        iris_log("TEST FAILED: I2C Unoperational\r\n");
     }
 }
 
@@ -127,7 +127,7 @@ void _testScanI2C() {
  *
  */
 static void testTempSensor(void) {
-    DBG_PUT("\n");
+    iris_log("\n");
     uint16_t vis_temp, nir_temp, nand_temp, gate_temp;
     vis_temp = nir_temp = nand_temp = gate_temp = 0;
     vis_temp = get_temp(0x4C);
@@ -136,13 +136,13 @@ static void testTempSensor(void) {
     gate_temp = get_temp(0x4F);
 
     if (vis_temp && nir_temp && nand_temp && gate_temp) {
-        DBG_PUT("TEST PASSED: Temp sensors operational\r\n");
+        iris_log("TEST PASSED: Temp sensors operational\r\n");
         printTemp(vis_temp, 0x4C);
         printTemp(nir_temp, 0x4D);
         printTemp(nand_temp, 0x4E);
         printTemp(gate_temp, 0x4F);
     } else {
-        DBG_PUT("TEST FAILED: Temp sensors unoperational\r\n");
+        iris_log("TEST FAILED: Temp sensors unoperational\r\n");
     }
     return;
 }
@@ -157,7 +157,7 @@ static void testTempSensor(void) {
 void printTemp(uint16_t temp, uint8_t sensor) {
     char buf[64];
     sprintf(buf, "Sensor 0x%x Temperature: %d.%04d C\r\n", sensor, (temp >> 8) - 64, ((temp & 0xFF) >> 4) * 625);
-    DBG_PUT(buf);
+    iris_log(buf);
 }
 
 void test_clocksignal() {

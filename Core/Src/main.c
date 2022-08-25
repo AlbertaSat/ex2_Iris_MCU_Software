@@ -26,18 +26,21 @@
 #include <stdbool.h>
 #include <string.h>
 
-#include "arducam.h"
 #include "iris_system.h"
+#include "arducam.h"
 #include "spi_bitbang.h"
 #include "IEB_TESTS.h"
-#include "tmp421.h"
-#include "housekeeping.h"
-#include "command_handler.h"
-#include "spi_command_handler.h"
-#include "flash_cmds.h"
 #include "nandfs.h"
+#include "flash_cmds.h"
 #include "can.h"
+#include "obc_handler.h"
+#include "command_handler.h"
+#include "housekeeping.h"
+#include "tmp421.h"
 #include "microtar.h"
+#include "spi_obc.h"
+#include "logger.h"
+
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -94,9 +97,6 @@ static void onboot_commands(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
-uint8_t spi_int_flag = 0;
-uint8_t cam_to_nand_transfer_flag = 0;
-
 enum {
     IDLE,
     LISTENING,
@@ -109,6 +109,7 @@ enum {
     receiving,
 } uart_state;
 
+uint8_t spi_int_flag = 0;
 /* For future failure recovery mode */
 uint8_t can_bus_receive_flag = 0; // Needs to be set in can RX callback
 uint8_t i2c_bus_receive_flag = 0; // Needs to be set in i2c RX callback
@@ -151,19 +152,22 @@ int main(void) {
     MX_CRC_Init();
     MX_RTC_Init();
     /* USER CODE BEGIN 2 */
-    //    NAND_SPI_Init(&hspi2);
 
     onboot_commands();
-    //    init_filesystem();
-    uint8_t obc_cmd;
-
-    iris_state = LISTENING;
     /* USER CODE END 2 */
 
     /* Infinite loop */
     /* USER CODE BEGIN WHILE */
 
-#ifdef SPI_DEBUG
+#ifdef SPI_HANDLER
+
+    /******************************************************************************
+     *                      		SPI HANDLER
+     *****************************************************************************/
+    uint8_t obc_cmd;
+    iris_state = LISTENING;
+    int ret = 0;
+
     while (1) {
         /* USER CODE END WHILE */
 
@@ -173,9 +177,6 @@ int main(void) {
             if (spi_int_flag != 0) {
                 iris_state = HANDLE_COMMAND;
                 spi_int_flag = 0;
-            } else if (cam_to_nand_transfer_flag != 0) {
-                step_transfer();
-                // Transfer images from camera to flash task
             } else if (can_bus_receive_flag != 0) {
                 // Placeholder for future failure mode recovery
             } else if (i2c_bus_receive_flag != 0) {
@@ -184,11 +185,12 @@ int main(void) {
             break;
         case LISTENING:
             iris_state = IDLE;
-            spi_receive(&obc_cmd, 1);
+            obc_spi_receive(&obc_cmd, 1);
             break;
         case HANDLE_COMMAND:
-            if (spi_verify_command(obc_cmd) == 0) {
-                spi_handle_command(obc_cmd);
+            ret = obc_verify_command(obc_cmd);
+            if (ret != -1) {
+                ret = obc_handle_command(obc_cmd);
             }
             iris_state = FINISH;
             break;
@@ -197,17 +199,22 @@ int main(void) {
             break;
         }
     }
-#endif // SPI_DEBUG
-//       // //////////////////////////////////////////////////////////////////////////////////////////
-#ifdef UART_DEBUG
+#endif // SPI_HANDLER
+
+/******************************************************************************
+ *                      		UART HANDLER
+ *****************************************************************************/
+#ifdef UART_HANDLER
     char cmd[64];
     char buf[64];
     char *ptr = cmd;
+    int ret = 0;
+
     uart_state = idle;
     while (1) {
         switch (uart_state) {
         case idle:
-            DBG_PUT("\r:>> ");
+            iris_log("\r:>> ");
             uart_state = receiving;
             break;
         case receiving:;
@@ -219,21 +226,21 @@ int main(void) {
             if (rc != HAL_OK) {
                 if (rc != HAL_TIMEOUT) {
                     sprintf(buf, "UART read error: %x\r\n", rc);
-                    DBG_PUT(buf);
+                    iris_log(buf);
                 }
                 continue;
             }
             /* Command is complete when we get EOL of some sort */
             if (*ptr == '\n' || *ptr == '\r') {
                 *ptr = 0;
-                DBG_PUT("\r\n");
+                iris_log("\r\n");
                 uart_handle_command(cmd);
                 ptr = cmd;
                 uart_state = idle;
 
             } else {
                 *(ptr + 1) = 0;
-                DBG_PUT(ptr);
+                iris_log(ptr);
 
                 if (*ptr == 0x7f) { // handle backspace
                     if (ptr > cmd)
@@ -244,7 +251,7 @@ int main(void) {
             break;
         }
     }
-#endif // UART_DEBUG
+#endif // UART_HANDLER
        /* USER CODE END 3 */
 }
 
@@ -531,7 +538,7 @@ static void MX_SPI2_Init(void) {
     hspi2.Init.CLKPolarity = SPI_POLARITY_LOW;
     hspi2.Init.CLKPhase = SPI_PHASE_1EDGE;
     hspi2.Init.NSS = SPI_NSS_SOFT;
-    hspi2.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_32;
+    hspi2.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_4;
     hspi2.Init.FirstBit = SPI_FIRSTBIT_MSB;
     hspi2.Init.TIMode = SPI_TIMODE_DISABLE;
     hspi2.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
@@ -706,19 +713,24 @@ void HAL_SPI_RxCpltCallback(SPI_HandleTypeDef *hspi) {
     // Flag is set whenever OBC wants to communicate
     if (iris_state != HANDLE_COMMAND) {
         spi_int_flag = 1;
+    } else {
+        spi_int_flag = 0;
     }
 }
 
 static void init_filesystem() {
-    DBG_PUT("Initializing file system\r\n");
+    iris_log("Initializing file system\r\n");
     NAND_SPI_Init(&hspi2);
     NANDfs_init();
+
+    logger_create();
+    store_file_infos_in_buffer();
 }
 
 static void onboot_commands(void) {
 
-#ifdef SPI_DEBUG
-#ifndef SPI_DEBUG_UART_OUTPUT
+#ifdef SPI_HANDLER
+#ifndef DEBUG_OUTPUT
     GPIO_InitTypeDef GPIO_InitStruct = {0};
     /*Configure GPIO pin */
     GPIO_InitStruct.Pin = ERR_Pin;
@@ -731,7 +743,6 @@ static void onboot_commands(void) {
 #endif
 
     HAL_TIM_Base_Start(&htim2);
-
     init_filesystem();
 
 #ifdef CURRENTSENSE_5V
@@ -740,26 +751,23 @@ static void onboot_commands(void) {
     // init_ina209(CURRENTSENSE_5V);
 
     HAL_Delay(500);
-
-#ifdef IRIS_PROTO
-    sensor_togglepower(1);
     flood_cam_spi();
-    initalize_sensors();
-#else
-    flood_cam_spi();
-#endif // IRIS_PROTO
 
-#ifdef UART_DEBUG
-    DBG_PUT("-----------------------------------\r\n");
-    DBG_PUT("Iris Electronics Test Software\r\n"
-            "         UART Edition         \r\n");
-    DBG_PUT("-----------------------------------\r\n");
-#else
-    DBG_PUT("-----------------------------------\r\n");
-    DBG_PUT("Iris Electronics Test Software\r\n"
-            "        SPI Edition         \r\n");
-    DBG_PUT("-----------------------------------\r\n");
+#ifdef DEBUG_OUTPUT
+#ifdef UART_HANDLER
+    iris_log("-----------------------------------\r\n");
+    iris_log("Iris Electronics Test Software\r\n"
+             "         UART Edition         \r\n");
+    iris_log("-----------------------------------\r\n");
 #endif
+#ifdef SPI_HANDLER
+    iris_log("-----------------------------------\r\n");
+    iris_log("Iris Electronics Test Software\r\n"
+             "        SPI Edition         \r\n");
+    iris_log("-----------------------------------\r\n");
+#endif
+#endif
+    iris_log("Iris initialized and ready!");
 }
 /* USER CODE END 4 */
 
