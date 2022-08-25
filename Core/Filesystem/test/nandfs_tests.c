@@ -67,36 +67,28 @@ int check_all_pages_in_block(int block, char c) {
 
         NAND_ReturnType ret = NAND_Page_Read(&addr, PAGE_LEN, buffer);
         if (ret != Ret_Success) {
-            DBG_PUT("read b %d p %d r %d\r\n", block, i, ret);
+            iris_log("read b %d p %d r %d\r\n", block, i, ret);
             return ret;
         }
         for (int j = 0; j < PAGE_LEN; j++) {
             if (buffer[j] != c) {
-                DBG_PUT("buff b %d p %d %d != %d\r\n", block, i, buffer[j], c);
+                iris_log("buff b %d p %d %d != %d\r\n", block, i, buffer[j], c);
                 return -1;
             }
         }
     }
 }
 
-int read_from_block_one(uint16_t page) {
+int write_all_pages_in_block(int block, char c) {
     PhysicalAddrs addr = {0};
-    uint8_t buffer[PAGE_LEN];
-
-    uint8_t block = 0;
+    char buffer[PAGE_LEN];
+    memset(buffer, c, PAGE_LEN);
     addr.block = block;
-
-    NAND_ReturnType ret = NAND_Page_Read(&addr, PAGE_LEN, buffer);
-    if (ret != Ret_Success) {
-        DBG_PUT("read b %d p %d r %d\r\n", block, page, ret);
-        return ret;
-    }
-    for (int j = 0; j < PAGE_LEN; j++) {
-        if (buffer[j] != j) {
-            DBG_PUT("buff b %d p %d %d != %d\r\n", block, page, buffer[j], j);
-            return -1;
-        } else {
-            DBG_PUT("buff b %d p %d d %d\n\r", block, page, buffer[j]);
+    for (int i = 0; i < NUM_PAGES_PER_BLOCK; i++) {
+        NAND_ReturnType ret = NAND_Page_Program(&addr, PAGE_LEN, buffer);
+        if (ret != Ret_Success) {
+            iris_log("prog b %d p %d r %d\r\n", block, i, ret);
+            return ret;
         }
     }
 }
@@ -105,9 +97,9 @@ int nand_find_bad_block_test() {
     NANDfs_format();
     for (int i = 0; i < 2048; i++) {
         char testchar = rand();
-        DBG_PUT("W %d\r\n", i);
+        iris_log("W %d\r\n", i);
         write_all_pages_in_block(i, testchar);
-        DBG_PUT("C %d\r\n", i);
+        iris_log("C %d\r\n", i);
         check_all_pages_in_block(i, testchar);
     }
 }
@@ -126,7 +118,7 @@ int nand_indep_image_test() {
         memcpy(image, sample, size_to_write);
         sample += size_to_write;
         NAND_ReturnType ret = NAND_Page_Program(&addr, size_to_write, image);
-        DBG_PUT("Ret: %d\r\n", ret);
+        iris_log("Ret: %d\r\n", ret);
         size_remaining -= size_to_write;
         _increment_seek2(&addr, 0);
     }
@@ -203,7 +195,7 @@ int pattern_with_filesystem_test(int page_cnt) {
     int rc, count;
     NAND_FILE *fd = NANDfs_create();
     if (!fd) {
-        DBG_PUT("create failed: %d\r\n", nand_errno);
+        iris_log("create failed: %d\r\n", nand_errno);
         return -1;
     }
 
@@ -211,27 +203,27 @@ int pattern_with_filesystem_test(int page_cnt) {
         memset(page, count, PAGE_DATA_SIZE);
 
         if ((rc = NANDfs_write(fd, PAGE_DATA_SIZE, page))) {
-            DBG_PUT("write page %d failedr\n", count);
+            iris_log("write page %d failedr\n", count);
             break;
         }
     }
 
     int file_id = fd->node.id;
     if ((rc = NANDfs_close(fd))) {
-        DBG_PUT("close file %d failed: %d\r\n", file_id, nand_errno);
+        iris_log("close file %d failed: %d\r\n", file_id, nand_errno);
     }
 
-    DBG_PUT("wrote file id %d\r\n", file_id);
+    iris_log("wrote file id %d\r\n", file_id);
 
     fd = NANDfs_open_latest();
     if (!fd) {
-        DBG_PUT("open file %d failed: %d\r\n", file_id, nand_errno);
+        iris_log("open file %d failed: %d\r\n", file_id, nand_errno);
         return -1;
     }
 
     int file_size = fd->node.file_size;
     if (file_size != PAGE_DATA_SIZE * page_cnt) {
-        DBG_PUT("wrong len %d\r\n", file_size);
+        iris_log("wrong len %d\r\n", file_size);
         NANDfs_close(fd);
         return -2;
     }
@@ -244,13 +236,41 @@ int pattern_with_filesystem_test(int page_cnt) {
         int error_reported = 0;
         for (int i = 0; i < PAGE_DATA_SIZE; i++) {
             if (page[i] != count && !error_reported) {
-                DBG_PUT("page %d: bad byte %x at offset %d\r\n", count, page[i], i);
+                iris_log("page %d: bad byte %x at offset %d\r\n", count, page[i], i);
                 break;
             }
         }
     }
 
     NANDfs_close(fd);
+    return 0;
+}
+
+int read_from_block(uint8_t block, uint16_t page) {
+    PhysicalAddrs addr = {0};
+    uint8_t buffer[PAGE_DATA_SIZE];
+    uint8_t char_count = 0;
+    char str[128];
+
+    addr.block = block;
+    addr.page = page;
+
+    NAND_ReturnType ret = NAND_Page_Read(&addr, PAGE_DATA_SIZE, buffer);
+    if (ret != Ret_Success) {
+        iris_log("read b %d p %d r %d\r\n", block, page, ret);
+        return ret;
+    }
+    for (int j = 0; j < PAGE_DATA_SIZE; j++) {
+        if (char_count < 127) {
+            str[char_count] = buffer[j];
+            char_count++;
+        } else {
+            iris_log(str);
+            char_count = 0;
+            memset(str, 0, 128);
+        }
+    }
+
     return 0;
 }
 

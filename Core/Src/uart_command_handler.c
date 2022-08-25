@@ -29,25 +29,26 @@ static inline const char *next_token(const char *ptr) {
 void help() {
     // UART DEBUG ONLY
 #ifdef UART_HANDLER
-    DBG_PUT("TO RUN TESTS: test\r\n\n\n");
-    DBG_PUT("Commands:\r\n");
-    DBG_PUT("\tWorking/Tested:\r\n");
-    DBG_PUT("\t\tpower <on/off> | toggles sensor power\r\n");
-    DBG_PUT("\t\tinit sensor | Resets arducam modules to default\r\n");
-    DBG_PUT("\t\tcapture <vis/nir> | capture image from sensor\r\n");
-    DBG_PUT("\t\tformat<vis/nir> [JPEG|BMP|RAW]\r\n");
-    DBG_PUT("\t\t hk | Gets housekeeping\r\n");
-    DBG_PUT("\t\twidth <vis/nir> [<pixels>]\r\n");
-    DBG_PUT("\t\tscan | Scan I2C bus 2\r\n");
-    DBG_PUT("\t\ti2c read deviceaddress registeraddress | read from i2c device register. values in hex\r\n");
-    DBG_PUT("\t\ti2c write deviceaddress registeraddress value | write to i2c device register. values in hex\r\n");
-    DBG_PUT("\tNeeds work\r\n");
-    DBG_PUT("\t\txfer sensor media filename | transfer image over media\r\n");
-    DBG_PUT("\tNot tested/partially implemented:\r\n");
-    DBG_PUT("\t\tlist n | List the n most recent files\r\n");
-    DBG_PUT("\t\tread ro media | Transfer relative file offset number\r\n");
-    DBG_PUT("\t\treg <vis/nir> read <regnum>\r\n\treg write <regnum> <val>\r\n");
-    DBG_PUT("\t\tSaturation [<0..8>]\r\n");
+    iris_log("TO RUN TESTS: test\r\n\n\n");
+    iris_log("Commands:\r\n");
+    iris_log("\tWorking/Tested:\r\n");
+    iris_log("\t\tpower <on/off> | toggles sensor power\r\n");
+    iris_log("\t\tinit sensor | Resets arducam modules to default\r\n");
+    iris_log("\t\tcapture <vis/nir> | capture image from sensor\r\n");
+    iris_log("\t\tformat<vis/nir> [JPEG|BMP|RAW]\r\n");
+    iris_log("\t\t hk | Gets housekeeping\r\n");
+    iris_log("\t\twidth <vis/nir> [<pixels>]\r\n");
+    iris_log("\t\tscan | Scan I2C bus 2\r\n");
+    iris_log("\t\ti2c read deviceaddress registeraddress | read from i2c device register. values in hex\r\n");
+    iris_log(
+        "\t\ti2c write deviceaddress registeraddress value | write to i2c device register. values in hex\r\n");
+    iris_log("\tNeeds work\r\n");
+    iris_log("\t\txfer sensor media filename | transfer image over media\r\n");
+    iris_log("\tNot tested/partially implemented:\r\n");
+    iris_log("\t\tlist n | List the n most recent files\r\n");
+    iris_log("\t\tread ro media | Transfer relative file offset number\r\n");
+    iris_log("\t\treg <vis/nir> read <regnum>\r\n\treg write <regnum> <val>\r\n");
+    iris_log("\t\tSaturation [<0..8>]\r\n");
 #endif
 }
 
@@ -62,7 +63,7 @@ void uart_handle_format_cmd(const char *cmd) {
     switch (*wptr) {
     case 'v':
         if (VIS_DETECTED == 0) {
-            DBG_PUT("VIS Unavailable.\r\n");
+            iris_log("VIS Unavailable.\r\n");
             return;
         }
         target_sensor = VIS_SENSOR; // vis = 0
@@ -70,13 +71,13 @@ void uart_handle_format_cmd(const char *cmd) {
 
     case 'n':
         if (NIR_DETECTED == 0) {
-            DBG_PUT("NIR Unavailable.\r\n");
+            iris_log("NIR Unavailable.\r\n");
             return;
         }
         target_sensor = NIR_SENSOR;
         break;
     default:
-        DBG_PUT("Target Error.\r\n");
+        iris_log("Target Error.\r\n");
         return;
     }
 
@@ -96,7 +97,7 @@ void uart_handle_format_cmd(const char *cmd) {
             break;
         default:
             sprintf(buf, "unknown format: <%s>\r\n", fmtarg);
-            DBG_PUT(buf);
+            iris_log(buf);
             return;
         }
     }
@@ -104,9 +105,9 @@ void uart_handle_format_cmd(const char *cmd) {
     if (format != old_format) {
         program_sensor(format, target_sensor);
     }
-    DBG_PUT("current format: ");
-    DBG_PUT(format_names[format]);
-    DBG_PUT("\r\n");
+    iris_log("current format: ");
+    iris_log(format_names[format]);
+    iris_log("\r\n");
 }
 
 void handle_reg_cmd(const char *cmd) {
@@ -117,7 +118,7 @@ void handle_reg_cmd(const char *cmd) {
     switch (*wptr) {
     case 'v':
         if (VIS_DETECTED == 0) {
-            DBG_PUT("VIS Unavailable.\r\n");
+            iris_log("VIS Unavailable.\r\n");
             return;
         }
         target_sensor = VIS_SENSOR; // vis = 0
@@ -125,13 +126,13 @@ void handle_reg_cmd(const char *cmd) {
 
     case 'n':
         if (NIR_DETECTED == 0) {
-            DBG_PUT("NIR Unavailable.\r\n");
+            iris_log("NIR Unavailable.\r\n");
             return;
         }
         target_sensor = NIR_SENSOR;
         break;
     default:
-        DBG_PUT("Target Error.\r\n");
+        iris_log("Target Error.\r\n");
         return;
     }
 
@@ -179,7 +180,7 @@ void handle_reg_cmd(const char *cmd) {
         sprintf(buf, "reg op must be read or write, '%s' not supported\r\n", rwarg);
         break;
     }
-    DBG_PUT(buf);
+    iris_log(buf);
 }
 
 void uart_handle_width_cmd(const char *cmd) {
@@ -190,12 +191,12 @@ void uart_handle_width_cmd(const char *cmd) {
         if (VIS_DETECTED) {
             arducam_get_resolution(&width, &depth, VIS_SENSOR);
             sprintf(buf, "VIS Camera Resolution: %d by %d\r\n", width, depth);
-            DBG_PUT(buf);
+            iris_log(buf);
         }
         if (NIR_DETECTED) {
             arducam_get_resolution(&width, &depth, NIR_SENSOR);
             sprintf(buf, "NIR Camera Resolution: %d by %d\r\n", width, depth);
-            DBG_PUT(buf);
+            iris_log(buf);
         }
         return;
     }
@@ -204,20 +205,20 @@ void uart_handle_width_cmd(const char *cmd) {
     switch (*wptr) {
     case 'v':
         if (VIS_DETECTED == 0) {
-            DBG_PUT("VIS Unavailable.\r\n");
+            iris_log("VIS Unavailable.\r\n");
             return;
         }
         target_sensor = VIS_SENSOR; // vis = 0
         break;
     case 'n':
         if (NIR_DETECTED == 0) {
-            DBG_PUT("NIR Unavailable.\r\n");
+            iris_log("NIR Unavailable.\r\n");
             return;
         }
         target_sensor = NIR_SENSOR;
         break;
     default:
-        DBG_PUT("Target Error.\r\n");
+        iris_log("Target Error.\r\n");
         return;
     }
     const char *res = next_token(wptr);
@@ -254,7 +255,7 @@ void uart_handle_width_cmd(const char *cmd) {
     }
 
     if (buf[0])
-        DBG_PUT(buf);
+        iris_log(buf);
 }
 
 void uart_handle_capture_cmd(const char *cmd) {
@@ -264,7 +265,7 @@ void uart_handle_capture_cmd(const char *cmd) {
     switch (*wptr) {
     case 'v':
         if (VIS_DETECTED == 0) {
-            DBG_PUT("VIS Unavailable.\r\n");
+            iris_log("VIS Unavailable.\r\n");
             return;
         }
         target_sensor = VIS_SENSOR; // vis = 0
@@ -272,13 +273,13 @@ void uart_handle_capture_cmd(const char *cmd) {
 
     case 'n':
         if (NIR_DETECTED == 0) {
-            DBG_PUT("NIR Unavailable.\r\n");
+            iris_log("NIR Unavailable.\r\n");
             return;
         }
         target_sensor = NIR_SENSOR;
         break;
     default:
-        DBG_PUT("Target Error.\r\n");
+        iris_log("Target Error.\r\n");
         return;
     }
 
@@ -294,7 +295,7 @@ void uart_handle_xfer_cmd(const char *cmd) {
     case 'v':
 #ifndef FAKE_CAM
         if (VIS_DETECTED == 0) {
-            DBG_PUT("VIS Unavailable.\r\n");
+            iris_log("VIS Unavailable.\r\n");
             return;
         }
 #endif
@@ -303,20 +304,20 @@ void uart_handle_xfer_cmd(const char *cmd) {
 
     case 'n':
         if (NIR_DETECTED == 0) {
-            DBG_PUT("NIR Unavailable.\r\n");
+            iris_log("NIR Unavailable.\r\n");
             return;
         }
         target_sensor = NIR_SENSOR;
         break;
     default:
-        DBG_PUT("Target Error.\r\n");
+        iris_log("Target Error.\r\n");
         return;
     }
 
     int media = XFER_UART;
     wptr = next_token(wptr);
     if (!wptr) {
-        DBG_PUT("Xfer: missing media\n");
+        iris_log("Xfer: missing media\n");
         return;
     }
     switch (*wptr) {
@@ -333,13 +334,13 @@ void uart_handle_xfer_cmd(const char *cmd) {
 
     wptr = next_token(wptr);
     if (!wptr) {
-        DBG_PUT("Xfer: missing name\n");
+        iris_log("Xfer: missing name\n");
         return;
     }
 
     uint32_t fname;
     if (sscanf(wptr, "%lx", &fname) != 1) {
-        DBG_PUT("name must be a number (for now)\r\n");
+        iris_log("name must be a number (for now)\r\n");
         memcpy(&fname, wptr, sizeof(fname));
     }
 
@@ -351,14 +352,14 @@ void uart_handle_read_file_cmd(const char *cmd) {
 
     int which;
     if (sscanf(wptr, "%d", &which) != 1) {
-        DBG_PUT("Can't parse relative file offset\r\n");
+        iris_log("Can't parse relative file offset\r\n");
         return;
     }
 
     int media = XFER_UART;
     wptr = next_token(wptr);
     if (!wptr) {
-        DBG_PUT("Xfer: missing media\n");
+        iris_log("Xfer: missing media\n");
         return;
     }
     switch (*wptr) {
@@ -387,12 +388,12 @@ void uart_handle_saturation_cmd(const char *cmd, uint8_t sensor) {
             saturation = *satarg - '0';
             arducam_set_saturation(saturation, sensor);
         } else
-            DBG_PUT("legal saturation values are 0-8\r\n");
+            iris_log("legal saturation values are 0-8\r\n");
     }
 
     saturation = arducam_get_saturation(sensor);
     sprintf(buf, "current saturation: %x\r\n", saturation);
-    DBG_PUT(buf);
+    iris_log(buf);
 }
 
 void handle_i2c16_8_cmd(const char *cmd) {
@@ -400,31 +401,31 @@ void handle_i2c16_8_cmd(const char *cmd) {
     const char *rwarg = next_token(cmd);
 
     if (!rwarg) {
-        DBG_PUT("rwarg broke\r\n");
+        iris_log("rwarg broke\r\n");
         return;
     }
     const char *rwaddr = next_token(rwarg);
 
     if (!rwaddr) {
-        DBG_PUT("rwaddr broke\r\n");
+        iris_log("rwaddr broke\r\n");
         return;
     }
 
     const char *regptr = next_token(rwaddr);
     if (!regptr) {
-        DBG_PUT("regptr broke\r\n");
+        iris_log("regptr broke\r\n");
         return;
     }
 
     uint32_t reg;
     if (sscanf(regptr, "%lx", &reg) != 1) {
-        DBG_PUT("reg broke\r\n");
+        iris_log("reg broke\r\n");
         return;
     }
 
     uint32_t addr;
     if (sscanf(rwaddr, "%lx", &addr) != 1) {
-        DBG_PUT("addr broke\r\n");
+        iris_log("addr broke\r\n");
         return;
     }
 
@@ -454,7 +455,7 @@ void handle_i2c16_8_cmd(const char *cmd) {
         sprintf(buf, "reg op must be read or write, '%s' not supported\r\n", rwarg);
         break;
     }
-    DBG_PUT(buf);
+    iris_log(buf);
 }
 
 void uart_get_hk_packet(uint8_t *out) {
@@ -475,65 +476,65 @@ void uart_handle_nand_commands(const char *cmd) {
     const char *p = next_token(cmd);
 
     if (!p) {
-        DBG_PUT("missing nand sub-command\r\n");
+        iris_log("missing nand sub-command\r\n");
         return;
     }
 
     switch (*p) {
     case 'f':
-        DBG_PUT("formatting\r\n");
+        iris_log("formatting\r\n");
         if ((rc = NANDfs_format())) {
-            DBG_PUT("format failed: %d\r\n", rc);
+            iris_log("format failed: %d\r\n", rc);
         }
         break;
     case 'l':
-        DBG_PUT("files:\r\n");
+        iris_log("files:\r\n");
         list_files();
         break;
     case 't': {
         int count = 10;
         if ((p = next_token(p))) {
             if (sscanf(p, "%d", &count) != 1) {
-                DBG_PUT("bad count %s\r\n", p);
+                iris_log("bad count %s\r\n", p);
                 return;
             }
         }
-        DBG_PUT("creating a file with %d pages\r\n", count);
+        iris_log("creating a file with %d pages\r\n", count);
         if ((rc = pattern_with_filesystem_test(count))) {
-            DBG_PUT("test failed: %d\r\n", rc);
+            iris_log("test failed: %d\r\n", rc);
         }
     } break;
     case 'r':
         if ((p = next_token(p))) {
             if (sscanf(p, "%d", &block) != 1) {
-                DBG_PUT("bad block %s\r\n", p);
+                iris_log("bad block %s\r\n", p);
                 return;
             }
             if ((p = next_token(p))) {
                 if (sscanf(p, "%d", &page) != 1) {
-                    DBG_PUT("bad page %s\r\n", p);
+                    iris_log("bad page %s\r\n", p);
                     return;
                 }
             }
 
-            DBG_PUT("read page <%d,%d>\r\n", block, page);
+            iris_log("read page <%d,%d>\r\n", block, page);
             dump_page(block, page);
         }
         break;
     case 'e':
         if ((p = next_token(p))) {
             if (sscanf(p, "%d", &block) != 1) {
-                DBG_PUT("bad block %s\r\n", p);
+                iris_log("bad block %s\r\n", p);
                 return;
             }
 
-            DBG_PUT("erase block %d\r\n", block);
+            iris_log("erase block %d\r\n", block);
             erase_block(block);
         }
         break;
 
     default:
-        DBG_PUT("unknown NAND cmd: %s\r\n", p);
+        iris_log("unknown NAND cmd: %s\r\n", p);
         break;
     }
 }
@@ -545,8 +546,8 @@ void print_progress(uint8_t count, uint8_t max) {
     sprintf(buf, "Progress: [%.*s%.*s]\r", scaled,
             "==================================================", length - scaled,
             "                                        ");
-    DBG_PUT(buf);
+    iris_log(buf);
     if (count == max) {
-        DBG_PUT("\r\n");
+        iris_log("\r\n");
     }
 }

@@ -17,14 +17,14 @@ static void uart_dump_buf(uint8_t *data, uint16_t len) {
     for (int i = 0; i < len; i++) {
         digit[0] = hex_2_ascii(data[i] >> 4);
         digit[1] = hex_2_ascii(data[i] & 0x0f);
-        DBG_PUT(digit);
+        iris_log(digit);
     }
 }
 #endif
 
 static int uart_open(io_funcs_t *iofuncs, uint32_t name) {
     iofuncs->handle = &huart1;
-    DBG_PUT("JPG");
+    iris_log("JPG");
     return 0;
 }
 
@@ -44,7 +44,7 @@ static int uart_write_len(io_funcs_t *iofuncs, uint32_t len) {
 }
 
 static int uart_close(io_funcs_t *iofuncs) {
-    DBG_PUT("\04");
+    iris_log("\04");
     return 0;
 }
 
@@ -59,7 +59,7 @@ static int flash_open(struct io_funcs *iofuncs, uint32_t name) {
     NAND_FILE *fp = NANDfs_create(name);
     iofuncs->handle = fp;
     if (!fp) {
-        DBG_PUT("NAND Flash file open failed\r\n");
+        iris_log("NAND Flash file open failed\r\n");
         return -1;
     }
     return 0;
@@ -73,7 +73,7 @@ static int flash_close(io_funcs_t *iofuncs) {
     NAND_ReturnType rc = NANDfs_close(iofuncs->handle);
 
     if (rc != Ret_Success) {
-        DBG_PUT("NAND Flash file close failed");
+        iris_log("NAND Flash file close failed");
     }
 
     return rc;
@@ -100,14 +100,14 @@ int transfer_image(uint8_t sensor, int32_t name, int media) {
     }
 
     sprintf(msg, "Starting xfer to media %d\r\n", media);
-    DBG_PUT(msg);
+    iris_log(msg);
 
     if (io_funcs->open(io_funcs, name))
         return -2;
 
     if ((rc = arducam_dump_image(sensor, io_funcs))) {
         sprintf(msg, "image dump failed, rc: %d\r\n", rc);
-        DBG_PUT(msg);
+        iris_log(msg);
     }
 
     rc = io_funcs->close(io_funcs);
@@ -120,18 +120,18 @@ static int nand_dump_file(int which, io_funcs_t *io_driver) {
     int rc;
     NAND_FILE *fh = NANDfs_open(which);
     if (!fh) {
-        DBG_PUT("open failed\r\n");
+        iris_log("open failed\r\n");
         return -1;
     }
 
     uint32_t len = fh->node.file_size;
     if (len == 0) {
-        DBG_PUT("no files\r\n");
+        iris_log("no files\r\n");
         NANDfs_close(fh);
         return -2;
     }
 
-    DBG_PUT("file id %d, length %ld\n", which, len);
+    iris_log("file id %d, length %ld\n", which, len);
 
     if (io_driver->write_len) {
         if ((rc = io_driver->write_len(io_driver, len))) {
@@ -144,7 +144,7 @@ static int nand_dump_file(int which, io_funcs_t *io_driver) {
     uint16_t count = PAGE_DATA_SIZE;
     while (remaining >= count) {
         if (NANDfs_read(fh, count, fdata) == -1) {
-            DBG_PUT("read failed: %d\r\n", nand_errno);
+            iris_log("read failed: %d\r\n", nand_errno);
             break;
         }
         if ((rc = io_driver->write(io_driver, fdata, count))) {
@@ -156,7 +156,7 @@ static int nand_dump_file(int which, io_funcs_t *io_driver) {
 
     if (remaining > 0) {
         if (NANDfs_read(fh, remaining, fdata) == -1) {
-            DBG_PUT("residue read failed: %d\r\n", nand_errno);
+            iris_log("residue read failed: %d\r\n", nand_errno);
         }
 
         if ((rc = io_driver->write(io_driver, fdata, remaining))) {
@@ -183,19 +183,19 @@ int transfer_file(int which, int media) {
         break;
     case XFER_SPI:
     default:
-        DBG_PUT("unsupported transfer media\r\n");
+        iris_log("unsupported transfer media\r\n");
         return -1;
     }
 
     sprintf(msg, "Starting xfer to media %d\r\n", media);
-    DBG_PUT(msg);
+    iris_log(msg);
 
     if (io_funcs->open(io_funcs, which))
         return -2;
 
     if ((rc = nand_dump_file(which, io_funcs))) {
         sprintf(msg, "image dump failed, rc: %d\r\n", rc);
-        DBG_PUT(msg);
+        iris_log(msg);
     }
 
     rc = io_funcs->close(io_funcs);
@@ -214,14 +214,14 @@ static inline void char_name(uint32_t name, char *str) {
 int list_files() {
     NAND_DIR *dir = NANDfs_opendir();
     if (!dir) {
-        DBG_PUT("Error opening dir, nand_errno: %d\n", nand_errno);
+        iris_log("Error opening dir, nand_errno: %d\n", nand_errno);
         return -1;
     }
 
     do {
         inode_t *entry = NANDfs_getdir(dir);
 
-        DBG_PUT("id %ld, size %ld, start %d\r\n", entry->id, entry->file_size, entry->start_block);
+        iris_log("id %ld, size %ld, start %d\r\n", entry->id, entry->file_size, entry->start_block);
     } while (NANDfs_nextdir(dir) > 0);
 
     NANDfs_closedir(dir);
@@ -235,14 +235,14 @@ int dump_page(int block, int page) {
     NAND_ReturnType rc;
 
     if ((rc = NAND_Page_Read(&paddr, PAGE_DATA_SIZE, data)) != Ret_Success) {
-        DBG_PUT("Page read <%d,%d> failed: %d\r\n", block, page, rc);
+        iris_log("Page read <%d,%d> failed: %d\r\n", block, page, rc);
         return -1;
     }
 
     for (int i = 0; i < 64; i++) {
-        DBG_PUT("%02x ", data[i]);
+        iris_log("%02x ", data[i]);
     }
-    DBG_PUT("\r\n");
+    iris_log("\r\n");
 
     return 0;
 }
@@ -252,7 +252,7 @@ int erase_block(int block) {
     NAND_ReturnType rc;
 
     if ((rc = NAND_Block_Erase(&paddr)) != Ret_Success) {
-        DBG_PUT("block erase %d failed: %d\r\n", block, rc);
+        iris_log("block erase %d failed: %d\r\n", block, rc);
         return -1;
     }
 
