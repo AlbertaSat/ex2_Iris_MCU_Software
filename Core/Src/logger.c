@@ -42,8 +42,8 @@ void iris_log(const char *log_data, ...) {
 #ifdef DEBUG_OUTPUT
     static char output_array[128];
     va_list arg;
-    va_start(arg, format);
-    int chars_written = vsnprintf(output_array, 128, format, arg);
+    va_start(arg, log_data);
+    int chars_written = vsnprintf(output_array, 128, log_data, arg);
     HAL_UART_Transmit(&huart1, (uint8_t *)output_array, chars_written, 100);
     va_end(arg);
 #else
