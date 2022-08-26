@@ -363,8 +363,6 @@ int transfer_image_to_nand(uint8_t sensor, uint8_t *file_timestamp) {
         return -1;
     }
 
-    iris_log("%d|%s|%d\n", image_file_infos_queue[image_count].file_id,
-             image_file_infos_queue[image_count].file_name, image_file_infos_queue[image_count].file_size);
     iris_log("%d|%s|%d", image_file_infos_queue[image_count].file_id,
              image_file_infos_queue[image_count].file_name, image_file_infos_queue[image_count].file_size);
 
