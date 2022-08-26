@@ -22,6 +22,8 @@
 extern SPI_HandleTypeDef hspi1;
 extern UART_HandleTypeDef huart1;
 
+uint8_t turn_off_logger_flag = 0;
+
 static int fill_buffer(uint8_t *data);
 static int write_to_nand();
 
@@ -38,6 +40,9 @@ void logger_create() {
 }
 
 void iris_log(const char *log_data, ...) {
+    if (turn_off_logger_flag != 0) {
+        return;
+    }
 
 #ifdef DEBUG_OUTPUT
     static char output_array[128];

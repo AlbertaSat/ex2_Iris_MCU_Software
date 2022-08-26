@@ -28,6 +28,14 @@ typedef struct __attribute__((__packed__)) currentsense_packet_s {
 } currentsense_packet_t;
 
 typedef struct {
+    uint8_t toggle_iris_logger;
+    uint8_t toggle_direct_method;
+    uint8_t format_iris_nand;
+    uint16_t set_resolution;
+    uint8_t set_saturation;
+} Iris_config;
+
+typedef struct {
     uint32_t file_id;
     uint8_t *file_name;
     uint32_t file_size;
@@ -45,7 +53,7 @@ void get_image_count(uint8_t *cnt);
 int get_image_length(uint32_t *image_length, uint8_t index);
 void turn_off_sensors();
 void turn_on_sensors();
-void set_sensors_config();
+void set_configurations(Iris_config *config);
 int initalize_sensors();
 int onboot_sensors(uint8_t sensor);
 void set_rtc_time(uint32_t obc_unix_time);

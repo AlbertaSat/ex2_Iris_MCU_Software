@@ -15,6 +15,8 @@
 extern SPI_HandleTypeDef hspi1;
 extern uint8_t image_count;
 
+uint8_t direct_method_flag = 0;
+
 uint8_t sensor = VIS_SENSOR; // VIS or NIR, used exclusively in direct transfer mode
 uint8_t image_file_infos_queue_iterator = 0;
 
@@ -29,6 +31,7 @@ const uint8_t iris_commands[IRIS_NUM_COMMANDS] = {IRIS_TAKE_PIC,
                                                   IRIS_UPDATE_SENSOR_I2C_REG,
                                                   IRIS_UPDATE_CURRENT_LIMIT,
                                                   IRIS_SET_TIME,
+                                                  IRIS_UPDATE_CONFIG,
                                                   IRIS_WDT_CHECK};
 
 /**
@@ -88,18 +91,18 @@ int obc_handle_command(uint8_t obc_cmd) {
         take_image();
         iris_log("Image capture complete");
 
-        uint8_t cur_capture_timestamp_vis[CAPTURE_TIMESTAMP_SIZE];
-        uint8_t cur_capture_timestamp_nir[CAPTURE_TIMESTAMP_SIZE];
+        if (direct_method_flag != 1) {
+            uint8_t cur_capture_timestamp_vis[CAPTURE_TIMESTAMP_SIZE];
+            uint8_t cur_capture_timestamp_nir[CAPTURE_TIMESTAMP_SIZE];
 
-        set_capture_timestamp(cur_capture_timestamp_vis, VIS_SENSOR);
-        set_capture_timestamp(cur_capture_timestamp_nir, NIR_SENSOR);
+            set_capture_timestamp(cur_capture_timestamp_vis, VIS_SENSOR);
+            set_capture_timestamp(cur_capture_timestamp_nir, NIR_SENSOR);
 
-#ifndef DIRECT_METHOD
-        obc_disable_spi_rx();
-        transfer_image_to_nand(VIS_SENSOR, cur_capture_timestamp_vis);
-        transfer_image_to_nand(NIR_SENSOR, cur_capture_timestamp_nir);
-        obc_enable_spi_rx();
-#endif
+            obc_disable_spi_rx();
+            transfer_image_to_nand(VIS_SENSOR, cur_capture_timestamp_vis);
+            transfer_image_to_nand(NIR_SENSOR, cur_capture_timestamp_nir);
+            obc_enable_spi_rx();
+        }
         return 0;
     }
     case IRIS_GET_IMAGE_COUNT: {
@@ -109,20 +112,20 @@ int obc_handle_command(uint8_t obc_cmd) {
         return 0;
     }
     case IRIS_TRANSFER_IMAGE: {
-#ifdef DIRECT_METHOD
-        transfer_image_to_obc_direct_method();
-#else
-        transfer_images_to_obc_nand_method(image_file_infos_queue_iterator);
-        delete_image_file_from_queue(image_file_infos_queue_iterator);
-        image_count -= 1;
-        image_file_infos_queue_iterator += 1;
+        if (direct_method_flag == 1) {
+            transfer_image_to_obc_direct_method();
+        } else {
+            transfer_images_to_obc_nand_method(image_file_infos_queue_iterator);
+            delete_image_file_from_queue(image_file_infos_queue_iterator);
+            image_count -= 1;
+            image_file_infos_queue_iterator += 1;
 
-        // Once all images are transferred to OBC, image count should
-        // be 0, and image_file_infos_queue_iterator will be re-initialize to 0
-        if (image_count == 0) {
-            image_file_infos_queue_iterator = 0;
+            // Once all images are transferred to OBC, image count should
+            // be 0, and image_file_infos_queue_iterator will be re-initialize to 0
+            if (image_count == 0) {
+                image_file_infos_queue_iterator = 0;
+            }
         }
-#endif
         return 0;
     }
     case IRIS_TRANSFER_LOG: {
@@ -151,8 +154,6 @@ int obc_handle_command(uint8_t obc_cmd) {
         } else {
             iris_log("Sensor initialize");
         }
-        set_sensors_config();
-        iris_log("Sensors configured");
 
         obc_spi_transmit(&tx_ack, 1);
         return 0;
@@ -163,16 +164,16 @@ int obc_handle_command(uint8_t obc_cmd) {
         memset(packet, 0, IRIS_IMAGE_SIZE_WIDTH);
         int ret;
 
-#ifdef DIRECT_METHOD
-        image_length = (uint32_t)read_fifo_length(sensor);
-#else
-        ret = get_image_length(&image_length, image_file_infos_queue_iterator);
-        if (ret < 0) {
-            iris_log("Failed to get image length");
-            obc_spi_transmit(packet, IRIS_IMAGE_SIZE_WIDTH);
-            return -1;
+        if (direct_method_flag == 1) {
+            image_length = (uint32_t)read_fifo_length(sensor);
+        } else {
+            ret = get_image_length(&image_length, image_file_infos_queue_iterator);
+            if (ret < 0) {
+                iris_log("Failed to get image length");
+                obc_spi_transmit(packet, IRIS_IMAGE_SIZE_WIDTH);
+                return -1;
+            }
         }
-#endif
         packet[0] = (image_length >> (8 * 2)) & 0xff;
         packet[1] = (image_length >> (8 * 1)) & 0xff;
         packet[2] = (image_length >> (8 * 0)) & 0xff;
@@ -205,6 +206,20 @@ int obc_handle_command(uint8_t obc_cmd) {
         Iris_Timestamp tm = {0};
         get_rtc_time(&tm);
         return 0;
+    }
+    case IRIS_UPDATE_CONFIG: {
+        Iris_config config;
+        uint8_t iris_config_buffer[IRIS_CONFIG_SIZE];
+
+        obc_spi_receive_blocking(iris_config_buffer, IRIS_CONFIG_SIZE);
+
+        config.toggle_iris_logger = iris_config_buffer[0];
+        config.toggle_direct_method = iris_config_buffer[1];
+        config.format_iris_nand = iris_config_buffer[2];
+        config.set_resolution = iris_config_buffer[3] << 8 | iris_config_buffer[4];
+        config.set_saturation = iris_config_buffer[5];
+
+        set_configurations(&config);
     }
     case IRIS_WDT_CHECK: {
         return 0;

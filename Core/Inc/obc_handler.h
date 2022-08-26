@@ -24,12 +24,14 @@
 #define IRIS_UPDATE_CURRENT_LIMIT 0x70
 #define IRIS_SET_TIME 0x05
 #define IRIS_WDT_CHECK 0x80
+#define IRIS_UPDATE_CONFIG 0x90
 
 #define IRIS_IMAGE_TRANSFER_BLOCK_SIZE 512 // Will change once NAND flash is implemented
 #define IRIS_LOG_TRANSFER_BLOCK_SIZE 2048
 #define IRIS_IMAGE_SIZE_WIDTH 3 // Image size represented in 3 bytes
 #define IRIS_UNIX_TIME_SIZE 4
-#define IRIS_NUM_COMMANDS 12
+#define IRIS_NUM_COMMANDS 13
+#define IRIS_CONFIG_SIZE 6 // Number of bytes in below struct
 
 int obc_verify_command(uint8_t cmd);
 int obc_handle_command(uint8_t cmd);

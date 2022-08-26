@@ -31,11 +31,16 @@ extern int width;
 extern const struct sensor_reg OV5642_JPEG_Capture_QSXGA[];
 extern const struct sensor_reg OV5642_QVGA_Preview[];
 
+extern uint8_t turn_off_logger_flag;
+extern uint8_t direct_method_flag;
+
 #ifdef UART_HANDLER
 // Only used for UART operations
 uint8_t VIS_DETECTED = 0;
 uint8_t NIR_DETECTED = 0;
 #endif
+
+uint8_t sensor_status = SENSORS_OFF;
 
 housekeeping_packet_t hk;
 char buf[128];
@@ -115,6 +120,7 @@ int get_image_length(uint32_t *image_length, uint8_t index) {
 void turn_off_sensors() {
     HAL_GPIO_WritePin(CAM_EN_GPIO_Port, CAM_EN_Pin, GPIO_PIN_RESET);
     iris_log("Sensor Power Disabled.\r\n");
+    sensor_status = SENSORS_OFF;
 }
 
 /**
@@ -122,17 +128,36 @@ void turn_off_sensors() {
  */
 void turn_on_sensors() {
     HAL_GPIO_WritePin(CAM_EN_GPIO_Port, CAM_EN_Pin, GPIO_PIN_SET);
-    iris_log("Sensor Power Enabled.\r\n");
+    iris_log("Sensor Power Enabled\r\n");
+    sensor_status = SENSORS_ON;
 }
 
 /**
  * @brief Once sensors are on, initialize configurations (i.e. resolution,
  * saturation, etc) for both of the sensors
+ *
+ * Future developers can add or modify different configuration
  */
-void set_sensors_config() {
-    // Set resolution for both sensors
-    arducam_set_resolution(JPEG, 2592, VIS_SENSOR);
-    arducam_set_resolution(JPEG, 2592, NIR_SENSOR);
+void set_configurations(Iris_config *config) {
+    // These flags toggle different software methods
+    turn_off_logger_flag = config->toggle_iris_logger;
+    direct_method_flag = config->toggle_direct_method;
+
+    // Format NAND flash
+    uint8_t format_nand_flash = config->format_iris_nand;
+    if (format_nand_flash == 1) {
+        NANDfs_format();
+    }
+
+    if (sensor_status == SENSORS_ON) {
+        // Set resolution for both sensors
+        arducam_set_resolution(JPEG, (int)config->set_resolution, VIS_SENSOR);
+        arducam_set_resolution(JPEG, (int)config->set_resolution, NIR_SENSOR);
+
+        // Set saturation for both sensors
+        arducam_set_saturation((int)config->set_saturation, VIS_SENSOR);
+        arducam_set_saturation((int)config->set_saturation, NIR_SENSOR);
+    }
 
     HAL_Delay(500);
 }
