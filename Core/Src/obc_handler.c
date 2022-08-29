@@ -102,6 +102,8 @@ int obc_handle_command(uint8_t obc_cmd) {
             transfer_image_to_nand(VIS_SENSOR, cur_capture_timestamp_vis);
             transfer_image_to_nand(NIR_SENSOR, cur_capture_timestamp_nir);
             obc_enable_spi_rx();
+        } else {
+            image_count = 1;
         }
         return 0;
     }
