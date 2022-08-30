@@ -32,9 +32,9 @@ Separate folders contain software submodules for the Equipment Handlers (EH), Ha
 
 ## Configuring
 To configure the repo for the version of Iris you are using, edit the file `/Core/Inc/iris_system.h`
-For flight assembly, use the following configuration:
-\n	* `#define SPI_HANDLER`
-\n	* `#define IRIS_FM`
+For flight assembly, use the following configuration:  
+	* `#define SPI_HANDLER`  
+	* `#define IRIS_FM`  
 The rest will be handled by the software. If not for flight, use the pertinent combination of defines for your specific use case.
 ## Contributing
 
