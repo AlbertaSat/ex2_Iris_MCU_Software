@@ -13,7 +13,7 @@ Separate folders contain software submodules for the Equipment Handlers (EH), Ha
 		* Source files for HAL / EH. Main entry point. 
 		
 * Drivers/
-	* HalCoGEN generated source files including hardware drivers, and configurations
+	* STM32CubeMX generated source files including hardware drivers, and configurations
 
 ## Getting Started
 1. Set up an SSH key with GitHub. [Instructions](https://docs.github.com/en/github/authenticating-to-github/connecting-to-github-with-ssh/adding-a-new-ssh-key-to-your-github-account)
