@@ -1,4 +1,4 @@
-# EX2_OBC_SOFTWARE 
+# EX2_IRIS_MCU_SOFTWARE 
 Welcome 👋 - this is the central repository for the Ex-Alta 2 Iris Payload. 
 
 Separate folders contain software submodules for the Equipment Handlers (EH), Hardware Interface (HAL) and On-board services.
