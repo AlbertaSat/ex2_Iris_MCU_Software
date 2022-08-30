@@ -30,7 +30,12 @@ Separate folders contain software submodules for the Equipment Handlers (EH), Ha
 
 7. You  can now build and debug, and flash this project to Iris with a ST-LINKV/2 Probe!!
 
-
+## Configuring
+To configure the repo for the version of Iris you are using, edit the file `/Core/Inc/iris_system.h`
+For flight assembly, use the following configuration:
+	* `#define SPI_HANDLER`
+	* `#define IRIS_FM`
+The rest will be handled by the software. If not for flight, use the pertinent combination of defines for your specific use case.
 ## Contributing
 
 * Branches
