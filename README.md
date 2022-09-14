@@ -60,7 +60,7 @@ To create an Iris binary (`.bin`) file, go to STM32CubeIDE, open project and bui
 on the following path `ex2_Iris_MCU_Software/Debug/ex2_Iris_MCU_Software.bin`
 
 ### Using Iris binary file to perform firmware update
-Here are the steps to perform firmware updates on Iris:
+Here are the steps to perform firmware updates on Iris during flight:
 1. Build project to create binary file
 2. Locate binary file
 3. Ensure that the OBC and ground station are up-to-date and working
