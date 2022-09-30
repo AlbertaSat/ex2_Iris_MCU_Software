@@ -30,4 +30,6 @@
 //	uint16_t END: 7;
 //} CAN_packet_t;
 
+void send_can_frame(uint32_t * frame, unsigned int frame_len_bits);
+
 #endif /* INC_DRIVERS_CAN_CAN_H_ */

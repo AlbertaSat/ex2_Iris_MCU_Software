@@ -90,6 +90,7 @@ void Error_Handler(void);
 
 /* Iris Spec Defines --------------------------------------------------------*/
 #define ERR_Pin GPIO_PIN_9
+#define WDI_Pin GPIO_PIN_8
 #define ERR_GPIO_Port GPIOA
 
 /* USER CODE END Private defines */
