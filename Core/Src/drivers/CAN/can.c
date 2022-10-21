@@ -55,7 +55,6 @@ void generate_can_footer(uint8_t *footer, uint8_t *byte_stuffed_array) {
     footer[3] = 0x00;
 }
 
-#define CAN_DELAY 1
 void send_can_header(uint8_t *header) {
     // NOT COMPLETE DO NOT USE
 
@@ -89,7 +88,7 @@ void send_can_frame(uint32_t * frame, unsigned int frame_len_bits){//how to gene
 	for (int i = 0; i < (frame_len_bits/UINT32_SIZE_BITS+1); i++) {
     	if(i == 0){//first item may be less HEX digits
 			for(int j = bits_in_first_frame_index; j > 0; j--){
-				if ((frame[i] >> (k - 1)) & 1) {
+				if ((frame[i] >> (j - 1)) & 1) {
 					CAN_TX_GPIO_Port->BRR = CAN_TX_Pin;
 				} else {
 					CAN_TX_GPIO_Port->BSRR = CAN_TX_Pin;
@@ -98,7 +97,7 @@ void send_can_frame(uint32_t * frame, unsigned int frame_len_bits){//how to gene
 			}
     	} else {
     		for(int j = UINT32_SIZE_BITS; j > 0; j--){
-    		    if ((frame[i] >> (j-1)) & 1) {
+    		    if ((frame[i] >> (j - 1)) & 1) {
     		        CAN_TX_GPIO_Port->BRR = CAN_TX_Pin;
     		    } else {
     		        CAN_TX_GPIO_Port->BSRR = CAN_TX_Pin;

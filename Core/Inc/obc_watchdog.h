@@ -8,6 +8,6 @@
 #ifndef INC_OBC_WATCHDOG_H_
 #define INC_OBC_WATCHDOG_H_
 
-
+void send_obc_reset_cmd_to_eps();
 
 #endif /* INC_OBC_WATCHDOG_H_ */

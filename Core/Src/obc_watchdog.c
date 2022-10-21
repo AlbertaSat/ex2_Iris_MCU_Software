@@ -6,6 +6,7 @@
  */
 #include "can.h"
 #include "iris_system.h"
+#include "spi_bitbang.h"
 
 #define OBC_WATCHDOG_PERIOD_MS 600000 //10 minutes
 extern TIM_HandleTypeDef htim3;
@@ -25,7 +26,7 @@ extern TIM_HandleTypeDef htim3;
 #define OBC_RESET_CMD_1_BITS 132
 #define OBC_RESET_CMD_DELAY_BITS 10
 #define OBC_RESET_CMD_2_BITS 121
-#define UINT32_SIZE_BITS 32
+
 uint32_t obc_reset_cmd_1[OBC_RESET_CMD_1_BITS/UINT32_SIZE_BITS+1] = {0x4, 0x14609046, 0x22828338, 0x20C10498, 0x209EC795};
 uint32_t obc_reset_cmd_2[OBC_RESET_CMD_2_BITS/UINT32_SIZE_BITS+1] = {0x829C10, 0x4161E082, 0x70461CD5, 0x2D2E0D95};
 

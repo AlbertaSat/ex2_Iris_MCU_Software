@@ -16,6 +16,10 @@
 #define CAN_HEADER_LEN 3
 #define CAN_FOOTER_LEN 4
 
+#define CAN_DELAY 1
+#define UINT32_SIZE_BITS 32
+
+
 // don't forget stuffin
 // typedef struct __attribute__((__packed__)) CAN_packet_s {
 //	uint16_t START : 1;
