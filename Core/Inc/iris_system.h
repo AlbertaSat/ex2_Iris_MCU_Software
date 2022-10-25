@@ -66,13 +66,13 @@ void Error_Handler(void);
 /* Private defines -----------------------------------------------------------*/
 
 /* USER CODE BEGIN Private defines */
-#define software_ver 0x13
+#define software_ver 0x10 // Version 1.0. Initial Release!
 #define VIS_SENSOR 0x3C
 #define NIR_SENSOR 0x3E
 
 /* Iris Model Defines --------------------------------------------------------*/
 //#define IRIS_EM
-//#define IRIS_FM
+#define IRIS_FM
 // #define IRIS_PROTO
 
 #ifdef IRIS_FM
