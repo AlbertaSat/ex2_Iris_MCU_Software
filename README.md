@@ -16,19 +16,17 @@ Separate folders contain software submodules for the Equipment Handlers (EH), Ha
 	* STM32CubeMX generated source files including hardware drivers, and configurations
 
 ## Getting Started
-1. Set up an SSH key with GitHub. [Instructions](https://docs.github.com/en/github/authenticating-to-github/connecting-to-github-with-ssh/adding-a-new-ssh-key-to-your-github-account)
+1. Clone this repository.
 
-2. Clone this repository.
+2. [Download](https://www.st.com/en/development-tools/stm32cubeide.html) STM32CubeIDE Version 1.9.0 
 
-3. [Download](https://www.st.com/en/development-tools/stm32cubeide.html) STM32CubeIDE Version 1.9.0 
-
-4. Import this code as a STM32CubeIDE Project:
+3. Import this code as a STM32CubeIDE Project:
 	Select `File > Import`
 	Select `General` =>  `Existing Projects into Workspace`
 	Then browse to this repository, and select the discovered project
 	Select `Finish`
 
-5. You  can now build and debug, and flash this project to Iris with a ST-LINKV/2 Probe!!
+4. You  can now build and debug, and flash this project to Iris with a ST-LINKV/2 Probe!!
 
 ## Software Architecture
 Iris software uses a bare-metal design involving a global loop, defined in `main.c`, executing infinitely. Inside
@@ -65,12 +63,13 @@ Here are the steps to perform firmware updates on Iris during flight:
 2. Locate binary file
 3. Ensure that the OBC and ground station are up-to-date and working
 4. Start the OBC
-5. Using `ftp` upload the binary file to OBC's sd card. Please ensure the file is stored under the follwing name `ex2_Iris_MCU_Software.bin`
+5. Using `ftp` upload the binary file to OBC's sd card. Please ensure the file is stored under the follwing name `ex2_Iris_MCU_Software.bin`. This will take some time, and there won't be a completion message. Trust the process.
 6. Using `cli`, write Iris firmware update command (`ex2.iris.iris_program_flash`) to start firmware update
 
 ## Operator Flight Modification
-* This [document](https://docs.google.com/document/d/18MfM1MbAzbHLhlNQgt6bJxLck85kH8YPalTy1IB2w84/edit) outlines on-board chips as well as their behavior that an operator might want to modify during flight.
+* AX2-PL-175 Iris Operators Manual outlines on-board chips as well as their behavior that an operator might want to modify during flight.
 ## Contributing
+Set up an SSH key with GitHub. [Instructions](https://docs.github.com/en/github/authenticating-to-github/connecting-to-github-with-ssh/adding-a-new-ssh-key-to-your-github-account)
 * Branches
 	* Branches must change  or implement one feature
 	* Branches created from branches must be merged in the order they are created
