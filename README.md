@@ -68,6 +68,8 @@ Here are the steps to perform firmware updates on Iris during flight:
 5. Using `ftp` upload the binary file to OBC's sd card. Please ensure the file is stored under the follwing name `ex2_Iris_MCU_Software.bin`
 6. Using `cli`, write Iris firmware update command (`ex2.iris.iris_program_flash`) to start firmware update
 
+## Operator Flight Modification
+* This [document](https://docs.google.com/document/d/18MfM1MbAzbHLhlNQgt6bJxLck85kH8YPalTy1IB2w84/edit) outlines on-board chips as well as their behavior that an operator might want to modify during flight.
 ## Contributing
 * Branches
 	* Branches must change  or implement one feature
